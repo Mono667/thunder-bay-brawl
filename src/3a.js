@@ -11,9 +11,16 @@ const cv = document.getElementById('game'), ctx = cv.getContext('2d');
 // text and sparks get twice the pixels (16-bit arcade detail); all drawing code
 // still works in 480x270 world units via wx.setTransform(RES, ...).
 const RES = 2;
+// SD: sprite-sheet density = px per world unit on the world canvas (the fight plane is zoomed ZOOM x)
+const SD = RES * ZOOM;
 const wc = document.createElement('canvas'); wc.width = W * RES; wc.height = H * RES;
 const wx = wc.getContext('2d'); wx.imageSmoothingEnabled = false;
 function worldXform() { wx.setTransform(RES, 0, 0, RES, 0, 0); wx.imageSmoothingEnabled = false; }
+// GY: screen y of the fight-plane ground line. screenXform = 480x270 screen units (stage art, HUD-ish overlays);
+// planeXform = world units of the fight plane (x already minus camX, y down from the top), zoomed ZOOM x about GY.
+const GY = 252;
+function screenXform(g, b) { g.setTransform(b, 0, 0, b, 0, 0); g.imageSmoothingEnabled = false; }
+function planeXform(g, b) { g.setTransform(b * ZOOM, 0, 0, b * ZOOM, 0, b * (GY - ZOOM * GROUND)); g.imageSmoothingEnabled = false; }
 function mk(w, h, rf) { const c = document.createElement('canvas'); c.width = Math.max(1, w | 0); c.height = Math.max(1, h | 0); c.g = c.getContext('2d', rf ? { willReadFrequently: true } : undefined); c.g.imageSmoothingEnabled = false; return c; }
 let seed = 1337; function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
 function rgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
@@ -22,11 +29,14 @@ const OUT = '#0b0712';
 /* Snap a canvas to a palette: hard alpha, nearest palette colour, and a
    1px dark outline on the silhouette edge. This is what turns smooth
    vector drawing into crisp pixel art. */
+const PIX_CACHE = new WeakMap();   // palette -> { P, packed colours, rgb -> palette index } kept across frames
 function pixelate(c, pal, outline) {
   const w = c.width, h = c.height, g = c.getContext('2d'), im = g.getImageData(0, 0, w, h), d = im.data;
-  const P = pal.map(rgb), cache = new Map();
-  for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3] < 128) { d[i + 3] = 0; continue; }
+  let C = PIX_CACHE.get(pal);
+  if (!C) { const P = pal.map(rgb); C = { P, cache: new Map(), u: new Uint32Array(new Uint8Array(P.flatMap(p => [p[0], p[1], p[2], 255])).buffer) }; PIX_CACHE.set(pal, C); }
+  const P = C.P, cache = C.cache, U = C.u, d32 = new Uint32Array(d.buffer, d.byteOffset, d.length >> 2);
+  for (let q = 0, i = 0; q < d32.length; q++, i += 4) {
+    if (d[i + 3] < 128) { d32[q] = 0; continue; }
     const key = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
     let j = cache.get(key);
     if (j === undefined) {
@@ -34,7 +44,7 @@ function pixelate(c, pal, outline) {
       for (let k = 0; k < P.length; k++) { const dr = d[i] - P[k][0], dg = d[i + 1] - P[k][1], db = d[i + 2] - P[k][2], e = dr * dr * 3 + dg * dg * 4 + db * db * 2; if (e < best) { best = e; j = k; } }
       cache.set(key, j);
     }
-    d[i] = P[j][0]; d[i + 1] = P[j][1]; d[i + 2] = P[j][2]; d[i + 3] = 255;
+    d32[q] = U[j];
   }
   if (outline) {
     const o = rgb(outline), a = new Uint8Array(w * h);

@@ -73,7 +73,7 @@ function drawStageCards() {
   for (const id of STAGE_CARDS) {
     const el = document.querySelector('#stage-' + id + ' canvas'); if (!el) continue;
     const g = el.getContext('2d'), rid = id === 'random' ? STAGE_IDS[Math.floor(frame / 50) % STAGE_IDS.length] : id, tg = THUMB.g;
-    tg.imageSmoothingEnabled = false; drawStage(tg, (STAGE_W - W) / 2 + Math.sin(frame / 160 + rid.length) * 120, frame, rid); drawSnow(tg, frame, true);
+    tg.imageSmoothingEnabled = false; drawStage(tg, (STAGE_W - VIEW_W) / 2 + Math.sin(frame / 160 + rid.length) * 120, frame, rid, 1); screenXform(tg, 1); drawSnow(tg, frame, true);
     g.imageSmoothingEnabled = false; g.drawImage(THUMB, 0, 0, 240, 135);
     if (id === 'random') { g.fillStyle = 'rgba(5,6,15,0.55)'; g.fillRect(0, 0, 240, 135); drawText(g, '?', 120, 44, 6, (frame >> 3) & 1 ? 'gold' : 'fire', 'c'); }
   }

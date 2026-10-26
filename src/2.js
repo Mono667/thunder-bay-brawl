@@ -5,7 +5,10 @@
    Canvas 2D, fixed 60 Hz timestep, no build step.
    World units: 480 x 270 logical pixels. y is height above the ground.
    ===================================================================== */
-const W = 480, H = 270, GROUND = 238, STAGE_W = 800, TICK = 1000 / 60, MAXSEP = 440;
+const W = 480, H = 270, GROUND = 238, STAGE_W = 800, TICK = 1000 / 60;
+// the camera shows the fight plane at ZOOM x: VIEW_W world units across the 480-wide screen.
+// Every hitbox, reach, speed and projectile stays in world units, so feel and balance are unchanged.
+const ZOOM = 1.5, VIEW_W = W / ZOOM, MAXSEP = VIEW_W - 40;
 const QS = new URLSearchParams(location.search);
 const SHOW_BOXES = QS.has('boxes');
 
@@ -232,7 +235,7 @@ function stageInfo(id) { return STAGE_INFO.find(s => s.id === id) || STAGE_INFO[
 function resolveStage(p) { return STAGE_IDS.includes(p) ? p : STAGE_IDS[Math.floor(Math.random() * STAGE_IDS.length)]; }   // 'random' (or anything unknown) rolls one
 function newMatch(mode, c1, c2, stage) {
   G = { mode, chars: [c1, c2], round: 1, wins: [0, 0], timer: 99, tt: 0, phase: 'intro', pt: 0, banner: null, f: [], proj: [], sparks: [],
-    shake: 0, hitstop: 0, slow: 0, camX: (STAGE_W - W) / 2, ev: [], evId: 0, tick: 0, result: null, stat: { hits: [0, 0], blocks: [0, 0], specials: [0, 0] } };
+    shake: 0, hitstop: 0, slow: 0, camX: (STAGE_W - VIEW_W) / 2, ev: [], evId: 0, tick: 0, result: null, stat: { hits: [0, 0], blocks: [0, 0], specials: [0, 0] } };
   G.stage = resolveStage(stage); startRound(); G.phase = 'vs'; G.pt = 0; G.banner = null; G.vsLine = Math.random() * 1000 | 0;   // face-to-face VS showdown before round 1
 }
 const VS_T = 230, VS_SKIP = 200, SFZ_T = 16;   // showdown: slide in 0-30, P1 line 40-130, P2 reply 120-215
@@ -440,6 +443,7 @@ function applyHit(a, d, M, at, fromProj) {
     if (d.mv === 'sp2' && d.y > 0) d.y = Math.max(d.y, 1);
     if (d.y > 0 || M.kd || d.hp <= 0) { d.st = 'kd'; d.vy = (d.hp <= 0 ? 5.5 : 4.5) * (CHARS[d.ch].nojug ? 0.75 : 1); d.vx = away * (d.hp <= 0 ? 3.2 : 2.2) * kb; d.y = Math.max(d.y, 1); }
     else { d.st = 'hit'; d.stun = M.hs; d.vx = away * M.push * kb; }
+    d.hk = M.heavy ? 2 : M.lvl === 'high' ? 0 : 1;   // reaction art only: 0 head snap, 1 gut, 2 heavy stagger
     if (M.kiss) {   // KISS MY BUTT!: yank them round behind him, SMOOCH! burst covers the spot, they stagger off dizzy
       d.st = 'hit'; d.stun = M.hs; d.dz = M.hs; d.x = a.x - a.face * 22; d.vx = -a.face * 1.3; d.y = 0; d.face = a.face;
       a.buff = BUFF_T; G.kiss = { x: a.x - a.face * 13, t: 0 }; ev('smooch');
@@ -504,7 +508,7 @@ function resolveBodies() {
   const sep = b.x - a.x;
   if (Math.abs(sep) > MAXSEP) { const fix = (Math.abs(sep) - MAXSEP) / 2 * Math.sign(sep); a.x += fix; b.x -= fix; }
   const mid = (a.x + b.x) / 2;
-  G.camX = Math.max(0, Math.min(STAGE_W - W, mid - W / 2));
+  G.camX = Math.max(0, Math.min(STAGE_W - VIEW_W, mid - VIEW_W / 2));
 }
 
 function simFight(inA, inB) {

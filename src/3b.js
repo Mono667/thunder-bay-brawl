@@ -178,7 +178,7 @@ function solve1(D, q) {
 
 /* ---------- painting primitives ---------- */
 const LV = [0.45, -0.9];
-const OLW = 1.6;   // outline width added around shapes (world units): ~0.8 each side = 1-2 sprite px at RES 2
+const OLW = 1.25;   // outline width added around shapes (world units): ~0.6 each side = ~2 sprite px at SD 3
 function strokeSeg(g, a, b, w, col, off) { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.moveTo(a[0] + off[0], a[1] + off[1]); g.lineTo(b[0] + off[0], b[1] + off[1]); g.stroke(); }
 function lightN(p, q) { const dx = q[0] - p[0], dy = q[1] - p[1], d = Math.hypot(dx, dy) || 1; let n = [-dy / d, dx / d]; if (n[0] * LV[0] + n[1] * LV[1] < 0) n = [-n[0], -n[1]]; return n; }
 function limb(g, pts, ws, C, stripe) {          // pts: [a, j, b]  ws: [w1, w2]  C: [shadow, base, hi]
@@ -512,6 +512,21 @@ function faceMouth(g, HT, ex, M, L) {
 }
 
 /* ---------- animation sets ---------- */
+/* in-between poses: lerp two key poses (raw fields when they line up, else via solved hand/foot positions) */
+function tweenQ(D, a, b, t) {
+  const near = t < 0.5 ? a : b, o = Object.assign({}, near), L = (x, y) => x + (y - x) * t, LA = (x, y) => [L(x[0], y[0]), L(x[1], y[1])];
+  const same = (k) => (a[k] == null) === (b[k] == null);
+  if (same('fHa') && same('bHa') && same('fFw') && same('bFw') && (a.flip || 0) === (b.flip || 0)) {
+    for (const k of ['hip', 'fF', 'bF', 'fH', 'bH', 'fHa', 'bHa', 'fFw', 'bFw']) if (a[k] && b[k]) o[k] = LA(a[k], b[k]);
+    for (const k of ['lean', 'rot', 'hairK']) if (a[k] != null || b[k] != null) o[k] = L(a[k] || 0, b[k] || 0);
+    if (a.tilt != null || b.tilt != null) o.tilt = L(a.tilt != null ? a.tilt : -a.lean * 0.7, b.tilt != null ? b.tilt : -b.lean * 0.7);
+    if (a.reach && b.reach) o.reachMax = L(a.reachMax, b.reachMax); else if (a.reach || b.reach) { const Ja = solve(D, a), Jb = solve(D, b); o.reach = null; o.hip = LA(Ja.hip, Jb.hip); if (a.reach === 'fH' || b.reach === 'fH') o.fHa = LA(Ja.fH, Jb.fH); else { o.fF = LA(Ja.fA, Jb.fA); } }
+    return o;
+  }
+  if ((a.rot || 0) || (b.rot || 0) || (a.flip || 0) !== (b.flip || 0)) return Object.assign({}, near);
+  const Ja = solve(D, a), Jb = solve(D, b);
+  return Object.assign(o, { hip: LA(Ja.hip, Jb.hip), lean: L(a.lean, b.lean), tilt: L(a.tilt != null ? a.tilt : -a.lean * 0.7, b.tilt != null ? b.tilt : -b.lean * 0.7), fHa: LA(Ja.fH, Jb.fH), bHa: LA(Ja.bH, Jb.bH), fF: LA(Ja.fA, Jb.fA), bF: LA(Ja.bA, Jb.bA), fFw: null, bFw: null, reach: null, hairK: L(a.hairK || 0, b.hairK || 0) });
+}
 function animsFor(ch, A) {
   A = A || ART[ch]; const D = A.D, LK = A.L, MV = CHARS[ch].moves, L = [], big = D.tw >= 11;
   const add = (name, meta, frames) => L.push({ name, meta, frames });
@@ -654,6 +669,50 @@ function animsFor(ch, A) {
     Q(D, { hip: [0, hy + 2], lean: ln + 0.3, fF: [12, ank - 2], bF: [-8, ank], fH: [-4, 4], bH: [-8, 3], hairK: 3 }),
     Q(D, { hip: [1, hy + 3], lean: ln + 0.42, fF: [15, ank - 4], bF: [-15, ank - 7], fH: [-8, 5], bH: [-11, 3], hairK: 5, speed: 1 }),
     Q(D, { hip: [0, hy + 2], lean: ln + 0.2, fF: [10, ank], bF: [-6, ank], hairK: 2 })]);
+  /* batch 2: more in-betweens. Normals get a wind-up tween + a settle tween (lights 3->5, heavies 5->7),
+     specials gain a tween into and out of the active frames, plus new reaction / knockdown / lose rows. */
+  const idleQ = Q(D, {}), crQ = crouchQ(D, {});
+  const ins = (an, i, q, ph) => { an.frames.splice(i, 0, q); an.meta.ph.splice(i, 0, ph); };
+  for (const an of L) {
+    const ph = an.meta.ph; if (!ph) continue;
+    const fs = an.frames, lastS = ph.lastIndexOf('s'), firstA = ph.indexOf('a'), lastA = ph.lastIndexOf('a');
+    const normal = /^(c?[lh][pk]|j[pk])$/.test(an.name), heavy = /^c?h[pk]$/.test(an.name);
+    if (lastS < 0 || firstA < 0) continue;
+    const s0 = fs[lastS], a0 = fs[firstA], aL = fs[lastA], rL = fs[fs.length - 1];
+    if (normal) {
+      const rest = an.name[0] === 'c' ? crQ : an.name[0] === 'j' ? rL : idleQ;
+      ins(an, ph.length, tweenQ(D, rL, rest, 0.5), 'r');                           // settle back to guard
+      if (heavy) ins(an, lastA + 1, tweenQ(D, aL, fs[lastA + 1], 0.3), 'a');         // follow-through holds the hit
+      ins(an, lastS + 1, tweenQ(D, s0, a0, 0.55), 's');                              // the snap between wind-up and contact
+    } else if (/^(sp|sp2|sp3|dsh|tnt)$/.test(an.name)) {
+      if (lastA + 1 < fs.length) ins(an, lastA + 1, tweenQ(D, aL, fs[lastA + 1], 0.45), 'r');
+      ins(an, lastS + 1, tweenQ(D, s0, a0, 0.5), 's');
+    }
+  }
+  const row = (n) => L.find(a => a.name === n);
+  // gut hit (mid / low): doubled over, hands to the belly
+  add('hitlo', { by: 't', t: [2, 6, 10] }, [
+    Q(D, { lean: ln + 0.42, tilt: 0.35, hip: [-3, hy + 4], fH: [5, 9], bH: [3, 10], fF: [D.st[0] + 2, ank], expr: 'h', hairK: -2 }),
+    Q(D, { lean: ln + 0.5, tilt: 0.45, hip: [-4, hy + 5], fH: [6, 8], bH: [4, 9], fF: [D.st[0] + 2, ank], expr: 'h', hairK: -3, fi: 2 }),
+    Q(D, { lean: ln + 0.3, tilt: 0.25, hip: [-3, hy + 3], fH: [6, 6], bH: [3, 7], expr: 'h', hairK: -1, fi: 3 }),
+    Q(D, { lean: ln + 0.1, tilt: 0.05, hip: [-1, hy + 1], fH: [5, 4], bH: [2, 5], expr: 'h', fi: 4 })]);
+  // heavy stagger: knocked back off balance, arms flung out, stumbling feet
+  add('stagger', { by: 't', t: [3, 7, 12, 17] }, [
+    Q(D, { lean: -0.5, tilt: -0.55, hip: [-5, hy + 1], fH: [-8, -10], bH: [-13, -6], fF: [D.st[0] + 4, ank - 3], bF: [D.st[1] - 2, ank], expr: 'h', hairK: 5 }),
+    Q(D, { lean: -0.42, tilt: -0.45, hip: [-6, hy + 2], fH: [-10, -4], bH: [-14, 0], fF: [D.st[0] + 2, ank], bF: [D.st[1] - 6, ank - 2], expr: 'h', hairK: 4, fi: 2 }),
+    Q(D, { lean: -0.2, tilt: -0.2, hip: [-4, hy + 3], fH: [-4, 4], bH: [-9, 6], fF: [D.st[0] + 1, ank], bF: [D.st[1] - 4, ank], expr: 'h', hairK: 2, fi: 3 }),
+    Q(D, { lean: ln + 0.12, tilt: 0.1, hip: [-2, hy + 3], fH: [3, 6], bH: [-2, 7], expr: 'h', hairK: 1, fi: 4 }),
+    Q(D, { lean: ln + 0.04, hip: [-1, hy + 1], fH: [5, 3], bH: [2, 4], expr: 'h', fi: 5 })]);
+  { const k = row('hit'); k.meta.t = [2, 5, 9]; k.frames.splice(1, 0, tweenQ(D, k.frames[0], k.frames[1], 0.5)); }   // head snap: 4 frames
+  { const k = row('chit'); k.meta.t = [3, 6]; k.frames.splice(1, 0, tweenQ(D, k.frames[0], k.frames[1], 0.5)); }
+  { const k = row('kd'); k.meta.t = [2, 4, 7, 10]; const f = k.frames; k.frames = [f[0], tweenQ(D, f[0], f[1], 0.5), f[1], tweenQ(D, f[1], f[2], 0.5), f[2]]; }
+  { const k = row('rise'); k.meta.t = [3, 5, 8, 11]; const f = k.frames;
+    k.frames = [Q(D, { hip: [-3, -9], rot: -1.3, lean: 0, fFw: [14, ank], bFw: [8, ank - 3], fH: [-6, 10], bH: [-9, 10], expr: 'g' }), f[0],
+      Q(D, { hip: [-3, -D.crH - 1], rot: -0.4, lean: ln + 0.3, fFw: [D.st[0] + 6, ank], bFw: [D.st[1] - 2, ank], fH: [-2, 10], bH: [-5, 9], expr: 'g' }), f[1], f[2]]; }
+  { const k = row('block'), f = k.frames[0]; k.meta.by = 't'; k.meta.t = [4]; k.frames = [Q(D, { fH: [6, -11], bH: [9, -7], lean: ln - 0.2, tilt: -0.25, hip: [-3, hy + 1], expr: 'g', hairK: 2 }), f]; }
+  { const k = row('cblock'), f = k.frames[0]; k.meta.by = 't'; k.meta.t = [4]; k.frames = [crouchQ(D, { fH: [7, -9], bH: [9, -5], lean: ln + 0.28, hip: [-3, -D.crH + 1], expr: 'g' }), f]; }
+  // lose pose (round / match lost on their feet): hands on knees, head down, heavy breathing
+  add('lose', { fps: 4 }, [0, 1, 2, 3].map(i => { const b = [0, 1, 2, 1][i]; return Q(D, { hip: [-1, hy + 5 + b * 0.6], lean: ln + 0.5 - b * 0.03, tilt: 0.45, fH: [7, 15 - b * 0.5], bH: [3, 15 - b * 0.5], fF: [D.st[0] + 2, ank], bF: [D.st[1] - 2, ank], expr: 'h', hairK: -2 + b, fi: i }); }));
   return L;
 }
 function chainPts(q, J) {
@@ -720,19 +779,26 @@ function itemIcon(g, c, item, s) {   // stolen gear, drawn on its own (flying ba
 let SCRATCH = null;
 function buildSheet(ch, A) {
   A = A || ART[ch];
-  const defs = animsFor(ch, A), S = { lazy: 1, ch, A, pal: palOf(A), defs, rows: [], fw: FW * RES, fh: FH * RES, ox: FOX * RES, oy: FOY * RES, scale: 1 / RES, anims: {} };
+  const defs = animsFor(ch, A), S = { lazy: 1, ch, A, pal: palOf(A), defs, rows: [], fw: FW * SD, fh: FH * SD, ox: FOX * SD, oy: FOY * SD, scale: 1 / SD, anims: {} };
   defs.forEach((an, row) => { S.anims[an.name] = Object.assign({ row, n: an.frames.length }, an.meta); });
   return S;
 }
-function sheetRow(S, row) {
+/* resumable: with a deadline (performance.now() ms) it paints frames until the deadline passes
+   (at least one), parks the half-built strip in S.pend and returns null; without one it finishes the row. */
+function sheetRow(S, row, until) {
   let Rw = S.rows[row]; if (Rw) return Rw;
-  const an = S.defs[row], n = an.frames.length, fw = FW * RES, fh = FH * RES;
+  const an = S.defs[row], n = an.frames.length, fw = FW * SD, fh = FH * SD;
   if (!SCRATCH) SCRATCH = mk(fw, fh, true);
-  const tmp = mk(fw * n, fh, true);
-  an.frames.forEach((q, i) => {
-    const g = SCRATCH.g; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, fw, fh); g.setTransform(RES, 0, 0, RES, FOX * RES, FOY * RES);
+  S.pend = S.pend || {};
+  const P = S.pend[row] || (S.pend[row] = { tmp: mk(fw * n, fh, true), i: 0 }), tmp = P.tmp;
+  while (P.i < n) {
+    const q = an.frames[P.i], i = P.i;
+    const g = SCRATCH.g; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, fw, fh); g.setTransform(SD, 0, 0, SD, FOX * SD, FOY * SD);
     if (q.flip) g.scale(-1, 1); paintFrame(g, S.ch, q, S.A); g.setTransform(1, 0, 0, 1, 0, 0); pixelate(SCRATCH, S.pal, null); tmp.g.drawImage(SCRATCH, i * fw, 0);
-  });
+    P.i++;
+    if (until != null && P.i < n && performance.now() >= until) return null;
+  }
+  delete S.pend[row];
   const d = tmp.g.getImageData(0, 0, fw * n, fh).data, W2 = fw * n; let x0 = fw, x1 = -1, y0 = fh, y1 = -1;
   for (let y = 0; y < fh; y++) for (let x = 0; x < W2; x++) if (d[(y * W2 + x) * 4 + 3]) { const fx = x % fw; if (fx < x0) x0 = fx; if (fx > x1) x1 = fx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
   if (x1 < 0) { x0 = 0; x1 = 1; y0 = 0; y1 = 1; }
@@ -740,7 +806,7 @@ function sheetRow(S, row) {
   const cw = x1 - x0 + 1, chh = y1 - y0 + 1, img = mk(cw * n, chh);
   for (let i = 0; i < n; i++) img.g.drawImage(tmp, i * fw + x0, y0, cw, chh, i * cw, 0, cw, chh);
   tmp.width = tmp.height = 1;   // free the scratch strip
-  Rw = { img, rim: rimOf(img, cw), fw: cw, fh: chh, ox: FOX * RES - x0, oy: FOY * RES - y0 };
+  Rw = { img, rim: rimOf(img, cw), fw: cw, fh: chh, ox: FOX * SD - x0, oy: FOY * SD - y0 };
   S.rows[row] = Rw; return Rw;
 }
 function sheetReady(S) { return !S.lazy || S.rows.length === S.defs.length && S.rows.every(Boolean); }
@@ -751,11 +817,12 @@ function warmSheets(ms) {
   const t0 = performance.now(), todo = [];
   if (G && G.f) { for (const f of G.f) todo.push([SHEETS[f.ch], null]); for (const k in SHEETS) if (k.indexOf(':') > 0) todo.push([SHEETS[k], null]); }
   for (const ch of CHAR_IDS) todo.push([SHEETS[ch], WARM_BASIC]);
+  if (!(G && G.f) && typeof pick !== 'undefined' && SHEETS[pick]) todo.push([SHEETS[pick], null]);   // menus: after the cards, get the highlighted fighter's full sheet going
   for (const [S, only] of todo) {
     if (!S || !S.lazy) continue;
     for (let r = 0; r < S.defs.length; r++) {
       if (S.rows[r] || (only && only.indexOf(S.defs[r].name) < 0)) continue;
-      sheetRow(S, r); if (performance.now() - t0 > ms) return false;
+      sheetRow(S, r, t0 + ms); if (performance.now() - t0 >= ms) return false;
     }
   }
   return true;
@@ -817,7 +884,8 @@ function poseOf(f) {
   if (f.st === 'walk') return { name: 'walk', p: 0 };
   if (f.st === 'crouch') return { name: 'crouch', p: 0 };
   if (f.st === 'block') return { name: f.cr ? 'cblock' : 'block', p: 0 };
-  if (f.st === 'hit') return { name: f.cr ? 'chit' : 'hit', p: 0 };
+  if (f.st === 'hit') return { name: f.cr ? 'chit' : f.hk === 2 ? 'stagger' : f.hk === 1 ? 'hitlo' : 'hit', p: 0 };
+  if ((f.st === 'idle' || f.st === 'walk') && G && G.f && (G.phase === 'roundEnd' || G.phase === 'matchEnd') && G.f[1 - f.i] && G.f[1 - f.i].st === 'win') return { name: 'lose', p: 0 };
   return { name: f.st, p: 0 };
 }
 function animOf(f, S) {
@@ -840,11 +908,21 @@ function frameOf(f, A, tick) {
   const tt = f.st === 'win' ? f.t : tick;
   return Math.floor(tt * (A.fps || 8) / 60) % n;
 }
+/* row lookup on the draw path: during a match a row that isn't warm yet gets a few ms of painting per
+   screen frame (no long hitch that would swallow a motion input); meanwhile the closest warm row stands in. */
+function readyRow(S, A, i) {
+  const R = S.rows[A.row]; if (R) return [R, i];
+  if (G && G.f) {
+    const got = sheetRow(S, A.row, performance.now() + 3); if (got) return [got, i];
+    for (const nm of (/^c/.test(S.defs[A.row].name) ? ['crouch', 'idle'] : ['idle'])) { const B = S.anims[nm], RB = B && S.rows[B.row]; if (RB) return [RB, i % B.n]; }
+  }
+  return [sheetRow(S, A.row), i];
+}
 function drawFromSheet(g, f, S, sx, sy, tick, mirrorY, rim) {
-  const A = animOf(f, S), i = frameOf(f, A, tick), sc = S.scale || 1, sq = squashOf(f) || [1, 1];
+  const A = animOf(f, S), sc = S.scale || 1, sq = squashOf(f) || [1, 1]; let i = frameOf(f, A, tick);
   g.save(); g.translate(sx, sy); g.scale(f.face * sc * sq[0], (mirrorY ? -sc : sc) * sq[1]);
   if (S.lazy) {
-    const Rw = sheetRow(S, A.row);
+    let Rw; [Rw, i] = readyRow(S, A, i);
     g.drawImage(Rw.img, i * Rw.fw, 0, Rw.fw, Rw.fh, -Rw.ox, -Rw.oy, Rw.fw, Rw.fh);
     if (rim) { const a0 = g.globalAlpha; g.globalAlpha = a0 * rim; g.drawImage(Rw.rim, i * Rw.fw, 0, Rw.fw, Rw.fh, -Rw.ox, -Rw.oy, Rw.fw, Rw.fh); g.globalAlpha = a0; }
   } else g.drawImage(S.img, i * S.fw, A.row * S.fh, S.fw, S.fh, -S.ox, -S.oy, S.fw, S.fh);

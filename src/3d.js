@@ -30,193 +30,7 @@ function gradRows(g, x, y, w, h, cols) {   // dithered vertical gradient through
 function R(g, c, x, y, w, h) { g.fillStyle = c; g.fillRect(x | 0, y | 0, w | 0, h | 0); }
 function disc(g, c, x, y, r) { g.fillStyle = c; for (let yy = -r; yy <= r; yy++) { const hw = Math.floor(Math.sqrt(r * r - yy * yy)); g.fillRect(x - hw, y + yy, hw * 2 + 1, 1); } }
 
-const BG = {}, STAGES = {}, NEON = [], LAMPS = [120, 400, 680], FG_PAR = 1.3, WIND = { off: 0, last: 0, g: 0 };
-function buildStage() {
-  seed = 4242;
-  /* sky: deep night, sodium-orange city glow on the horizon, stars, moon, faint aurora */
-  let c = mk(W, 140, true), g = c.g;
-  gradRows(g, 0, 0, W, 140, ['#03030c', '#070820', '#0e0f33', '#1c1645', '#34205a', '#5a2c5e', '#86405a']);
-  for (let i = 0; i < 120; i++) { const x = rnd() * W | 0, y = rnd() * 100 | 0, b = rnd(); R(g, b < 0.15 ? '#fff6c8' : b < 0.5 ? '#9aa6e8' : '#4a5090', x, y, 1, 1); if (b < 0.04) { R(g, '#6a74c0', x - 1, y, 3, 1); R(g, '#6a74c0', x, y - 1, 1, 3); R(g, '#ffffff', x, y, 1, 1); } }
-  for (let x = 0; x < W; x++) { const y = 30 + Math.sin(x * 0.018) * 9 + Math.sin(x * 0.051) * 4; for (let k = 0; k < 14; k++) if (dith(x, k) < 0.16 * (1 - k / 14)) R(g, k < 5 ? '#3a9a7a' : '#2a6a6a', x, y + k, 1, 1); }
-  disc(g, '#6a6a7a', 392, 40, 15); disc(g, '#fff3c4', 392, 40, 14); disc(g, '#e8d9a0', 396, 42, 12); disc(g, '#fff9dc', 389, 37, 9);
-  disc(g, '#d8c68a', 387, 35, 2); disc(g, '#d8c68a', 398, 46, 3); disc(g, '#e0cf96', 394, 32, 1); disc(g, '#d8c68a', 384, 45, 1);
-  for (const [x0, y0, w0] of [[20, 74, 120], [150, 66, 90], [300, 80, 140], [420, 70, 70]]) for (let i = 0; i < w0; i++) { const h = 3 + Math.sin(i * 0.2 + x0) * 2; R(g, '#1a1640', x0 + i, y0 - h, 1, h + 2); if (dith(i, 0) < 0.4) R(g, '#3a2a5a', x0 + i, y0 - h, 1, 1); }
-  BG.sky = c;
-
-  /* far: Lake Superior + the Sleeping Giant across the water */
-  c = mk(640, 140); g = c.g;
-  const HZ = 104;
-  const giant = [[0, 103], [40, 102], [70, 98], [100, 93], [130, 84], [160, 74], [185, 71], [205, 76], [235, 85], [262, 83], [290, 70], [320, 62], [360, 60], [400, 62], [425, 70], [440, 78], [452, 74], [462, 64], [474, 60], [486, 62], [494, 56], [500, 62], [512, 76], [530, 92], [560, 101], [640, 103]];
-  g.fillStyle = '#1b1f44'; g.beginPath(); g.moveTo(0, HZ); for (const p of giant) g.lineTo(p[0], p[1]); g.lineTo(640, HZ); g.closePath(); g.fill();
-  g.fillStyle = '#2a2c5a'; for (let i = 1; i < giant.length; i++) { const [x0, y0] = giant[i - 1], [x1, y1] = giant[i]; for (let x = x0; x < x1; x++) { const y = y0 + (y1 - y0) * (x - x0) / (x1 - x0); if (y1 < y0 || dith(x, 0) < 0.5) g.fillRect(x, Math.round(y), 1, 1); } }
-  for (let i = 0; i < 40; i++) { const x = 60 + rnd() * 480 | 0; R(g, '#151938', x, 96 + rnd() * 6 | 0, 2 + rnd() * 5 | 0, 1); }
-  gradRows(g, 0, HZ, 640, 36, ['#141a3e', '#0e1430', '#0a0e24']);
-  for (let i = 0; i < 70; i++) { const x = rnd() * 640 | 0, y = HZ + 2 + rnd() * 30 | 0; R(g, rnd() < 0.5 ? '#2a3466' : '#1e2850', x, y, 3 + rnd() * 10 | 0, 1); }
-  for (let y = HZ + 1; y < 140; y += 2) { const w = 6 + (y - HZ) * 0.5; R(g, y % 4 ? '#e8d9a0' : '#a89a70', 520 - w / 2 + Math.sin(y) * 3, y, w * (0.4 + rnd() * 0.6), 1); }
-  BG.far = c;
-
-  /* mid: Port Arthur skyline, harbour cranes, the grain elevators */
-  c = mk(760, 150, true); g = c.g;
-  const sky = [[0, 34, 30], [30, 40, 46], [96, 34, 22], [150, 66, 38], [250, 40, 18], [300, 32, 28], [520, 70, 34], [620, 52, 24], [690, 70, 30]];
-  for (const [x, w, hh] of sky) { R(g, '#0c1028', x, 140 - hh, w, hh + 10); R(g, '#151a3a', x, 140 - hh, w, 1); for (let yy = 140 - hh + 3; yy < 138; yy += 4) for (let xx = x + 2; xx < x + w - 2; xx += 4) if (rnd() < 0.35) R(g, rnd() < 0.75 ? '#e8b85a' : '#8fd7ff', xx, yy, 2, 2); }
-  // grain elevator: a long row of silos + headhouse + gallery
-  const EX = 336;
-  for (let i = 0; i < 12; i++) { const x = EX + i * 12; R(g, '#141a36', x, 80, 11, 70); R(g, '#26305a', x + 1, 80, 2, 70); R(g, '#3a4a7a', x + 1, 80, 1, 70); R(g, '#0c1024', x + 9, 80, 2, 70); R(g, '#1e2648', x + 1, 78, 9, 2); }
-  R(g, '#10152e', EX - 10, 52, 40, 30); R(g, '#1a2140', EX - 10, 52, 40, 2); R(g, '#10152e', EX + 2, 40, 16, 14); R(g, '#1a2140', EX + 2, 40, 16, 1);
-  R(g, '#10152e', EX + 30, 76, 120, 4); for (let x = EX - 6; x < EX + 26; x += 6) R(g, '#e8b85a', x, 60, 2, 3);
-  drawTxt(g, 'POOL 6', EX + 40, 100, 1, '#3a4a7a'); R(g, '#ff3a3a', EX + 9, 38, 2, 2);
-  // harbour cranes
-  for (const x of [590, 650]) { R(g, '#10152e', x, 70, 3, 80); R(g, '#10152e', x - 30, 70, 56, 3); R(g, '#10152e', x + 22, 70, 2, 18); for (let k = 0; k < 8; k++) R(g, '#151b3a', x - 28 + k * 7, 72, 1, 4); R(g, '#ff3a3a', x + 1, 68, 2, 2); }
-  BG.mid = c;
-
-  /* near: Bay Street storefronts, sidewalk, wet road */
-  c = mk(STAGE_W, H, true); g = c.g;
-  const SH = [
-    { x: 0, w: 112, top: 100, brick: ['#3a1e20', '#4a2826', '#5a3430'], sign: 'LIVE BAIT', col: '#57e0ff', win: '#3aa0c8' },
-    { x: 112, w: 140, top: 82, brick: ['#2a2436', '#34304a', '#403a58'], sign: 'THE HOITO', col: '#ff3a3a', win: '#ffb36b', awn: ['#a01818', '#e8e0d0'] },
-    { x: 252, w: 30, top: 104, alley: 1 },
-    { x: 282, w: 148, top: 90, brick: ['#30202a', '#3c2832', '#4a323e'], sign: 'TATTOO', col: '#c46aff', win: '#9a5aff' },
-    { x: 430, w: 130, top: 104, brick: ['#3a2a1a', '#4a3622', '#5a4430'], sign: 'PERSIANS 24HR', col: '#ff8ac0', win: '#ffc8a0', awn: ['#c0306a', '#f0d8e0'] },
-    { x: 560, w: 120, top: 78, brick: ['#1e2430', '#28303e', '#343c4c'], sign: 'PAWN', col: '#ffd23a', win: '#d8c070' },
-    { x: 680, w: 120, top: 96, brick: ['#2a1a2a', '#382236', '#462c44'], sign: 'ARCADE', col: '#7aff8a', win: '#5ad0ff', awn: ['#1a6a3a', '#d0f0d8'] }
-  ];
-  for (const s of SH) {
-    if (s.alley) {   // dark alley: back wall, fire escape, dumpster, steam
-      R(g, '#0a0810', s.x, s.top, s.w, 214 - s.top); for (let y = s.top + 10; y < 200; y += 22) { R(g, '#1a1620', s.x + 3, y, s.w - 6, 2); for (let x = s.x + 4; x < s.x + s.w - 4; x += 4) R(g, '#1a1620', x, y - 8, 1, 8); }
-      R(g, '#1e3a2a', s.x + 4, 196, 22, 18); R(g, '#2a5038', s.x + 4, 196, 22, 2); R(g, '#0a1a10', s.x + 6, 200, 18, 1);
-      continue;
-    }
-    // brick facade (dithered courses)
-    for (let y = s.top; y < 214; y++) for (let x = s.x; x < s.x + s.w; x++) {
-      const row = (y - s.top) >> 2, mortar = ((y - s.top) & 3) === 3 || ((x + (row & 1 ? 4 : 0)) & 7) === 7;
-      g.fillStyle = mortar ? s.brick[0] : (dith(x, y) < 0.18 ? s.brick[2] : s.brick[1]); g.fillRect(x, y, 1, 1);
-    }
-    // cornice + rooftop details
-    R(g, s.brick[2], s.x, s.top - 4, s.w, 4); R(g, '#0b0712', s.x, s.top - 5, s.w, 1); R(g, s.brick[0], s.x, s.top, s.w, 2);
-    for (let x = s.x + 4; x < s.x + s.w - 4; x += 8) R(g, s.brick[0], x, s.top - 2, 4, 2);
-    if (s.w > 120) { R(g, '#101018', s.x + s.w - 30, s.top - 14, 10, 10); R(g, '#1a1a26', s.x + s.w - 31, s.top - 15, 12, 2); }
-    // upper-floor windows, some lit
-    for (let fy = s.top + 8; fy < 128; fy += 22) for (let x = s.x + 10; x < s.x + s.w - 18; x += 26) {
-      R(g, '#0b0712', x - 1, fy - 1, 16, 18); const lit = rnd() < 0.4;
-      if (lit) gradRows(g, x, fy, 14, 16, ['#ffe9a8', '#f5b85a', '#b0602a']); else gradRows(g, x, fy, 14, 16, ['#2a3a6a', '#151c3a', '#0c1024']);
-      R(g, '#0b0712', x + 6, fy, 2, 16); R(g, '#0b0712', x, fy + 7, 14, 1); R(g, s.brick[2], x - 2, fy + 16, 18, 2);
-      if (!lit && rnd() < 0.5) R(g, '#4a5a8a', x + 1, fy + 1, 2, 3);
-    }
-    // sign board (neon mounts on it, drawn live)
-    R(g, '#0b0712', s.x + 6, 132, s.w - 12, 16); R(g, '#16101c', s.x + 7, 133, s.w - 14, 14);
-    NEON.push({ x: s.x + s.w / 2, y: 136, txt: s.sign, col: s.col, ph: NEON.length * 53, dodgy: s.sign === 'PAWN' ? 1 : 0 });
-    // shop window with warm interior + door
-    const wx0 = s.x + 6, ww = s.w - 46;
-    R(g, '#0b0712', wx0 - 2, 152, ww + 4, 50);
-    gradRows(g, wx0, 154, ww, 44, ['#1a1420', s.win, '#2a1a24', '#120c14']);
-    for (let i = 0; i < 6; i++) { const x = wx0 + 4 + rnd() * (ww - 12) | 0; R(g, '#0b0712', x, 176 + rnd() * 8 | 0, 4 + rnd() * 6 | 0, 22); }
-    R(g, '#0b0712', wx0 + (ww >> 1), 154, 2, 44); R(g, 'rgba(255,255,255,0.18)', wx0 + 3, 156, 2, 20); R(g, 'rgba(255,255,255,0.12)', wx0 + 6, 156, 1, 12);
-    R(g, '#0b0712', s.x + s.w - 34, 158, 28, 56); R(g, '#1c1622', s.x + s.w - 32, 160, 24, 54); gradRows(g, s.x + s.w - 29, 163, 18, 20, ['#2a2030', s.win, '#2a2030']);
-    R(g, '#d8b46a', s.x + s.w - 12, 188, 2, 3);
-    R(g, s.brick[0], s.x, 202, s.w, 12); R(g, s.brick[2], s.x, 202, s.w, 1);
-    if (s.awn) for (let x = s.x + 2; x < s.x + s.w - 2; x++) { const st = ((x - s.x) >> 3) & 1; R(g, s.awn[st], x, 148, 1, 5); R(g, s.awn[0], x, 153, 1, (x & 7) < 4 ? 2 : 1); }
-  }
-  // lamp posts (lantern heads; the glow is live)
-  for (const x of LAMPS) { R(g, '#0b0a10', x, 116, 3, 100); R(g, '#1a1822', x, 116, 1, 100); R(g, '#0b0a10', x - 3, 212, 9, 4); R(g, '#0b0a10', x - 12, 114, 15, 3); R(g, '#0b0a10', x - 14, 117, 9, 7); R(g, '#ffe9a8', x - 13, 118, 7, 5); R(g, '#fff9dc', x - 11, 119, 3, 2); }
-  // sidewalk + curb + snowbanks
-  gradRows(g, 0, 214, STAGE_W, 12, ['#5a5864', '#4a4854', '#3a3844']);
-  for (let x = 0; x < STAGE_W; x += 32) R(g, '#2e2c36', x, 214, 1, 12);
-  for (let i = 0; i < 260; i++) R(g, '#c8d4e4', rnd() * STAGE_W | 0, 214 + rnd() * 11 | 0, 1, 1);
-  R(g, '#8a8696', 0, 225, STAGE_W, 1); R(g, '#6a6676', 0, 226, STAGE_W, 1);
-  for (let x = 0; x < STAGE_W; x += 2) { const hh = 3 + Math.sin(x * 0.05) * 2 + Math.sin(x * 0.17) * 1.5 + rnd() | 0; if (Math.sin(x * 0.013) > -0.35 && LAMPS.every(l => Math.abs(x - l) > 6)) { R(g, '#e4ecf8', x, 226 - hh, 2, hh); R(g, '#b0bed2', x, 225, 2, 1); if (dith(x, hh) < 0.3) R(g, '#ffffff', x, 226 - hh, 2, 1); } }
-  // wet road: reflection of the street (rippled, fading), asphalt dither, lane paint, puddles
-  const facade = mk(STAGE_W, 90); facade.g.drawImage(c, 0, 124, STAGE_W, 90, 0, 0, STAGE_W, 90);
-  gradRows(g, 0, 227, STAGE_W, H - 227, ['#1e1c26', '#16141e', '#100e16']);
-  for (let r = 0; r < H - 227; r++) {
-    const sy = 89 - Math.floor(r * 1.9); if (sy < 0) break;
-    g.globalAlpha = 0.34 * (1 - r / (H - 227)); g.drawImage(facade, 0, sy, STAGE_W, 1, Math.round(Math.sin(r * 1.7) * 1.5), 227 + r, STAGE_W, 1);
-  }
-  g.globalAlpha = 1;
-  for (let i = 0; i < 700; i++) R(g, rnd() < 0.5 ? '#2a2834' : '#0c0a12', rnd() * STAGE_W | 0, 228 + rnd() * 42 | 0, 1, 1);
-  for (let x = 6; x < STAGE_W; x += 44) { R(g, '#8a7a3a', x, 258, 22, 2); R(g, '#c8b04a', x + 2, 258, 18, 1); }
-  for (const [x, y, w] of [[60, 248, 40], [300, 262, 60], [520, 244, 30], [700, 256, 50]]) for (let k = 0; k < 4; k++) R(g, 'rgba(140,170,255,0.08)', x + k * 3, y + k, w - k * 6, 1);
-  BG.near = c;
-
-  neonSprites(NEON);
-  /* lamp glow + window-light pools */
-  BG.glow = mk(120, 120); { const gg = BG.glow.g, gr = gg.createRadialGradient(60, 60, 2, 60, 60, 60); gr.addColorStop(0, 'rgba(255,225,150,0.55)'); gr.addColorStop(0.3, 'rgba(255,200,120,0.18)'); gr.addColorStop(1, 'rgba(255,200,120,0)'); gg.fillStyle = gr; gg.fillRect(0, 0, 120, 120); }
-  BG.cone = mk(80, 110); { const gg = BG.cone.g, gr = gg.createLinearGradient(0, 0, 0, 110); gr.addColorStop(0, 'rgba(255,225,150,0.20)'); gr.addColorStop(1, 'rgba(255,225,150,0.02)'); gg.fillStyle = gr; gg.beginPath(); gg.moveTo(36, 0); gg.lineTo(44, 0); gg.lineTo(80, 110); gg.lineTo(0, 110); gg.closePath(); gg.fill(); }
-
-  /* crowd on the sidewalk: 4 bob frames, parkas + toques, a few phones up */
-  const PPL = []; for (let x = 6; x < STAGE_W - 6; x += 9 + rnd() * 12) if (LAMPS.every(l => Math.abs(x - l) > 10)) PPL.push({ x: x | 0, h: 18 + rnd() * 9 | 0, w: 11 + rnd() * 5 | 0, c: ['#2a2a4a', '#3a1e2a', '#1e3a3a', '#3a3a22', '#2a1a3a', '#40242a'][rnd() * 6 | 0], hat: ['#c02a2a', '#2a6ac0', '#e0c040', '#2a8a4a', '#d0d0e0', null][rnd() * 6 | 0], ph: rnd() * 4 | 0, arm: rnd() < 0.35, phone: rnd() < 0.2, skin: ['#c88a6a', '#e0b090', '#8a5a3a', '#f0c8a8'][rnd() * 4 | 0] });
-  BG.crowd = crowdFrames(PPL);
-
-  /* aurora curtains: 4 shimmering frames, cross-faded live */
-  BG.aur = [];
-  for (let k = 0; k < 4; k++) {
-    const ac = mk(W, 60), ag = ac.g, ph = k * 1.57;
-    for (let x = 0; x < W; x++) {
-      const y0 = 26 + Math.sin(x * 0.018 + ph * 0.5) * 9 + Math.sin(x * 0.051 - ph) * 4, len = 12 + Math.sin(x * 0.11 + ph * 1.3) * 6 + Math.sin(x * 0.023 - ph) * 5;
-      for (let j = 0; j < len; j++) { const f = j / len; if (dith(x, j + k) < 0.5 * (1 - f) * (0.6 + 0.4 * Math.sin(x * 0.2 + ph))) { ag.fillStyle = f < 0.15 && Math.sin(x * 0.03 + ph) > 0.5 ? '#c86ad8' : f < 0.5 ? '#5ae0a0' : '#2a8a7a'; ag.fillRect(x, Math.round(y0 - 12 + j), 1, 1); } }
-    }
-    BG.aur.push(ac);
-  }
-  /* passing-car headlight wash + soft drop shadow */
-  BG.head = mk(160, 60); { const gg = BG.head.g, gr = gg.createRadialGradient(80, 30, 2, 80, 30, 80); gr.addColorStop(0, 'rgba(255,246,220,0.55)'); gr.addColorStop(0.35, 'rgba(255,236,200,0.18)'); gr.addColorStop(1, 'rgba(255,236,200,0)'); gg.fillStyle = gr; gg.setTransform(1, 0, 0, 0.38, 0, 18.6); gg.fillRect(0, 0, 160, 160); }
-  BG.shadow = mk(64, 12); for (let y = 0; y < 12; y++) for (let x = 0; x < 64; x++) { const dx = (x - 31.5) / 32, dy = (y - 5.5) / 6, r = dx * dx + dy * dy; if (r < 1 && dith(x, y) < 1.15 - r) { BG.shadow.g.fillStyle = r < 0.35 ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.45)'; BG.shadow.g.fillRect(x, y, 1, 1); } }
-  /* foreground layer (parallax 1.3x, drawn over the fighters' reflections): snowbank, parked car, hydrant, mailbox */
-  BG.fgW = Math.ceil((STAGE_W - W) * FG_PAR + W); c = mk(BG.fgW, 40, true); g = c.g;
-  for (let x = 0; x < BG.fgW; x += 2) { const hh = 5 + Math.sin(x * 0.031) * 3 + Math.sin(x * 0.11) * 1.5 + (rnd() * 1.5 | 0); if (Math.sin(x * 0.009 + 1) > -0.55) { R(g, '#0b0712', x, 40 - hh - 1, 2, 1); R(g, '#cdd8ea', x, 40 - hh, 2, hh); R(g, '#f2f6ff', x, 40 - hh, 2, 1); if (dith(x, hh) < 0.35) R(g, '#9aa8c4', x, 40 - hh + 3, 2, 1); } }
-  const car = (x0) => {   // roof + windows of a parked car poking up from the bottom of frame, snow on the roof
-    R(g, '#0b0712', x0, 12, 126, 28); R(g, '#1c1a2c', x0 + 1, 13, 124, 27); R(g, '#2a2840', x0 + 1, 13, 124, 2);
-    R(g, '#0b0712', x0 + 22, 2, 76, 12); R(g, '#24223a', x0 + 23, 3, 74, 10);
-    gradRows(g, x0 + 26, 4, 30, 9, ['#c46aff', '#3a2a6a', '#14122a']); gradRows(g, x0 + 60, 4, 34, 9, ['#57e0ff', '#1e3a6a', '#14122a']);
-    R(g, '#0b0712', x0 + 57, 3, 3, 10); R(g, '#e8eef8', x0 + 24, 0, 72, 3); R(g, '#ffffff', x0 + 30, 0, 50, 1);
-    R(g, '#ff3a2a', x0 + 2, 18, 5, 3); R(g, '#ffb0a0', x0 + 3, 18, 2, 1); R(g, '#3a3850', x0 + 8, 24, 110, 1);
-  };
-  car(8); car(BG.fgW - 150);
-  { const hx = 470; R(g, '#0b0712', hx - 1, 16, 12, 24); R(g, '#c02a1a', hx, 18, 10, 22); R(g, '#e85a3a', hx + 1, 18, 2, 22); R(g, '#0b0712', hx - 3, 24, 16, 5); R(g, '#a01a10', hx - 2, 25, 14, 3); R(g, '#e8eef8', hx, 15, 10, 3); }   // hydrant
-  { const mx = 300; R(g, '#0b0712', mx - 1, 6, 20, 34); R(g, '#c01818', mx, 7, 18, 33); R(g, '#e84a3a', mx + 1, 8, 3, 32); R(g, '#0b0712', mx + 3, 14, 12, 2); R(g, '#f0f0f0', mx + 4, 20, 10, 3); R(g, '#e8eef8', mx, 4, 18, 4); }   // red street mailbox
-  BG.fg = c;
-  STAGES.bay = { id: 'bay', gy: 227, sky: BG.sky, far: BG.far, mid: BG.mid, midY: -34, near: BG.near, neon: NEON, crowd: BG.crowd, crowdY: 178, fg: BG.fg, aur: 1, car: 1,
-    lamps: LAMPS.map(x => ({ x: x - 10, y: 120, cone: 1, pool: 236 })), vents: [[266, 214, 7], [560, 239, 6]] };
-
-  /* snow flakes */
-  BG.snow = []; for (let i = 0; i < 110; i++) BG.snow.push({ x: Math.random() * W, y: Math.random() * H, s: 0.25 + Math.random() * 0.85 });
-
-  /* CRT overlay: scanlines + vignette at 960x540 */
-  BG.crt = mk(960, 540); { const gg = BG.crt.g; gg.fillStyle = 'rgba(0,0,0,0.30)'; for (let y = 0; y < 540; y += 2) gg.fillRect(0, y, 960, 1);
-    gg.fillStyle = 'rgba(255,0,60,0.035)'; for (let x = 0; x < 960; x += 3) gg.fillRect(x, 0, 1, 540);
-    const gr = gg.createRadialGradient(480, 270, 200, 480, 270, 620); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,0.55)'); gg.fillStyle = gr; gg.fillRect(0, 0, 960, 540); }
-}
-
-function crowdFrames(PPL) {   // 6 frames, STAGE_W x 50: 0-3 idle bob, 4-5 cheering
-  const out = [];
-  for (let fr = 0; fr < 6; fr++) {   // 0-3 idle bob, 4-5 cheering (arms up, hopping)
-    const cc = mk(STAGE_W, 50), cg = cc.g, cheer = fr >= 4;
-    for (const p of PPL) {
-      const b = cheer ? (((fr + p.ph) & 1) ? -4 : -1) : [0, -1, -2, -1][(fr + p.ph) & 3], top = 50 - p.h + b, x = p.x;
-      R(cg, '#0b0712', x, top + 6, p.w, 2); R(cg, '#0b0712', x - 1, top + 8, p.w + 2, p.h); R(cg, p.c, x + 1, top + 7, p.w - 2, 2); R(cg, p.c, x, top + 9, p.w, p.h);
-      R(cg, 'rgba(0,0,0,0.35)', x + (p.w >> 1), top + 12, 1, p.h);
-      R(cg, 'rgba(255,255,255,0.10)', x, top + 7, p.w, 1); R(cg, 'rgba(0,0,0,0.35)', x + p.w - 2, top + 8, 2, p.h);
-      const hx = x + (p.w >> 1) - 4;
-      R(cg, '#0b0712', hx - 1, top - 1, 9, 9); R(cg, p.skin, hx, top, 7, 8); R(cg, 'rgba(0,0,0,0.3)', hx + 5, top, 2, 8); R(cg, '#0b0712', hx + 2, top + 3, 1, 1); R(cg, '#0b0712', hx + 5, top + 3, 1, 1);
-      if (p.hat) { R(cg, '#0b0712', hx - 1, top - 3, 9, 5); R(cg, p.hat, hx, top - 2, 7, 4); R(cg, 'rgba(255,255,255,0.35)', hx, top + 1, 7, 1); R(cg, '#ffffff', hx + 2, top - 4, 3, 2); } else R(cg, '#2a1a12', hx, top, 7, 2);
-      if (cheer) { for (const ax of [x - 3, x + p.w - 1]) { const up = ((fr + p.ph + (ax > x ? 1 : 0)) & 1) ? 0 : 2; R(cg, '#0b0712', ax, top - 8 + up, 4, 15); R(cg, p.c, ax + 1, top - 7 + up, 2, 13); R(cg, p.skin, ax + 1, top - 9 + up, 2, 2); } if (p.phone) R(cg, '#bfe8ff', x + p.w - 1, top - 12, 3, 3); }
-      else if (p.arm) { const up = ((fr + p.ph) & 2) ? 3 : 0; R(cg, '#0b0712', x + p.w - 1, top - 6 + up, 4, 14); R(cg, p.c, x + p.w, top - 5 + up, 2, 12); R(cg, p.skin, x + p.w, top - 7 + up, 2, 2); if (p.phone) R(cg, '#bfe8ff', x + p.w - 1, top - 10 + up, 3, 3); }
-    }
-    out.push(cc);
-  }
-  return out;
-}
-
-
-function neonSprites(list) {   /* neon signs: an 'on' (tube + glow) and 'off' (dead tube) sprite each */
-  for (const n of list) {
-    const tw = txtW(n.txt, 1), w = tw + 16, h = 20;
-    const on = mk(w, h), off = mk(w, h);
-    for (let k = 0; k < 3; k++) { on.g.shadowColor = n.col; on.g.shadowBlur = 6; drawTxt(on.g, n.txt, 8, 6, 1, n.col); }
-    on.g.shadowBlur = 0; drawTxt(on.g, n.txt, 8, 6, 1, n.col); on.g.globalAlpha = 0.7; drawTxt(on.g, n.txt, 8, 6, 1, '#ffffff'); on.g.globalAlpha = 1;
-    on.g.strokeStyle = n.col; on.g.lineWidth = 1; on.g.strokeRect(3.5, 2.5, w - 7, h - 5);
-    drawTxt(off.g, n.txt, 8, 6, 1, '#3a2a3a'); off.g.strokeStyle = '#2a2030'; off.g.strokeRect(3.5, 2.5, w - 7, h - 5);
-    n.on = on; n.off = off; n.w = w;
-  }
-}
+/* stage builders, crowd, neon + shared stage assets live in 3c.js */
 /* ---------- sparks / dust (pre-rendered frame strips, pixel-snapped) ---------- */
 const SPARK_PAL = ['#ffffff', '#fff6b0', '#ffe066', '#ffb020', '#ff6a12', '#c82808', '#bfe8ff', '#7fd3ff', '#3a8aff', '#1a4ca0', '#d8d0c0', '#a89a88', '#6a6058', '#0b0712'];
 const SPK = {};
@@ -225,7 +39,7 @@ function buildSparks() {
   for (const k in life) {
     const n = Math.ceil(life[k] / 2), S = size[k], arr = [];
     for (let i = 0; i < n; i++) {
-      const c = mk(S * RES, S * RES, true), g = c.g, p = i / (n - 1), m = S / 2; seed = 99 + i * 7 + k.charCodeAt(0); g.setTransform(RES, 0, 0, RES, 0, 0);
+      const c = mk(S * SD, S * SD, true), g = c.g, p = i / (n - 1), m = S / 2; seed = 99 + i * 7 + k.charCodeAt(0); g.setTransform(SD, 0, 0, SD, 0, 0);
       if (k === 'h' || k === 'H' || k === 'K') {
         const big = k === 'h' ? 1.3 : k === 'H' ? 2.2 : 3.4, rays = k === 'h' ? 8 : 14;
         if (i < 2) { g.fillStyle = '#ffffff'; g.fillRect(m - S * 0.45, m - 1.5, S * 0.9, 3); g.fillRect(m - 1.5, m - S * 0.32, 3, S * 0.64); }   // first frames: hard cross-flash
@@ -255,12 +69,12 @@ function buildSparks() {
 const PROJ = {};
 function buildProj() {
   PROJ.wave = [];
-  for (let i = 0; i < 8; i++) { const c = mk(32, 32, true); waveRings(c.g, [16, 16], 1, i / 8); PROJ.wave.push(pixelate(c, [OUT].concat(FXP, ['#ff6ad8', '#c03aa0']), null)); }
+  for (let i = 0; i < 8; i++) { const c = mk(32 * SD, 32 * SD, true); c.g.scale(SD, SD); waveRings(c.g, [16, 16], 1, i / 8); PROJ.wave.push(pixelate(c, [OUT].concat(FXP, ['#ff6ad8', '#c03aa0']), null)); }
   for (const art of ['ink', 'wire', 'chain']) {
     PROJ[art] = [];
     for (let i = 0; i < 8; i++) {
-      const c = mk(32, 32, true), g = c.g;
-      g.translate(16, 16); g.rotate(art === 'ink' ? Math.sin(i / 8 * Math.PI * 2) * 0.25 : 0); g.translate(-16, -16);
+      const c = mk(32 * SD, 32 * SD, true), g = c.g;
+      g.scale(SD, SD); g.translate(16, 16); g.rotate(art === 'ink' ? Math.sin(i / 8 * Math.PI * 2) * 0.25 : 0); g.translate(-16, -16);
       if (art === 'ink') { inkBlob(g, [16, 16], 1.7 + Math.sin(i / 8 * Math.PI * 2) * 0.12); } else if (art === 'chain') chainSpark(g, [16, 16], 1.55, i / 8 * Math.PI * 2); else wireCoil(g, [16, 16], 1.6, i / 8 * Math.PI * 2);
       PROJ[art].push(pixelate(c, [OUT].concat(FXP), null));
     }
@@ -275,50 +89,55 @@ function neonLevel(n, tick) {   // 1 = on, 0 = off; each sign has its own flicke
   return t < 8 && (t >> 1) % 2 ? 0 : 1;
 }
 function stageOf(sid) { return STAGES[sid || (G && G.stage) || (!G && ATTRACT.stage) || 'bay'] || STAGES.bay; }
-function drawStage(g, camX, tick, sid) {
-  const lv = QUAL.lv, S = stageOf(sid);
+function drawStage(g, camX, tick, sid, b) {   // draws in screen units, leaves the fight-plane transform set
+  b = b || RES; const lv = QUAL.lv, S = stageOf(sid), T = camX * ZOOM;
+  screenXform(g, b);
   g.drawImage(S.sky, 0, 0);
+  if (S.clouds) { const cw = S.clouds.width, ox = Math.round((((T * 0.035 + tick * 0.04) % cw) + cw) % cw); g.globalAlpha = 0.85; g.drawImage(S.clouds, -ox, S.cloudY); g.drawImage(S.clouds, cw - ox, S.cloudY); g.globalAlpha = 1; }
   if (lv > 0 && S.aur) {   // aurora curtains drift and shimmer (cross-fade between 4 frames)
-    const u = tick / 70, k = Math.floor(u) % 4, fr = u - Math.floor(u), ax = Math.round(-camX * 0.06 + Math.sin(tick * 0.002) * 6), a0 = (0.45 + 0.2 * Math.sin(tick * 0.013)) * S.aur;
+    const u = tick / 70, k = Math.floor(u) % 4, fr = u - Math.floor(u), ax = Math.round(-20 - T * 0.03 + Math.sin(tick * 0.002) * 6), a0 = (0.45 + 0.2 * Math.sin(tick * 0.013)) * S.aur;
     g.globalAlpha = a0 * (1 - fr); g.drawImage(BG.aur[k], ax, 0);
     g.globalAlpha = a0 * fr; g.drawImage(BG.aur[(k + 1) % 4], ax, 0); g.globalAlpha = 1;
   }
-  g.drawImage(S.far, Math.round(-camX * 0.12), 0);
-  g.drawImage(S.mid, Math.round(-camX * 0.35), S.midY);
-  const nx = Math.round(-camX);
+  for (const L of S.layers) g.drawImage(L.img, Math.round(-T * L.par), L.y || 0);
+  if (S.back) S.back(g, T, tick, lv, S);
+  const nx = Math.round(-T);
   g.drawImage(S.near, nx, 0);
   for (const n of S.neon) {
-    const x = Math.round(n.x - n.w / 2 + nx); if (x > W || x + n.w < 0) continue;
-    const on = neonLevel(n, tick); g.drawImage(on ? n.on : n.off, x, n.y - 4);
-    if (on && lv > 0) { g.save(); g.globalAlpha = 0.2; g.translate(x, S.gy + Math.round((S.gy - n.y) * 0.3)); g.scale(1, -0.5); g.drawImage(n.on, 0, 0); g.restore(); }   // smeared in the wet ground
+    const x = Math.round(n.x - n.w / 2 + nx); if (x > W + 50 || x + n.w < -50) continue;
+    const on = neonLevel(n, tick);
+    if (on && lv > 0) { g.globalCompositeOperation = 'lighter'; g.drawImage(n.wash, x - 45, n.y - 35); g.globalCompositeOperation = 'source-over'; }   // the sign lights the brick around it
+    g.drawImage(on ? n.on : n.off, x, n.y);
+    if (on && lv > 0) { g.save(); g.globalAlpha = 0.2; g.translate(x, S.gy + Math.round((S.gy - n.y) * 0.35)); g.scale(1, -0.5); g.drawImage(n.on, 0, 0); g.restore(); }   // smeared in the wet ground
   }
-  const cheer = G && ((G.phase === 'roundEnd' && G.koX != null) || G.phase === 'matchEnd');
+  const cheer = stageCheer();
   g.drawImage(S.crowd[cheer ? 4 + (Math.floor(tick / 6) & 1) : lv ? Math.floor(tick / 9) % 4 : 0], nx, S.crowdY);
   if (S.live) S.live(g, nx, tick, lv, S);
   if (lv > 0) {   // vent steam (alley grates, manholes)
     for (const [vx, vy, n] of S.vents) {
-      const x0 = vx + nx; if (x0 < -40 || x0 > W + 40) continue;
+      const x0 = vx + nx; if (x0 < -50 || x0 > W + 50) continue;
       for (let k = 0; k < n; k++) {
-        const age = (tick * 0.55 + k * (150 / n)) % 150, f = age / 150, r = 3 + age * 0.09;
+        const age = (tick * 0.55 + k * (150 / n)) % 150, f = age / 150, r = 4 + age * 0.12;
         g.globalAlpha = 0.22 * (1 - f) * Math.min(1, age / 12); g.fillStyle = k & 1 ? '#c8cede' : '#a8b0c8';
-        const x = x0 + Math.sin(age * 0.05 + k) * 4 + age * (0.18 + WIND.g * 0.9), y = vy - age * 0.45;
+        const x = x0 + Math.sin(age * 0.05 + k) * 5 + age * (0.22 + WIND.g * 1.1), y = vy - age * 0.6;
         g.fillRect(Math.round(x - r), Math.round(y - r * 0.7), Math.round(r * 2), Math.round(r * 1.4)); g.fillRect(Math.round(x - r * 0.7), Math.round(y - r), Math.round(r * 1.4), Math.round(r * 2));
       }
       g.globalAlpha = 1;
     }
     const cyc = tick % 780;   // a car passes behind camera: its headlights sweep the storefronts and the wet road
     if (S.car && cyc < 200) {
-      const dir = (Math.floor(tick / 780) & 1) ? -1 : 1, p = cyc / 200, wxp = dir > 0 ? -160 + p * (STAGE_W + 320) : STAGE_W + 160 - p * (STAGE_W + 320), x = Math.round(wxp + nx);
-      g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.8; g.drawImage(BG.head, x - 80, 150); g.drawImage(BG.head, x - 30, 154);
-      g.globalAlpha = 0.35; g.drawImage(BG.head, x - 80, 222, 160, 30); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+      const dir = (Math.floor(tick / 780) & 1) ? -1 : 1, p = cyc / 200, wxp = dir > 0 ? -200 + p * (NW + 400) : NW + 200 - p * (NW + 400), x = Math.round(wxp + nx);
+      g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.8; g.drawImage(BG.head, x - 100, 130); g.drawImage(BG.head, x - 40, 136);
+      g.globalAlpha = 0.35; g.drawImage(BG.head, x - 100, 214, 200, 40); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
     }
   }
   for (const l of S.lamps) {
-    const x = l.x + nx; if (x < -70 || x > W + 70) continue;
+    const x = l.x + nx; if (x < -90 || x > W + 90) continue;
     const a = (l.a || 1) * (l.flick ? l.flick(tick) : 1); if (a <= 0.05) continue;
-    if (lv > 0) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = a; g.drawImage(BG.glow, x - 60, l.y - 60); if (l.cone) g.drawImage(BG.cone, x - 40, l.y + 2); if (l.pool) { g.globalAlpha = 0.6 * a; g.drawImage(BG.glow, x - 60, l.pool - 60); } g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
-    else { g.globalAlpha = 0.5 * a; g.drawImage(BG.glow, x - 60, l.y - 60); g.globalAlpha = 1; }
+    if (lv > 0) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = a; g.drawImage(BG.glow, x - 80, l.y - 80); if (l.cone) g.drawImage(BG.cone, x - 55, l.y + 4); if (l.pool) { g.globalAlpha = 0.6 * a; g.drawImage(BG.glow, x - 80, l.pool - 80); } g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
+    else { g.globalAlpha = 0.5 * a; g.drawImage(BG.glow, x - 80, l.y - 80); g.globalAlpha = 1; }
   }
+  planeXform(g, b);
 }
 function drawSnow(g, tick, near) {
   const lv = QUAL.lv, n = lv === 2 ? 110 : lv === 1 ? 70 : 30;
@@ -330,13 +149,13 @@ function drawSnow(g, tick, near) {
   g.fillStyle = near ? '#eef4ff' : '#9aa8d0';
   for (let i = near ? 0 : 1; i < n; i += 2) {
     const s = BG.snow[i], big = near && s.s > 0.6, sp = near ? s.s : s.s * 0.5;
-    const y = (s.y + tick * sp * (0.7 - gst * 0.25)) % H, x = ((s.x + WIND.off * sp + Math.sin((tick + s.y) * 0.02) * 6 - (near ? (G ? G.camX : 0) * 0.3 : 0)) % W + W) % W;
+    const y = (s.y + tick * sp * (0.7 - gst * 0.25)) % H, x = ((s.x + WIND.off * sp + Math.sin((tick + s.y) * 0.02) * 6 - (near ? (G ? G.camX : 0) * ZOOM * 0.3 : 0)) % W + W) % W;
     g.fillRect(x | 0, y | 0, (big ? 2 : 1) + (streak ? (big ? streak : streak >> 1) : 0), big ? 2 : 1);
   }
 }
 
 /* ---------- fighters ---------- */
-const FLASH = mk(FW * RES, FH * RES);
+const FLASH = mk(FW * SD, FH * SD);
 function fighterVisible(f, tick) {
   const M = moveDef(f);
   if (M && M.tele && f.mf < M.s) return f.mf < 4 ? ((tick >> 1) & 1) : 0;   // DROP IN: vanishes on startup
@@ -346,7 +165,7 @@ function fighterVisible(f, tick) {
   return 1;
 }
 function drawFighter(g, f, tick, camX) {
-  const C = CHARS[f.ch], sx = Math.round((f.x - camX) * RES) / RES, sy = GROUND - Math.round(f.y * RES) / RES, S = sheetFor(f), M = moveDef(f);   // half-pixel positions at 2x density
+  const C = CHARS[f.ch], sx = Math.round((f.x - camX) * SD) / SD, sy = GROUND - Math.round(f.y * SD) / SD, S = sheetFor(f), M = moveDef(f);   // half-pixel positions at 2x density
   const vis = fighterVisible(f, tick), rend = RENDERERS[C.render] || RENDERERS.pixel;
   // contact shadow
   const sk = Math.max(0.35, 1 - f.y / 120), sw = Math.round(C.bodyW * 0.85 * sk) * 2, shh = Math.max(3, Math.round(7 * sk));
@@ -375,10 +194,10 @@ function drawFighter(g, f, tick, camX) {
   g.globalAlpha = 1;
   // white hit-flash while the hit-stop holds
   if (G && G.hitstop > 0 && (f.st === 'hit' || f.st === 'kd') && (G.hitstop & 2) && S && S.lazy) {
-    const A = animOf(f, S), i = frameOf(f, A, tick), Rw = sheetRow(S, A.row), fg = FLASH.g; fg.clearRect(0, 0, FLASH.width, FLASH.height);
+    const A = animOf(f, S), [Rw, i] = readyRow(S, A, frameOf(f, A, tick)), fg = FLASH.g; fg.clearRect(0, 0, FLASH.width, FLASH.height);
     fg.globalCompositeOperation = 'source-over'; fg.drawImage(Rw.img, i * Rw.fw, 0, Rw.fw, Rw.fh, 0, 0, Rw.fw, Rw.fh);
     fg.globalCompositeOperation = 'source-in'; fg.fillStyle = '#ffffff'; fg.fillRect(0, 0, Rw.fw, Rw.fh); fg.globalCompositeOperation = 'source-over';
-    const sq = squashOf(f) || [1, 1]; g.save(); g.globalAlpha = 0.75; g.translate(sx, sy); g.scale(f.face * sq[0] / RES, sq[1] / RES); g.drawImage(FLASH, 0, 0, Rw.fw, Rw.fh, -Rw.ox, -Rw.oy, Rw.fw, Rw.fh); g.restore();
+    const sq = squashOf(f) || [1, 1]; g.save(); g.globalAlpha = 0.75; g.translate(sx, sy); g.scale(f.face * sq[0] / SD, sq[1] / SD); g.drawImage(FLASH, 0, 0, Rw.fw, Rw.fh, -Rw.ox, -Rw.oy, Rw.fw, Rw.fh); g.restore();
   }
 }
 function drawAura(g, f, sx, sy, tick) {   // BINO's power-up: red/orange glow + rising embers
@@ -389,12 +208,14 @@ function drawAura(g, f, sx, sy, tick) {   // BINO's power-up: red/orange glow + 
 }
 function star5(g, x, y, r, col) { g.fillStyle = OUT; g.fillRect(x - r - 1, y - 1, 2 * r + 3, 3); g.fillRect(x - 1, y - r - 1, 3, 2 * r + 3); g.fillStyle = col; g.fillRect(x - r, y, 2 * r + 1, 1); g.fillRect(x, y - r, 1, 2 * r + 1); g.fillRect(x - 1, y - 1, 3, 3); }
 function headY(f) { const h = hurtBox(f); return GROUND - (h[1] + h[3]); }
-function worldBubble(g, x, y, txt, tint) {   // comic speech bubble above a fighter, kept on screen
+function worldBubble(g, x, y, txt, tint) {   // comic speech bubble above a fighter, kept on screen (x, y: fight plane; drawn in screen units)
+  const b = g === wx ? RES : 1; screenXform(g, b); x = x * ZOOM; y = GY + (y - GROUND) * ZOOM;
   const lines = wrapTxt(txt, 18), w = Math.max(...lines.map(l => txtW(l, 1))) + 10, h = lines.length * 9 + 6;
   let bx = Math.round(x - w / 2); bx = Math.max(2, Math.min(W - w - 2, bx)); const by = Math.max(46, Math.round(y - h - 8));
   R(g, OUT, bx - 1, by - 1, w + 2, h + 2); R(g, tint || '#f4f0e0', bx, by, w, h);
   const tx = Math.max(bx + 4, Math.min(bx + w - 6, Math.round(x))); R(g, OUT, tx - 1, by + h, 5, 4); R(g, tint || '#f4f0e0', tx, by + h, 3, 3);
   lines.forEach((l, j) => drawTxt(g, l, bx + 5, by + 4 + j * 9, 1, OUT));
+  planeXform(g, b);
 }
 function drawFightFX(g, t, camX) {
   // speech bubbles: DIRTY's catchphrase, BINO's shout
@@ -436,22 +257,22 @@ function drawFightFX(g, t, camX) {
 }
 function drawReflection(g, f, tick, camX) {
   if (!fighterVisible(f, tick)) return;
-  const C = CHARS[f.ch], sx = Math.round(f.x - camX), ry = GROUND + Math.round(f.y) + 1;
+  const C = CHARS[f.ch], sx = Math.round((f.x - camX) * SD) / SD, ry = GROUND + Math.round(f.y * SD) / SD + 1;
   g.globalAlpha = 0.22; (RENDERERS[C.render] || RENDERERS.pixel)(g, f, C, sx, ry, tick, true); g.globalAlpha = 1;
 }
 function drawProj(g, p, tick, camX) {
-  const x = Math.round(p.x - camX), y = GROUND - Math.round(p.y), art = p.art || (G && G.f[p.o] && CHARS[G.f[p.o].ch].moves.sp.proj && CHARS[G.f[p.o].ch].moves.sp.proj.art) || 'ink';
+  const x = Math.round((p.x - camX) * SD) / SD, y = GROUND - Math.round(p.y * SD) / SD, art = p.art || (G && G.f[p.o] && CHARS[G.f[p.o].ch].moves.sp.proj && CHARS[G.f[p.o].ch].moves.sp.proj.art) || 'ink';
   const fr = PROJ[art] || PROJ.ink, img = fr[Math.floor(tick / 3) % fr.length], d = Math.sign(p.vx) || 1;
   if (art === 'wave') { if ((tick >> 4) & 1) drawText(g, 'NICE', x - d * 4, y - 24 - ((tick >> 2) & 1), 1, 'cyan', 'c'); g.fillStyle = '#ff6ad8'; for (let k = 1; k < 4; k++) if ((tick + k) & 1) g.fillRect(x - d * (10 + k * 7), y - 6 + k * 3, 2, 2); }
   else if (art === 'ink') { g.fillStyle = '#14324a'; for (let k = 1; k < 5; k++) g.fillRect(x - d * k * 7, y + (k & 1 ? 2 : -2) + ((tick + k) % 3), 4 - (k >> 1), 2); }
   else { g.fillStyle = '#d0d4dc'; for (let k = 1; k < 4; k++) if ((tick + k) & 1) g.fillRect(x - d * k * 8, y - 3 + k * 2, 2, 1); }
-  g.save(); g.translate(x, y); g.scale(d, 1); g.drawImage(img, -16, -16); g.restore();
+  g.save(); g.translate(x, y); g.scale(d, 1); g.drawImage(img, -16, -16, 32, 32); g.restore();
 }
 function drawSpark(g, s, camX) {
   const fr = SPK[s.k] || SPK.h, img = fr[Math.min(fr.length - 1, s.t >> 1)];
   const dust = s.k === 'd' || s.k === 'D';
-  const iw = img.width / RES, ih = img.height / RES;
-  g.drawImage(img, Math.round(s.x - camX - iw / 2), Math.round(GROUND - s.y - ih / 2 - (dust ? ih * 0.2 : 0)), iw, ih);
+  const iw = img.width / SD, ih = img.height / SD;
+  g.drawImage(img, Math.round((s.x - camX - iw / 2) * SD) / SD, Math.round((GROUND - s.y - ih / 2 - (dust ? ih * 0.2 : 0)) * SD) / SD, iw, ih);
 }
 function drawBoxes(g) {
   for (const f of G.f) {
@@ -570,14 +391,14 @@ const ATTRACT = { pair: null, at: -1, stage: 'bay' };
 function renderAttract() {
   const cyc = Math.floor(frame / 420);
   if (ATTRACT.at !== cyc) { ATTRACT.at = cyc; ATTRACT.stage = (cyc & 1) && STAGES.alley ? 'alley' : 'bay'; const a = CHAR_IDS[cyc % CHAR_IDS.length], b = CHAR_IDS[(cyc + 1 + (cyc >> 2)) % CHAR_IDS.length]; ATTRACT.pair = [newFighter(a, 0), newFighter(b === a ? CHAR_IDS[(cyc + 2) % CHAR_IDS.length] : b, 1)]; }
-  const camX = (STAGE_W - W) / 2 + Math.sin(frame / 300) * 140;
-  drawStage(wx, camX, frame); drawSnow(wx, frame, false);
+  const camX = (STAGE_W - VIEW_W) / 2 + Math.sin(frame / 300) * 140;
+  drawStage(wx, camX, frame); screenXform(wx, RES); drawSnow(wx, frame, false); planeXform(wx, RES);
   const [p, q] = ATTRACT.pair, ph = frame % 420;
-  p.x = camX + 170; q.x = camX + 310; p.face = 1; q.face = -1;
+  p.x = camX + VIEW_W / 2 - 55; q.x = camX + VIEW_W / 2 + 55; p.face = 1; q.face = -1;
   for (const f of [p, q]) { f.st = ph > 300 ? 'win' : (ph >> 6) & 1 ? 'walk' : 'idle'; f.t = ph - 300; f.walkT = frame; }
   if (QUAL.lv > 0) for (const f of [p, q]) drawReflection(wx, f, frame, camX);
   for (const f of [p, q]) drawFighter(wx, f, frame, camX);
-  drawSnow(wx, frame, true);
+  screenXform(wx, RES); drawSnow(wx, frame, true);
 }
 
 /* ---------- VS showdown: portraits slide in nose to nose, lightning, then the trash talk ---------- */
@@ -624,26 +445,30 @@ function render() {
   if (!G) { warmSheets(5); worldXform(); renderAttract(); ctx.drawImage(wc, 0, 0, 960, 540); if (CRT.on) ctx.drawImage(BG.crt, 0, 0); return; }
   const t = G.tick, camX = G.camX;
   drawStage(wx, camX, t);
-  drawSnow(wx, t, false);
+  screenXform(wx, RES); drawSnow(wx, t, false); planeXform(wx, RES);
   if (QUAL.lv > 0) for (const f of G.f) drawReflection(wx, f, t, camX);
   if (G.sfz) {   // super-freeze: the street goes dark, a flash blooms behind the attacker
-    const a = G.f[G.sfz.i], k = Math.min(1, (G.sfz.t + 1) / 3);
-    wx.fillStyle = 'rgba(2,3,12,' + (0.62 * k).toFixed(3) + ')'; wx.fillRect(0, 0, W, H);
-    wx.globalCompositeOperation = 'lighter'; wx.globalAlpha = 1 - G.sfz.t / (SFZ_T + 4); wx.drawImage(BG.glow, Math.round(a.x - camX) - 120, GROUND - Math.round(a.y) - 150, 240, 240); wx.globalAlpha = 1; wx.globalCompositeOperation = 'source-over';
+    const a = G.f[G.sfz.i], k = Math.min(1, (G.sfz.t + 1) / 3), sx = (a.x - camX) * ZOOM, sy = GY - a.y * ZOOM;
+    screenXform(wx, RES); wx.fillStyle = 'rgba(2,3,12,' + (0.62 * k).toFixed(3) + ')'; wx.fillRect(0, 0, W, H);
+    wx.globalCompositeOperation = 'lighter'; wx.globalAlpha = 1 - G.sfz.t / (SFZ_T + 4); wx.drawImage(BG.glow, Math.round(sx) - 180, Math.round(sy) - 225, 360, 360); wx.globalAlpha = 1; wx.globalCompositeOperation = 'source-over';
+    planeXform(wx, RES);
   }
   const order = G.f.slice().sort((a, b) => (a.st === 'atk' ? 1 : 0) - (b.st === 'atk' ? 1 : 0));
   for (const f of order) drawFighter(wx, f, t, camX);
   for (const p of G.proj) drawProj(wx, p, t, camX);
   for (const s of G.sparks) drawSpark(wx, s, camX);
-  wx.drawImage(stageOf().fg, -Math.round(camX * FG_PAR), H - 40);   // foreground parallax (Bay St: snowbank, parked cars, hydrant, mailbox; alley: slush, can, pylon, tire)
+  screenXform(wx, RES);
+  { const fg = stageOf().fg; wx.drawImage(fg, -Math.round(camX * ZOOM * FG_PAR), H - fg.height); }   // foreground parallax strip (snowbank lip, hydrant cap / slush, pylon tip)
   drawSnow(wx, t, true);
+  planeXform(wx, RES);
   if (G.phase !== 'vs') drawFightFX(wx, t, camX);
   if (SHOW_BOXES) drawBoxes(wx);
+  screenXform(wx, RES);
   if (G.phase === 'vs') drawVS(wx, G.pt);
   // camera: round-start push-in, KO slow-mo zoom on the loser
   let z = 1, fx = W / 2, fy = H * 0.62;
-  if (G.phase === 'intro' && G.pt < 50) { const q = 1 - G.pt / 50; z = 1 + 0.28 * q * q; fx = (G.f[0].x + G.f[1].x) / 2 - camX; }
-  else if (G.phase === 'roundEnd' && G.koX != null && G.pt < 110) { z = 1 + 0.35 * Math.min(1, G.pt / 14) * (G.pt > 90 ? (110 - G.pt) / 20 : 1); fx = G.koX - camX; fy = GROUND - 50; }
+  if (G.phase === 'intro' && G.pt < 50) { const q = 1 - G.pt / 50; z = 1 + 0.28 * q * q; fx = ((G.f[0].x + G.f[1].x) / 2 - camX) * ZOOM; }
+  else if (G.phase === 'roundEnd' && G.koX != null && G.pt < 110) { z = 1 + 0.35 * Math.min(1, G.pt / 14) * (G.pt > 90 ? (110 - G.pt) / 20 : 1); fx = (G.koX - camX) * ZOOM; fy = GY - 50 * ZOOM; }
   const sw = W / z, shh = H / z, cx0 = Math.max(0, Math.min(W - sw, fx - sw / 2)), cy0 = Math.max(0, Math.min(H - shh, fy - shh * 0.6));
   const sh = G.shake, ox = sh ? Math.round((Math.random() - 0.5) * sh * 2) : 0, oy = sh ? Math.round((Math.random() - 0.5) * sh * 2) : 0;
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 960, 540);
@@ -651,13 +476,13 @@ function render() {
   if (G.banner && /K\.O\./.test(G.banner.txt) && G.banner.t < 12) { ctx.fillStyle = 'rgba(255,255,255,' + (0.7 * (1 - G.banner.t / 12)).toFixed(3) + ')'; ctx.fillRect(0, 0, 960, 540); }
   ctx.setTransform(2, 0, 0, 2, 0, 0); ctx.imageSmoothingEnabled = false;
   if (G.phase !== 'vs') drawHUD(ctx); else warmStealSheets();
-  if (G.phase !== 'fight') warmSheets(G.phase === 'vs' ? 14 : 5);   // finish the 2x sprite rows off the critical path
+  if (G.phase !== 'fight' || (G.tick & 1)) warmSheets(G.phase === 'vs' ? 24 : G.phase === 'intro' ? 16 : G.phase === 'fight' ? 1 : 5);   // in a fight: one sprite frame every other screen frame   // finish the 2x sprite rows off the critical path
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (CRT.on) ctx.drawImage(BG.crt, 0, 0);
 }
 
 /* ---------- build everything once at load ---------- */
-const BUILD_MS = (() => { const t0 = performance.now(); buildFighterArt(); buildStage(); STAGES.alley = buildAlley(); buildSparks(); buildProj(); buildHUD(); return Math.round(performance.now() - t0); })();
+const BUILD_MS = (() => { const t0 = performance.now(); buildFighterArt(); buildStageCommon(); STAGES.bay = buildBay(); STAGES.alley = buildAlley(); buildSparks(); buildProj(); buildHUD(); return Math.round(performance.now() - t0); })();
 
 /* ---------- tiny synth SFX ---------- */
 let AC = null;
