@@ -34,6 +34,12 @@ table.keys td:first-child{color:#ffd23a;text-align:right}
 .card canvas{width:100%;aspect-ratio:7/5;height:auto;max-height:26vh;object-fit:contain;image-rendering:pixelated;display:block}
 .card .nm{font-size:min(4.2vh,16px);color:#ffd23a}
 .card .ds{font-size:min(2.7vh,10.5px);font-family:Arial,sans-serif;font-weight:bold;color:#cfd6ff;min-height:2.6em}
+.scards{display:flex;gap:min(1.6vw,14px);margin:8px 0;justify-content:center}
+.scard{width:min(29vw,250px);border:3px solid #000;border-radius:8px;background:linear-gradient(#1c2450,#0d1128);padding:4px 4px 6px;cursor:pointer}
+.scard.sel{outline:4px solid #ffd23a;background:linear-gradient(#3b2a10,#1a1206)}
+.scard canvas{width:100%;aspect-ratio:16/9;height:auto;max-height:34vh;object-fit:cover;image-rendering:pixelated;display:block;border:2px solid #000}
+.scard .nm{font-size:min(3.8vh,15px);color:#ffd23a;margin-top:4px}
+.scard .ds{font-size:min(2.6vh,10px);font-family:Arial,sans-serif;font-weight:bold;color:#cfd6ff}
 .stat{display:flex;align-items:center;gap:4px;font-size:min(2.5vh,10px);font-family:Arial,sans-serif;font-weight:bold}
 .stat b{width:46px;text-align:right;color:#9fd0ff}
 .stat i{flex:1;height:6px;background:#222;border:1px solid #000;position:relative}
@@ -115,6 +121,13 @@ input.code{width:5.2em;text-transform:uppercase;letter-spacing:4px}
   <div style="color:#ffd23a;font-size:min(5vh,20px)">CHOOSE YOUR FIGHTER</div>
   <div class="cards" id="cards"></div>
   <div class="row"><button class="btn dim" id="btn-sel-back">BACK</button><button class="btn" id="btn-fight">FIGHT!</button></div>
+</div>
+
+<div class="scr" id="s-stage">
+  <div style="color:#ffd23a;font-size:min(5vh,20px)">CHOOSE YOUR STAGE</div>
+  <div class="scards" id="stages"></div>
+  <div class="small" id="stage-note"></div>
+  <div class="row"><button class="btn dim" id="btn-stage-back">BACK</button><button class="btn" id="btn-stage-go">FIGHT!</button></div>
 </div>
 
 <div class="scr" id="s-online">
@@ -365,10 +378,17 @@ function newFighter(ch, i) {
   return { ch, i, x: STAGE_W / 2 + (i ? 70 : -70), y: 0, vx: 0, vy: 0, face: i ? -1 : 1, hp: C.hp, max: C.hp, red: C.hp, redDelay: 0,
     st: 'idle', t: 0, mv: null, mf: 0, hitC: false, airAtk: false, cr: false, blk: false, stun: 0, inv: 0, pb: 0, walkT: 0, buff: 0, tcd: 0 };
 }
-function newMatch(mode, c1, c2) {
+const STAGE_INFO = [
+  { id: 'bay', name: 'BAY STREET', sub: 'PORT ARTHUR, THUNDER BAY', takes: 'BAY STREET' },
+  { id: 'alley', name: 'MAY STREET ALLEY BAR', sub: 'FORT WILLIAM, THUNDER BAY', takes: 'MAY STREET' }
+];
+const STAGE_IDS = STAGE_INFO.map(s => s.id);
+function stageInfo(id) { return STAGE_INFO.find(s => s.id === id) || STAGE_INFO[0]; }
+function resolveStage(p) { return STAGE_IDS.includes(p) ? p : STAGE_IDS[Math.floor(Math.random() * STAGE_IDS.length)]; }   // 'random' (or anything unknown) rolls one
+function newMatch(mode, c1, c2, stage) {
   G = { mode, chars: [c1, c2], round: 1, wins: [0, 0], timer: 99, tt: 0, phase: 'intro', pt: 0, banner: null, f: [], proj: [], sparks: [],
     shake: 0, hitstop: 0, slow: 0, camX: (STAGE_W - W) / 2, ev: [], evId: 0, tick: 0, result: null, stat: { hits: [0, 0], blocks: [0, 0], specials: [0, 0] } };
-  startRound(); G.phase = 'vs'; G.pt = 0; G.banner = null; G.vsLine = Math.random() * 1000 | 0;   // face-to-face VS showdown before round 1
+  G.stage = resolveStage(stage); startRound(); G.phase = 'vs'; G.pt = 0; G.banner = null; G.vsLine = Math.random() * 1000 | 0;   // face-to-face VS showdown before round 1
 }
 const VS_T = 230, VS_SKIP = 200, SFZ_T = 16;   // showdown: slide in 0-30, P1 line 40-130, P2 reply 120-215
 function startRound() {
@@ -1709,6 +1729,233 @@ RENDERERS.shapes = RENDERERS.pixel;
 <script>
 'use strict';
 /* =====================================================================
+   STAGE 2: MAY STREET ALLEY BAR, Fort William, Thunder Bay.
+   The back alley behind a dive bar off May Street, late night: brick,
+   a lit back door under a caged bulb, the tavern's neon, dumpsters,
+   kegs + crates, a fire escape, a chain-link fence, slush puddles, a cat
+   on the dumpster, regulars by the door, and a slice of May Street (and
+   the grain elevators, faint) through the alley mouth.
+   Built once by buildAlley() (called from 3d.js), same layer scheme as
+   Bay Street: sky / far / mid / near / crowd frames / fg + live bits.
+   ===================================================================== */
+function pxLine(g, c, x0, y0, x1, y1, w) { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) | 0; g.fillStyle = c; for (let i = 0; i <= n; i++) { const k = n ? i / n : 0; g.fillRect(Math.round(x0 + (x1 - x0) * k), Math.round(y0 + (y1 - y0) * k), w || 1, w || 1); } }
+function brickWall(g, x0, y0, w, h, cols, seedX) {   // [mortar, brick, lit brick, dark brick]
+  for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+    const row = (y - y0) >> 2, mortar = ((y - y0) & 3) === 3 || ((x + (row & 1 ? 4 : 0)) & 7) === 7;
+    const n = ((((x + (row & 1 ? 4 : 0)) >> 3) * 73 + row * 151 + (seedX || 0)) % 11);
+    g.fillStyle = mortar ? cols[0] : n === 0 ? cols[3] : (dith(x, y) < 0.16 || n === 5 ? cols[2] : cols[1]); g.fillRect(x, y, 1, 1);
+  }
+}
+function keg(g, x, y) {   // generic steel keg, 16 x 22
+  const cols = ['#3a4048', '#5a626c', '#8a929c', '#c8d0d8', '#9aa2ac', '#6a727c', '#4a5058', '#30363e'];
+  for (let i = 0; i < 16; i++) R(g, cols[Math.min(7, i >> 1)], x + i, y + 2, 1, 18);
+  R(g, OUT, x - 1, y + 1, 18, 1); R(g, OUT, x - 1, y + 20, 18, 2); R(g, OUT, x - 1, y + 1, 1, 21); R(g, OUT, x + 16, y + 1, 1, 21);
+  for (const ry of [y + 3, y + 10, y + 17]) { R(g, '#2a3038', x, ry, 16, 1); R(g, '#dfe6ee', x + 5, ry + 1, 3, 1); }
+  R(g, '#5a626c', x + 1, y, 14, 2); R(g, '#9aa2ac', x + 5, y, 6, 1); R(g, '#e8eef8', x + 2, y - 1, 12, 1);   // rim + a dusting of snow
+}
+function crate(g, x, y, c, d) {   // stackable plastic crate, 18 x 12
+  R(g, OUT, x - 1, y - 1, 20, 14); R(g, c, x, y, 18, 12); R(g, d, x, y + 10, 18, 2);
+  for (let k = 0; k < 4; k++) R(g, d, x + 2 + k * 4, y + 3, 2, 5);
+  R(g, 'rgba(255,255,255,0.18)', x, y, 18, 1);
+}
+function dumpster(g, x, y, col) {   // 64 x 38, top-left at (x, y)
+  const [c0, c1, c2] = col;
+  R(g, OUT, x - 1, y + 3, 66, 33); R(g, c1, x, y + 4, 64, 31);
+  for (let i = 0; i < 64; i += 8) { R(g, c2, x + i + 2, y + 8, 2, 25); R(g, c0, x + i + 4, y + 8, 1, 25); }
+  R(g, c2, x, y + 4, 64, 3); R(g, c0, x, y + 33, 64, 2);
+  R(g, OUT, x - 3, y - 1, 70, 6); R(g, '#1a1a22', x - 2, y, 68, 4); R(g, '#2e2e3a', x - 2, y, 68, 1);   // lid
+  R(g, '#e4ecf8', x - 1, y - 3, 66, 3); R(g, '#ffffff', x + 6, y - 3, 30, 1); for (let i = 0; i < 66; i += 5) if (dith(i, 1) < 0.5) R(g, '#b0bed2', x - 1 + i, y - 1, 2, 1);
+  for (const wx of [x + 6, x + 52]) { R(g, OUT, wx, y + 35, 7, 4); R(g, '#3a3a44', wx + 2, y + 36, 3, 2); }
+  R(g, '#0b0712', x + 24, y + 14, 16, 6); R(g, '#d8d0c0', x + 25, y + 15, 14, 4); R(g, '#0b0712', x + 27, y + 16, 10, 1); R(g, '#0b0712', x + 27, y + 18, 7, 1);   // generic stencil plate
+}
+function bag(g, x, y, r) { disc(g, OUT, x, y, r + 1); disc(g, '#121218', x, y, r); disc(g, '#24242e', x - (r >> 2), y - (r >> 2), r >> 1); R(g, '#5a5a6a', x - (r >> 1), y - (r >> 1), 2, 1); R(g, OUT, x - 1, y - r - 2, 3, 3); }
+function buildAlley() {
+  seed = 777;
+  const S = { id: 'alley', gy: 214, crowdY: 164, midY: 0, aur: 0.45 };
+  /* sky: sodium haze over Fort William, a handful of stars, low cloud */
+  let c = mk(W, 140, true), g = c.g;
+  gradRows(g, 0, 0, W, 140, ['#04040c', '#08081a', '#11122a', '#221a36', '#3a2236', '#5a3030', '#7a4228']);
+  for (let i = 0; i < 50; i++) { const x = rnd() * W | 0, y = rnd() * 70 | 0, b = rnd(); R(g, b < 0.2 ? '#fff6c8' : '#7a80c0', x, y, 1, 1); }
+  for (const [x0, y0, w0] of [[10, 52, 160], [200, 40, 120], [330, 58, 150]]) for (let i = 0; i < w0; i++) { const h = 3 + Math.sin(i * 0.17 + x0) * 2 + Math.sin(i * 0.05) * 2; R(g, '#2a1c30', x0 + i, y0 - h, 1, h + 3); if (dith(i, 1) < 0.35) R(g, '#5a3434', x0 + i, y0 + 2, 1, 1); }
+  S.sky = c;
+  /* far: Mount McKay's mesa and the grain elevators, faint through the haze */
+  c = mk(640, 140); g = c.g;
+  g.fillStyle = '#1a1428'; g.beginPath(); g.moveTo(0, 140); for (const [x, y] of [[0, 104], [30, 100], [60, 86], [80, 78], [150, 76], [170, 80], [190, 94], [230, 104], [260, 108]]) g.lineTo(x, y); g.lineTo(260, 140); g.fill();
+  for (let x = 62; x < 186; x++) if (dith(x, 0) < 0.5) R(g, '#2a1e34', x, Math.round(x < 80 ? 86 - (x - 62) * 0.45 : x < 150 ? 77 : 77 + (x - 150) * 0.4), 1, 1);
+  const EL = (x0, n, top, col, hi) => {   // a row of silos + headhouse, low contrast
+    for (let i = 0; i < n; i++) { const x = x0 + i * 9; R(g, col, x, top + 18, 8, 140); R(g, hi, x + 1, top + 18, 1, 140); R(g, hi, x, top + 17, 8, 1); }
+    R(g, col, x0 - 8, top, 26, 20); R(g, hi, x0 - 8, top, 26, 1); R(g, col, x0, top - 8, 10, 9); R(g, '#c84a3a', x0 + 4, top - 10, 2, 2);
+    R(g, col, x0 + 18, top + 10, n * 9 - 18, 3);
+    for (let i = 0; i < 4; i++) R(g, '#6a4a3a', x0 - 5 + i * 6, top + 8, 2, 2);
+  };
+  EL(286, 10, 54, '#1c1830', '#2e2640'); EL(470, 7, 66, '#1a162c', '#28223a');
+  for (let y = 0; y < 140; y++) if (y > 96) { g.fillStyle = 'rgba(122,66,40,' + (0.012 * (y - 96) / 4).toFixed(3) + ')'; g.fillRect(0, y, 640, 1); }   // haze at the bottom
+  S.far = c;
+  /* mid: nearer rooftops, chimneys, a water tank, an antenna */
+  c = mk(760, 150); g = c.g;
+  for (const [x, w, top] of [[0, 90, 74], [96, 60, 64], [170, 120, 82], [300, 70, 70], [380, 110, 86], [500, 80, 72], [590, 90, 80], [690, 70, 66]]) {
+    R(g, '#0d0b18', x, top, w, 150 - top); R(g, '#1c1828', x, top, w, 1);
+    for (let yy = top + 5; yy < 140; yy += 7) for (let xx = x + 4; xx < x + w - 4; xx += 7) if (rnd() < 0.12) R(g, rnd() < 0.8 ? '#c8904a' : '#7fb0d0', xx, yy, 2, 3);
+    if (rnd() < 0.7) { const cx = x + 6 + rnd() * (w - 16) | 0; R(g, '#0d0b18', cx, top - 9, 6, 9); R(g, '#1c1828', cx, top - 9, 6, 1); }
+  }
+  R(g, '#0d0b18', 330, 36, 3, 34); R(g, '#0d0b18', 324, 44, 15, 1); R(g, '#0d0b18', 326, 52, 11, 1); R(g, '#c84a3a', 330, 34, 2, 2);   // antenna
+  R(g, '#0d0b18', 520, 50, 30, 18); R(g, '#1c1828', 520, 50, 30, 1); g.fillStyle = '#0d0b18'; g.beginPath(); g.moveTo(518, 50); g.lineTo(535, 40); g.lineTo(552, 50); g.fill(); for (const lx of [522, 534, 546]) R(g, '#0d0b18', lx, 68, 2, 6);   // water tank
+  S.mid = c;
+
+  /* near: the alley itself */
+  c = mk(STAGE_W, H, true); g = c.g;
+  // A: four-storey brick with the fire escape (x 0-210)
+  brickWall(g, 0, 22, 210, 192, ['#1a0e10', '#3a1c1a', '#4a2622', '#2a1412'], 3);
+  R(g, '#4a2622', 0, 18, 210, 4); R(g, '#0b0712', 0, 17, 210, 1); for (let x = 2; x < 208; x += 10) R(g, '#2a1412', x, 20, 5, 2);
+  for (const wy of [34, 84, 136]) for (const wx of [44, 96, 148]) {
+    R(g, '#0b0712', wx - 1, wy - 1, 20, 26); const lit = rnd() < 0.3;
+    if (lit) { gradRows(g, wx, wy, 18, 24, ['#ffd890', '#d89a50', '#7a4a2a']); for (let k = 0; k < 24; k += 3) R(g, 'rgba(60,30,10,0.45)', wx, wy + k, 18, 1); }   // a lit window with blinds
+    else gradRows(g, wx, wy, 18, 24, ['#24304e', '#121a30', '#0a0e1c']);
+    R(g, '#0b0712', wx + 8, wy, 2, 24); R(g, '#5a3430', wx - 2, wy + 24, 22, 2); R(g, '#e4ecf8', wx - 2, wy + 23, 22, 1);
+  }
+  // fire escape: two landings, railings, the zig-zag stair, the drop ladder, brackets
+  const FE = '#0e0c14', FEH = '#34303e';
+  for (const py of [68, 122]) {
+    R(g, FE, 30, py, 164, 3); R(g, FEH, 30, py, 164, 1); R(g, '#e4ecf8', 30, py - 1, 164, 1);
+    R(g, FE, 30, py - 15, 164, 2); R(g, FEH, 30, py - 15, 164, 1); for (let x = 30; x < 195; x += 5) R(g, FE, x, py - 13, 1, 13);
+    for (const bx of [36, 186]) pxLine(g, FE, bx, py + 3, bx + (bx < 100 ? 10 : -10), py + 16, 2);
+  }
+  pxLine(g, FE, 66, 120, 150, 70, 2); pxLine(g, FE, 72, 122, 156, 72, 1); for (let k = 0; k < 12; k++) { const x = 70 + k * 7, y = 118 - k * 4.2; R(g, FEH, x, y | 0, 6, 1); }
+  pxLine(g, FEH, 66, 106, 150, 56, 1);
+  R(g, FE, 164, 125, 2, 44); R(g, FE, 174, 125, 2, 44); for (let y = 128; y < 168; y += 5) R(g, FEH, 164, y, 12, 1);
+  // B: the bar's back wall (x 210-590), two storeys
+  brickWall(g, 210, 70, 380, 144, ['#1e1416', '#4a2a22', '#5a3628', '#341c18'], 7);
+  R(g, '#2a2a34', 206, 64, 388, 6); R(g, '#4a4a58', 206, 64, 388, 1); R(g, '#e4ecf8', 206, 62, 388, 2); R(g, '#0b0712', 206, 70, 388, 1);
+  R(g, '#0b0712', 210, 70, 2, 144); R(g, '#0b0712', 588, 70, 2, 144);
+  for (const wx of [236, 292, 470, 526]) {
+    R(g, '#0b0712', wx - 1, 79, 26, 24); const lit = wx === 470;
+    gradRows(g, wx, 80, 24, 22, lit ? ['#ffb36b', '#c8703a', '#5a2a1a'] : ['#1e2840', '#10162a', '#0a0c18']);
+    R(g, '#0b0712', wx + 11, 80, 2, 22); R(g, '#6a4a3a', wx - 2, 102, 28, 2); R(g, '#e4ecf8', wx - 2, 101, 28, 1);
+  }
+  // sign board for the neon, the caged bulb, transom, back door (ajar, warm light)
+  R(g, '#0b0712', 322, 112, 130, 24); R(g, '#16101a', 323, 113, 128, 22); for (const bx of [330, 444]) R(g, '#3a3a44', bx, 108, 1, 5);
+  R(g, '#0b0712', 383, 138, 9, 4); R(g, '#3a3a44', 384, 139, 7, 1); R(g, '#0b0712', 382, 142, 11, 7); for (let x = 383; x < 393; x += 3) R(g, '#4a4a58', x, 142, 1, 7);
+  R(g, '#0b0712', 364, 150, 46, 64); R(g, '#2a2630', 366, 152, 42, 62);
+  gradRows(g, 370, 153, 34, 6, ['#ffe9a8', '#f5b85a']); R(g, '#0b0712', 386, 153, 1, 6); R(g, '#0b0712', 370, 159, 34, 1);
+  gradRows(g, 370, 160, 34, 54, ['#ffe0a0', '#f0a850', '#c06a2a', '#7a3a1a']);   // warm interior through the open door
+  for (const [x, y, w, h] of [[378, 172, 6, 30], [392, 168, 7, 34]]) R(g, 'rgba(60,24,12,0.55)', x, y, w, h);   // silhouettes inside
+  R(g, '#0b0712', 383, 160, 21, 54); R(g, '#4a4654', 384, 161, 19, 53); R(g, '#5a5664', 384, 161, 2, 53); R(g, '#3a3644', 401, 161, 2, 53);   // steel door, swung half open
+  R(g, '#2e2a38', 387, 166, 12, 18); R(g, '#2e2a38', 387, 190, 12, 18); R(g, '#c8b060', 386, 186, 3, 2);
+  R(g, '#0b0712', 388, 177, 11, 6); R(g, '#c8c0a8', 389, 178, 9, 4);
+  R(g, '#4a4854', 358, 210, 58, 4); R(g, '#6a6876', 358, 210, 58, 1);   // stoop
+  // wall clutter: AC unit + drip, meter, a pipe with a steam vent, a faded "NO PARKING" plate, generic tags
+  R(g, '#0b0712', 470, 116, 30, 20); R(g, '#5a5e68', 471, 117, 28, 18); for (let y = 119; y < 133; y += 2) R(g, '#3a3e48', 473, y, 24, 1); R(g, '#e4ecf8', 470, 114, 30, 2);
+  R(g, '#0b0712', 236, 150, 12, 16); R(g, '#6a7078', 237, 151, 10, 14); disc(g, '#c8d0d8', 242, 157, 3); R(g, '#0b0712', 241, 166, 2, 48);
+  R(g, '#2a2a34', 452, 140, 6, 74); R(g, '#4a4a58', 452, 140, 1, 74); R(g, '#0b0712', 448, 136, 14, 6); R(g, '#3a3a44', 449, 137, 12, 4);
+  R(g, '#0b0712', 527, 146, 42, 14); R(g, '#d8d0c0', 528, 147, 40, 12); drawTxt(g, 'NO', 530, 149, 1, '#c01818'); drawTxt(g, 'PARK', 543, 149, 1, '#0b0712');
+  for (const [x, y, col] of [[540, 176, '#2a8aa0'], [270, 130, '#8a3aa0']]) for (let k = 0; k < 18; k++) R(g, col, x + k, y + Math.round(Math.sin(k * 0.7) * 3), 2, 2);   // spray-paint squiggles (no words)
+  // C: chain-link fence over the gap (x 590-640), dark void behind it
+  R(g, '#07060c', 590, 40, 50, 174); for (let y = 40; y < 140; y += 3) if (y % 6) R(g, '#0d0b14', 592, y, 46, 1);
+  for (let y = 132; y < 212; y++) for (let x = 590; x < 640; x++) if (((x + y) % 7 === 0 || ((x - y) % 7 + 7) % 7 === 0) && dith(x, y) < 0.85) R(g, y < 136 ? '#4a5060' : '#6a7080', x, y, 1, 1);
+  R(g, '#8a90a0', 590, 130, 50, 2); for (const px of [590, 638]) { R(g, '#0b0712', px - 1, 128, 4, 86); R(g, '#8a90a0', px, 128, 2, 86); }
+  for (let x = 591; x < 638; x += 2) R(g, '#5a6070', x, 128 - (x & 2 ? 1 : 0), 1, 1);   // a twist of wire on top
+  // D: the alley mouth: a slice of May Street (x 640-760); above it the sky shows through
+  brickWall(g, 640, 112, 120, 84, ['#140e18', '#2a2030', '#342a3c', '#1e1626'], 11);
+  R(g, '#3a3044', 640, 108, 120, 4); R(g, '#e4ecf8', 640, 107, 120, 1);
+  R(g, '#0b0712', 650, 154, 56, 38); gradRows(g, 652, 156, 52, 34, ['#ffd890', '#f0a050', '#7a3a24']); R(g, '#0b0712', 677, 156, 2, 34);
+  for (let x = 650; x < 708; x++) { const st = ((x - 650) >> 3) & 1; R(g, st ? '#1a6a6a' : '#d8e8e0', x, 148, 1, 5); }
+  R(g, '#0b0712', 716, 160, 22, 36); gradRows(g, 718, 162, 18, 32, ['#3a2a3a', '#5a3a3a', '#2a1a24']);
+  for (const wx of [656, 690, 724]) { R(g, '#0b0712', wx - 1, 119, 16, 20); gradRows(g, wx, 120, 14, 18, wx === 690 ? ['#ffe9a8', '#c8803a'] : ['#2a3a6a', '#0c1024']); }
+  gradRows(g, 640, 196, 120, 5, ['#6a6874', '#4a4854']); R(g, '#8a8696', 640, 201, 120, 1);
+  gradRows(g, 640, 202, 120, 12, ['#2a2832', '#1a1820']); for (let x = 644; x < 760; x += 20) R(g, '#c8b04a', x, 208, 10, 1);
+  // street furniture at the mouth: the May Street sign + a sodium streetlight
+  R(g, '#0b0712', 645, 92, 4, 122); R(g, '#3a4048', 646, 92, 1, 122);
+  R(g, '#0b0712', 624, 88, 46, 13); R(g, '#1a6a3a', 625, 89, 44, 11); R(g, '#e8f0e8', 626, 90, 42, 1); drawTxt(g, 'MAY ST', 629, 91, 1, '#ffffff');
+  R(g, '#0b0712', 752, 96, 4, 118); R(g, '#3a3a44', 753, 96, 1, 118); R(g, '#0b0712', 730, 94, 26, 3); R(g, '#0b0712', 728, 97, 14, 5); R(g, '#ffd890', 729, 100, 12, 2);
+  // E: corner of the next building (x 760-800)
+  brickWall(g, 760, 40, 40, 174, ['#160e12', '#30201e', '#3c2824', '#20140e'], 5); R(g, '#0b0712', 760, 40, 2, 174); R(g, '#3c2824', 760, 36, 40, 4); R(g, '#e4ecf8', 760, 35, 40, 1);
+  // wall base: dark concrete footing + a snow line (cleared at the stoop and the mouth)
+  R(g, '#1a1820', 0, 206, 640, 8); R(g, '#2a2832', 0, 206, 640, 1); R(g, '#1a1820', 760, 206, 40, 8);
+  // props: dumpsters, bags, kegs, crates, a pallet
+  dumpster(g, 84, 174, ['#0e2a1a', '#1e4a2e', '#2e6a42']); dumpster(g, 476, 174, ['#0e1a3a', '#1e2e5a', '#2e4a7a']);
+  for (const [x, y, r] of [[78, 206, 7], [158, 204, 9], [170, 208, 6], [150, 210, 6], [548, 206, 8], [560, 209, 6], [466, 209, 5]]) bag(g, x, y, r);
+  for (const kx of [246, 264, 282]) keg(g, kx, 190); for (const kx of [255, 273]) keg(g, kx, 167);
+  crate(g, 418, 200, '#2a4a8a', '#1a2a5a'); crate(g, 438, 200, '#8a2a2a', '#5a1a1a'); crate(g, 428, 187, '#2a4a8a', '#1a2a5a'); crate(g, 438, 174, '#8a2a2a', '#5a1a1a');
+  for (let k = 0; k < 4; k++) R(g, k & 1 ? '#3a2a1a' : '#5a4228', 566, 178 + k * 9, 22, 6); R(g, '#0b0712', 568, 176, 3, 36); R(g, '#0b0712', 583, 176, 3, 36);
+  for (let x = 0; x < STAGE_W; x += 2) {   // snow line along the wall foot
+    if ((x > 352 && x < 420) || (x > 640 && x < 760)) continue;
+    const hh = 2 + Math.sin(x * 0.07) * 1.5 + Math.sin(x * 0.21) + rnd() * 1.5 | 0; R(g, '#d8e2f0', x, 214 - hh, 2, hh); if (dith(x, hh) < 0.4) R(g, '#ffffff', x, 214 - hh, 2, 1);
+  }
+  // floor: cracked wet asphalt, slush, a manhole, puddles that mirror the wall
+  const facade = mk(STAGE_W, 114); facade.g.drawImage(c, 0, 100, STAGE_W, 114, 0, 0, STAGE_W, 114);
+  gradRows(g, 0, 214, STAGE_W, H - 214, ['#22202a', '#1a1822', '#14121a', '#0e0c14']);
+  for (let i = 0; i < 900; i++) R(g, rnd() < 0.5 ? '#2c2a36' : '#0a0810', rnd() * STAGE_W | 0, 215 + rnd() * 55 | 0, 1, 1);
+  for (let i = 0; i < 9; i++) { let x = rnd() * STAGE_W, y = 220 + rnd() * 44; for (let k = 0; k < 24; k++) { R(g, '#0a0810', x | 0, y | 0, 2, 1); x += 2; y += (rnd() - 0.5) * 2.2; } }
+  for (let i = 0; i < 16; i++) {   // slush patches, grey and lumpy
+    const x0 = rnd() * STAGE_W | 0, y0 = 216 + rnd() * 50 | 0, w0 = 14 + rnd() * 40 | 0, h0 = 2 + rnd() * 3 | 0;
+    for (let y = 0; y < h0; y++) for (let x = 0; x < w0; x++) { const e = Math.abs(x - w0 / 2) / (w0 / 2) + Math.abs(y - h0 / 2) / h0; if (e < 1 && dith(x0 + x, y0 + y) < 0.9 - e * 0.6) R(g, dith(x, y) < 0.3 ? '#c8d0de' : '#8a92a4', x0 + x, y0 + y, 1, 1); }
+  }
+  g.fillStyle = '#0b0712'; g.beginPath(); g.ellipse(310, 250, 16, 4, 0, 0, 7); g.fill(); g.fillStyle = '#2a2832'; g.beginPath(); g.ellipse(310, 250, 14, 3, 0, 0, 7); g.fill(); for (let x = 300; x < 322; x += 4) R(g, '#0b0712', x, 249, 2, 2);
+  for (const [cx, cy, rx, ry] of [[120, 236, 36, 4], [392, 230, 28, 3], [520, 252, 46, 5], [700, 240, 34, 4], [230, 262, 30, 4]]) {
+    for (let r = -ry; r <= ry; r++) {
+      const hw = Math.round(rx * Math.sqrt(1 - (r / (ry + 0.5)) ** 2)), y = cy + r, sy = Math.round(214 - (y - 214) * 2.6) - 100; if (hw < 2) continue;
+      R(g, '#0c0e1c', cx - hw, y, hw * 2, 1);
+      if (sy >= 0 && sy < 114) { g.globalAlpha = 0.6; g.drawImage(facade, cx - hw, sy, hw * 2, 1, cx - hw + Math.round(Math.sin(y * 1.7)), y, hw * 2, 1); g.globalAlpha = 1; }
+      R(g, 'rgba(60,80,150,0.18)', cx - hw, y, hw * 2, 1);
+    }
+    R(g, '#4a5068', cx - rx + 6, cy - ry - 1, rx * 2 - 12, 1); R(g, '#8a92a4', cx - rx + 10, cy + ry + 1, rx * 2 - 20, 1);
+  }
+  S.near = c;
+  /* neon: the tavern's name (a little temperamental) */
+  S.neon = [{ x: 387, y: 118, txt: 'THE MAY ST. TAVERN', col: '#ff5a3a', ph: 17, dodgy: 2 }];
+  /* lights: caged bulb over the door (flickers), wall-pack on the fire-escape building, the May St. sodium lamp */
+  S.lamps = [
+    { x: 387, y: 146, cone: 1, pool: 226, flick: (t) => { const u = t % 520; if (u < 34) return (u >> 2) % 3 === 0 ? 0.12 : 1; if (u > 260 && u < 266) return 0.25; return 0.92 + 0.08 * Math.sin(t * 0.37); } },
+    { x: 120, y: 96, cone: 1, pool: 222, a: 0.6 },
+    { x: 735, y: 100, cone: 1, pool: 214, a: 0.85 }
+  ];
+  S.vents = [[455, 136, 5], [310, 248, 6]];
+  /* regulars by the back door: parkas, toques, a flannel or two */
+  const PPL = [];
+  for (const [x, h] of [[300, 22], [314, 25], [330, 20], [346, 24], [416, 23], [452, 26], [464, 20]]) PPL.push({ x, h, w: 11 + rnd() * 4 | 0, c: ['#3a1e1e', '#2a2a4a', '#4a2a1a', '#1e3a2a', '#5a1a1a', '#2a2a2a'][rnd() * 6 | 0], hat: ['#c02a2a', '#2a6ac0', null, '#e0c040', '#3a3a3a'][rnd() * 5 | 0], ph: rnd() * 4 | 0, arm: rnd() < 0.5, phone: rnd() < 0.15, skin: ['#c88a6a', '#e0b090', '#8a5a3a', '#f0c8a8'][rnd() * 4 | 0] });
+  S.crowd = crowdFrames(PPL);
+  /* foreground (parallax 1.3x): slush heaps, a trash can, a pylon, a stray tire */
+  c = mk(BG.fgW, 40, true); g = c.g;
+  for (let x = 0; x < BG.fgW; x += 2) { const hh = 4 + Math.sin(x * 0.027) * 3 + Math.sin(x * 0.13) * 1.5 + (rnd() * 1.5 | 0); if (Math.sin(x * 0.011 + 2) > -0.4) { R(g, '#0b0712', x, 40 - hh - 1, 2, 1); R(g, '#9aa4b8', x, 40 - hh, 2, hh); R(g, '#d8e2f0', x, 40 - hh, 2, 1); if (dith(x, hh) < 0.4) R(g, '#6a7288', x, 40 - hh + 2, 2, 1); } }
+  { const tx = 40; R(g, '#0b0712', tx - 1, 6, 26, 34); R(g, '#5a606a', tx, 7, 24, 33); for (let k = 2; k < 24; k += 5) R(g, '#3a3e48', tx + k, 9, 2, 31); R(g, '#7a808a', tx + 1, 7, 2, 33); R(g, '#0b0712', tx - 3, 4, 30, 4); R(g, '#6a707a', tx - 2, 5, 28, 2); R(g, '#e4ecf8', tx - 2, 2, 28, 3); }
+  { const px = 420; g.fillStyle = '#0b0712'; g.beginPath(); g.moveTo(px - 10, 40); g.lineTo(px - 3, 8); g.lineTo(px + 3, 8); g.lineTo(px + 10, 40); g.fill(); g.fillStyle = '#ff6a12'; g.beginPath(); g.moveTo(px - 8, 39); g.lineTo(px - 2, 10); g.lineTo(px + 2, 10); g.lineTo(px + 8, 39); g.fill(); R(g, '#f0f0f0', px - 5, 22, 10, 4); R(g, '#0b0712', px - 14, 37, 28, 3); }
+  { const rx = BG.fgW - 120; disc(g, '#0b0712', rx, 34, 16); disc(g, '#24222c', rx, 34, 14); disc(g, '#0b0712', rx, 34, 7); R(g, '#3a3844', rx - 10, 22, 6, 2); R(g, '#e4ecf8', rx - 12, 18, 24, 3); }
+  S.fg = c;
+  neonSprites(S.neon);
+  S.live = alleyLive;
+  return S;
+}
+/* live bits: the bulb, the cat on the dumpster, cars passing the mouth of the alley */
+function alleyLive(g, nx, tick, lv, S) {
+  const b = S.lamps[0].flick(tick); R(g, b > 0.5 ? '#fff6c8' : '#5a4a30', 385 + nx, 143, 5, 4); if (b > 0.5) R(g, '#ffffff', 386 + nx, 144, 2, 2);
+  // alley cat on the blue dumpster lid: tail swish, blinks, arches up and puffs out at a KO
+  const cx = 512 + nx, cy = 171, cheer = G && ((G.phase === 'roundEnd' && G.koX != null) || G.phase === 'matchEnd');
+  if (cx > -20 && cx < W + 20) {
+    const k = '#0e0a12', up = cheer ? 3 : 0;
+    R(g, k, cx, cy - 7 - up, 12, 7 + up); R(g, k, cx + 1, cy - 9 - up, 10, 2);   // body (arched at a KO)
+    if (cheer) { R(g, k, cx, cy - 2, 2, 2); R(g, k, cx + 10, cy - 2, 2, 2); }
+    R(g, k, cx - 5, cy - 13 - up, 7, 6); R(g, k, cx - 5, cy - 15 - up, 2, 2); R(g, k, cx, cy - 15 - up, 2, 2);   // head + ears
+    const blink = (tick % 260) < 8; if (!blink) { R(g, '#c8ff6a', cx - 4, cy - 11 - up, 1, 1); R(g, '#c8ff6a', cx - 1, cy - 11 - up, 1, 1); }
+    const sw = Math.sin(tick * (cheer ? 0.4 : 0.06));
+    for (let s = 0; s < 7; s++) { const a = (cheer ? -1.3 : -0.4) + s * 0.22 * (cheer ? 0.2 : 1) + sw * 0.08 * s; R(g, k, Math.round(cx + 11 + Math.cos(a) * s * 1.6), Math.round(cy - 3 - up + Math.sin(a) * s * 1.8 - (cheer ? s : 0)), 2, 2); }
+  }
+  if (lv > 0) {   // a car rolls past on May Street every ~8 s: lights sweep the slice of storefront and the wet road
+    const cyc = tick % 470;
+    if (cyc < 140) {
+      const dir = (Math.floor(tick / 470) & 1) ? -1 : 1, p = cyc / 140, x = Math.round((dir > 0 ? 600 + p * 200 : 800 - p * 200) + nx);
+      g.save(); g.beginPath(); g.rect(640 + nx, 108, 120, 106); g.clip();
+      R(g, '#0b0712', x - 22, 196, 44, 12); R(g, '#1e1c2a', x - 21, 197, 42, 10); R(g, '#141220', x - 12, 190, 24, 7); R(g, '#5a7aa0', x - 10, 191, 20, 4);
+      R(g, '#fff6dc', dir > 0 ? x + 19 : x - 21, 200, 3, 3); R(g, '#ff2a2a', dir > 0 ? x - 22 : x + 19, 200, 3, 2);
+      g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.7; g.drawImage(BG.head, x - 80 + dir * 60, 168); g.globalAlpha = 0.45; g.drawImage(BG.head, x - 80 + dir * 50, 196, 160, 24);
+      g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.restore();
+      if (p > 0.3 && p < 0.7) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.12 * Math.sin((p - 0.3) / 0.4 * Math.PI); g.drawImage(BG.head, 600 + nx, 214, 220, 40); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }   // a sweep across the alley floor
+    }
+  }
+}
+</script>
+<script>
+'use strict';
+/* =====================================================================
    STAGE, FX, HUD
    Bay Street, Port Arthur, 2 AM. Every layer is pre-rendered once into
    offscreen canvases; per frame we only blit + animate a few live bits
@@ -1738,7 +1985,7 @@ function gradRows(g, x, y, w, h, cols) {   // dithered vertical gradient through
 function R(g, c, x, y, w, h) { g.fillStyle = c; g.fillRect(x | 0, y | 0, w | 0, h | 0); }
 function disc(g, c, x, y, r) { g.fillStyle = c; for (let yy = -r; yy <= r; yy++) { const hw = Math.floor(Math.sqrt(r * r - yy * yy)); g.fillRect(x - hw, y + yy, hw * 2 + 1, 1); } }
 
-const BG = {}, NEON = [], LAMPS = [120, 400, 680], FG_PAR = 1.3, WIND = { off: 0, last: 0, g: 0 };
+const BG = {}, STAGES = {}, NEON = [], LAMPS = [120, 400, 680], FG_PAR = 1.3, WIND = { off: 0, last: 0, g: 0 };
 function buildStage() {
   seed = 4242;
   /* sky: deep night, sodium-orange city glow on the horizon, stars, moon, faint aurora */
@@ -1812,7 +2059,7 @@ function buildStage() {
     }
     // sign board (neon mounts on it, drawn live)
     R(g, '#0b0712', s.x + 6, 132, s.w - 12, 16); R(g, '#16101c', s.x + 7, 133, s.w - 14, 14);
-    NEON.push({ x: s.x + s.w / 2, y: 136, txt: s.sign, col: s.col, ph: NEON.length * 53 });
+    NEON.push({ x: s.x + s.w / 2, y: 136, txt: s.sign, col: s.col, ph: NEON.length * 53, dodgy: s.sign === 'PAWN' ? 1 : 0 });
     // shop window with warm interior + door
     const wx0 = s.x + 6, ww = s.w - 46;
     R(g, '#0b0712', wx0 - 2, 152, ww + 4, 50);
@@ -1845,38 +2092,14 @@ function buildStage() {
   for (const [x, y, w] of [[60, 248, 40], [300, 262, 60], [520, 244, 30], [700, 256, 50]]) for (let k = 0; k < 4; k++) R(g, 'rgba(140,170,255,0.08)', x + k * 3, y + k, w - k * 6, 1);
   BG.near = c;
 
-  /* neon signs: an 'on' (tube + glow) and 'off' (dead tube) sprite each */
-  for (const n of NEON) {
-    const tw = txtW(n.txt, 1), w = tw + 16, h = 20;
-    const on = mk(w, h), off = mk(w, h);
-    for (let k = 0; k < 3; k++) { on.g.shadowColor = n.col; on.g.shadowBlur = 6; drawTxt(on.g, n.txt, 8, 6, 1, n.col); }
-    on.g.shadowBlur = 0; drawTxt(on.g, n.txt, 8, 6, 1, n.col); on.g.globalAlpha = 0.7; drawTxt(on.g, n.txt, 8, 6, 1, '#ffffff'); on.g.globalAlpha = 1;
-    on.g.strokeStyle = n.col; on.g.lineWidth = 1; on.g.strokeRect(3.5, 2.5, w - 7, h - 5);
-    drawTxt(off.g, n.txt, 8, 6, 1, '#3a2a3a'); off.g.strokeStyle = '#2a2030'; off.g.strokeRect(3.5, 2.5, w - 7, h - 5);
-    n.on = on; n.off = off; n.w = w;
-  }
+  neonSprites(NEON);
   /* lamp glow + window-light pools */
   BG.glow = mk(120, 120); { const gg = BG.glow.g, gr = gg.createRadialGradient(60, 60, 2, 60, 60, 60); gr.addColorStop(0, 'rgba(255,225,150,0.55)'); gr.addColorStop(0.3, 'rgba(255,200,120,0.18)'); gr.addColorStop(1, 'rgba(255,200,120,0)'); gg.fillStyle = gr; gg.fillRect(0, 0, 120, 120); }
   BG.cone = mk(80, 110); { const gg = BG.cone.g, gr = gg.createLinearGradient(0, 0, 0, 110); gr.addColorStop(0, 'rgba(255,225,150,0.20)'); gr.addColorStop(1, 'rgba(255,225,150,0.02)'); gg.fillStyle = gr; gg.beginPath(); gg.moveTo(36, 0); gg.lineTo(44, 0); gg.lineTo(80, 110); gg.lineTo(0, 110); gg.closePath(); gg.fill(); }
 
   /* crowd on the sidewalk: 4 bob frames, parkas + toques, a few phones up */
   const PPL = []; for (let x = 6; x < STAGE_W - 6; x += 9 + rnd() * 12) if (LAMPS.every(l => Math.abs(x - l) > 10)) PPL.push({ x: x | 0, h: 18 + rnd() * 9 | 0, w: 11 + rnd() * 5 | 0, c: ['#2a2a4a', '#3a1e2a', '#1e3a3a', '#3a3a22', '#2a1a3a', '#40242a'][rnd() * 6 | 0], hat: ['#c02a2a', '#2a6ac0', '#e0c040', '#2a8a4a', '#d0d0e0', null][rnd() * 6 | 0], ph: rnd() * 4 | 0, arm: rnd() < 0.35, phone: rnd() < 0.2, skin: ['#c88a6a', '#e0b090', '#8a5a3a', '#f0c8a8'][rnd() * 4 | 0] });
-  BG.crowd = [];
-  for (let fr = 0; fr < 6; fr++) {   // 0-3 idle bob, 4-5 cheering (arms up, hopping)
-    const cc = mk(STAGE_W, 50), cg = cc.g, cheer = fr >= 4;
-    for (const p of PPL) {
-      const b = cheer ? (((fr + p.ph) & 1) ? -4 : -1) : [0, -1, -2, -1][(fr + p.ph) & 3], top = 50 - p.h + b, x = p.x;
-      R(cg, '#0b0712', x, top + 6, p.w, 2); R(cg, '#0b0712', x - 1, top + 8, p.w + 2, p.h); R(cg, p.c, x + 1, top + 7, p.w - 2, 2); R(cg, p.c, x, top + 9, p.w, p.h);
-      R(cg, 'rgba(0,0,0,0.35)', x + (p.w >> 1), top + 12, 1, p.h);
-      R(cg, 'rgba(255,255,255,0.10)', x, top + 7, p.w, 1); R(cg, 'rgba(0,0,0,0.35)', x + p.w - 2, top + 8, 2, p.h);
-      const hx = x + (p.w >> 1) - 4;
-      R(cg, '#0b0712', hx - 1, top - 1, 9, 9); R(cg, p.skin, hx, top, 7, 8); R(cg, 'rgba(0,0,0,0.3)', hx + 5, top, 2, 8); R(cg, '#0b0712', hx + 2, top + 3, 1, 1); R(cg, '#0b0712', hx + 5, top + 3, 1, 1);
-      if (p.hat) { R(cg, '#0b0712', hx - 1, top - 3, 9, 5); R(cg, p.hat, hx, top - 2, 7, 4); R(cg, 'rgba(255,255,255,0.35)', hx, top + 1, 7, 1); R(cg, '#ffffff', hx + 2, top - 4, 3, 2); } else R(cg, '#2a1a12', hx, top, 7, 2);
-      if (cheer) { for (const ax of [x - 3, x + p.w - 1]) { const up = ((fr + p.ph + (ax > x ? 1 : 0)) & 1) ? 0 : 2; R(cg, '#0b0712', ax, top - 8 + up, 4, 15); R(cg, p.c, ax + 1, top - 7 + up, 2, 13); R(cg, p.skin, ax + 1, top - 9 + up, 2, 2); } if (p.phone) R(cg, '#bfe8ff', x + p.w - 1, top - 12, 3, 3); }
-      else if (p.arm) { const up = ((fr + p.ph) & 2) ? 3 : 0; R(cg, '#0b0712', x + p.w - 1, top - 6 + up, 4, 14); R(cg, p.c, x + p.w, top - 5 + up, 2, 12); R(cg, p.skin, x + p.w, top - 7 + up, 2, 2); if (p.phone) R(cg, '#bfe8ff', x + p.w - 1, top - 10 + up, 3, 3); }
-    }
-    BG.crowd.push(cc);
-  }
+  BG.crowd = crowdFrames(PPL);
 
   /* aurora curtains: 4 shimmering frames, cross-faded live */
   BG.aur = [];
@@ -1905,6 +2128,8 @@ function buildStage() {
   { const hx = 470; R(g, '#0b0712', hx - 1, 16, 12, 24); R(g, '#c02a1a', hx, 18, 10, 22); R(g, '#e85a3a', hx + 1, 18, 2, 22); R(g, '#0b0712', hx - 3, 24, 16, 5); R(g, '#a01a10', hx - 2, 25, 14, 3); R(g, '#e8eef8', hx, 15, 10, 3); }   // hydrant
   { const mx = 300; R(g, '#0b0712', mx - 1, 6, 20, 34); R(g, '#c01818', mx, 7, 18, 33); R(g, '#e84a3a', mx + 1, 8, 3, 32); R(g, '#0b0712', mx + 3, 14, 12, 2); R(g, '#f0f0f0', mx + 4, 20, 10, 3); R(g, '#e8eef8', mx, 4, 18, 4); }   // red street mailbox
   BG.fg = c;
+  STAGES.bay = { id: 'bay', gy: 227, sky: BG.sky, far: BG.far, mid: BG.mid, midY: -34, near: BG.near, neon: NEON, crowd: BG.crowd, crowdY: 178, fg: BG.fg, aur: 1, car: 1,
+    lamps: LAMPS.map(x => ({ x: x - 10, y: 120, cone: 1, pool: 236 })), vents: [[266, 214, 7], [560, 239, 6]] };
 
   /* snow flakes */
   BG.snow = []; for (let i = 0; i < 110; i++) BG.snow.push({ x: Math.random() * W, y: Math.random() * H, s: 0.25 + Math.random() * 0.85 });
@@ -1915,6 +2140,38 @@ function buildStage() {
     const gr = gg.createRadialGradient(480, 270, 200, 480, 270, 620); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,0.55)'); gg.fillStyle = gr; gg.fillRect(0, 0, 960, 540); }
 }
 
+function crowdFrames(PPL) {   // 6 frames, STAGE_W x 50: 0-3 idle bob, 4-5 cheering
+  const out = [];
+  for (let fr = 0; fr < 6; fr++) {   // 0-3 idle bob, 4-5 cheering (arms up, hopping)
+    const cc = mk(STAGE_W, 50), cg = cc.g, cheer = fr >= 4;
+    for (const p of PPL) {
+      const b = cheer ? (((fr + p.ph) & 1) ? -4 : -1) : [0, -1, -2, -1][(fr + p.ph) & 3], top = 50 - p.h + b, x = p.x;
+      R(cg, '#0b0712', x, top + 6, p.w, 2); R(cg, '#0b0712', x - 1, top + 8, p.w + 2, p.h); R(cg, p.c, x + 1, top + 7, p.w - 2, 2); R(cg, p.c, x, top + 9, p.w, p.h);
+      R(cg, 'rgba(0,0,0,0.35)', x + (p.w >> 1), top + 12, 1, p.h);
+      R(cg, 'rgba(255,255,255,0.10)', x, top + 7, p.w, 1); R(cg, 'rgba(0,0,0,0.35)', x + p.w - 2, top + 8, 2, p.h);
+      const hx = x + (p.w >> 1) - 4;
+      R(cg, '#0b0712', hx - 1, top - 1, 9, 9); R(cg, p.skin, hx, top, 7, 8); R(cg, 'rgba(0,0,0,0.3)', hx + 5, top, 2, 8); R(cg, '#0b0712', hx + 2, top + 3, 1, 1); R(cg, '#0b0712', hx + 5, top + 3, 1, 1);
+      if (p.hat) { R(cg, '#0b0712', hx - 1, top - 3, 9, 5); R(cg, p.hat, hx, top - 2, 7, 4); R(cg, 'rgba(255,255,255,0.35)', hx, top + 1, 7, 1); R(cg, '#ffffff', hx + 2, top - 4, 3, 2); } else R(cg, '#2a1a12', hx, top, 7, 2);
+      if (cheer) { for (const ax of [x - 3, x + p.w - 1]) { const up = ((fr + p.ph + (ax > x ? 1 : 0)) & 1) ? 0 : 2; R(cg, '#0b0712', ax, top - 8 + up, 4, 15); R(cg, p.c, ax + 1, top - 7 + up, 2, 13); R(cg, p.skin, ax + 1, top - 9 + up, 2, 2); } if (p.phone) R(cg, '#bfe8ff', x + p.w - 1, top - 12, 3, 3); }
+      else if (p.arm) { const up = ((fr + p.ph) & 2) ? 3 : 0; R(cg, '#0b0712', x + p.w - 1, top - 6 + up, 4, 14); R(cg, p.c, x + p.w, top - 5 + up, 2, 12); R(cg, p.skin, x + p.w, top - 7 + up, 2, 2); if (p.phone) R(cg, '#bfe8ff', x + p.w - 1, top - 10 + up, 3, 3); }
+    }
+    out.push(cc);
+  }
+  return out;
+}
+
+
+function neonSprites(list) {   /* neon signs: an 'on' (tube + glow) and 'off' (dead tube) sprite each */
+  for (const n of list) {
+    const tw = txtW(n.txt, 1), w = tw + 16, h = 20;
+    const on = mk(w, h), off = mk(w, h);
+    for (let k = 0; k < 3; k++) { on.g.shadowColor = n.col; on.g.shadowBlur = 6; drawTxt(on.g, n.txt, 8, 6, 1, n.col); }
+    on.g.shadowBlur = 0; drawTxt(on.g, n.txt, 8, 6, 1, n.col); on.g.globalAlpha = 0.7; drawTxt(on.g, n.txt, 8, 6, 1, '#ffffff'); on.g.globalAlpha = 1;
+    on.g.strokeStyle = n.col; on.g.lineWidth = 1; on.g.strokeRect(3.5, 2.5, w - 7, h - 5);
+    drawTxt(off.g, n.txt, 8, 6, 1, '#3a2a3a'); off.g.strokeStyle = '#2a2030'; off.g.strokeRect(3.5, 2.5, w - 7, h - 5);
+    n.on = on; n.off = off; n.w = w;
+  }
+}
 /* ---------- sparks / dust (pre-rendered frame strips, pixel-snapped) ---------- */
 const SPARK_PAL = ['#ffffff', '#fff6b0', '#ffe066', '#ffb020', '#ff6a12', '#c82808', '#bfe8ff', '#7fd3ff', '#3a8aff', '#1a4ca0', '#d8d0c0', '#a89a88', '#6a6058', '#0b0712'];
 const SPK = {};
@@ -1966,30 +2223,33 @@ function buildProj() {
 /* ---------- live stage drawing ---------- */
 function neonLevel(n, tick) {   // 1 = on, 0 = off; each sign has its own flicker habit
   const t = (tick + n.ph) % 600;
-  if (n.txt === 'PAWN') return (t < 40 && (t >> 2) % 3 === 0) || (t > 300 && t < 310) ? 0 : 1;   // the dodgy one
+  if (n.dodgy === 1) return (t < 40 && (t >> 2) % 3 === 0) || (t > 300 && t < 310) ? 0 : 1;   // the PAWN sign
+  if (n.dodgy === 2) return (t > 420 && t < 470 && (t * 7 >> 3) % 5 === 0) || (t < 6 && t & 1) ? 0 : 1;   // the tavern: buzzes, stutters now and then
   return t < 8 && (t >> 1) % 2 ? 0 : 1;
 }
-function drawStage(g, camX, tick) {
-  const lv = QUAL.lv;
-  g.drawImage(BG.sky, 0, 0);
-  if (lv > 0) {   // aurora curtains drift and shimmer (cross-fade between 4 frames)
-    const u = tick / 70, k = Math.floor(u) % 4, fr = u - Math.floor(u), ax = Math.round(-camX * 0.06 + Math.sin(tick * 0.002) * 6);
-    g.globalAlpha = (0.45 + 0.2 * Math.sin(tick * 0.013)) * (1 - fr); g.drawImage(BG.aur[k], ax, 0);
-    g.globalAlpha = (0.45 + 0.2 * Math.sin(tick * 0.013)) * fr; g.drawImage(BG.aur[(k + 1) % 4], ax, 0); g.globalAlpha = 1;
+function stageOf(sid) { return STAGES[sid || (G && G.stage) || (!G && ATTRACT.stage) || 'bay'] || STAGES.bay; }
+function drawStage(g, camX, tick, sid) {
+  const lv = QUAL.lv, S = stageOf(sid);
+  g.drawImage(S.sky, 0, 0);
+  if (lv > 0 && S.aur) {   // aurora curtains drift and shimmer (cross-fade between 4 frames)
+    const u = tick / 70, k = Math.floor(u) % 4, fr = u - Math.floor(u), ax = Math.round(-camX * 0.06 + Math.sin(tick * 0.002) * 6), a0 = (0.45 + 0.2 * Math.sin(tick * 0.013)) * S.aur;
+    g.globalAlpha = a0 * (1 - fr); g.drawImage(BG.aur[k], ax, 0);
+    g.globalAlpha = a0 * fr; g.drawImage(BG.aur[(k + 1) % 4], ax, 0); g.globalAlpha = 1;
   }
-  g.drawImage(BG.far, Math.round(-camX * 0.12), 0);
-  g.drawImage(BG.mid, Math.round(-camX * 0.35), -34);
+  g.drawImage(S.far, Math.round(-camX * 0.12), 0);
+  g.drawImage(S.mid, Math.round(-camX * 0.35), S.midY);
   const nx = Math.round(-camX);
-  g.drawImage(BG.near, nx, 0);
-  for (const n of NEON) {
+  g.drawImage(S.near, nx, 0);
+  for (const n of S.neon) {
     const x = Math.round(n.x - n.w / 2 + nx); if (x > W || x + n.w < 0) continue;
     const on = neonLevel(n, tick); g.drawImage(on ? n.on : n.off, x, n.y - 4);
-    if (on && lv > 0) { g.save(); g.globalAlpha = 0.28; g.translate(x, 2 * 229 - n.y + 30); g.scale(1, -1); g.drawImage(n.on, 0, 0); g.restore(); }
+    if (on && lv > 0) { g.save(); g.globalAlpha = 0.2; g.translate(x, S.gy + Math.round((S.gy - n.y) * 0.3)); g.scale(1, -0.5); g.drawImage(n.on, 0, 0); g.restore(); }   // smeared in the wet ground
   }
   const cheer = G && ((G.phase === 'roundEnd' && G.koX != null) || G.phase === 'matchEnd');
-  g.drawImage(BG.crowd[cheer ? 4 + (Math.floor(tick / 6) & 1) : lv ? Math.floor(tick / 9) % 4 : 0], nx, 178);
-  if (lv > 0) {   // vent steam: the alley grate and a manhole on the road
-    for (const [vx, vy, n] of [[266, 214, 7], [560, 239, 6]]) {
+  g.drawImage(S.crowd[cheer ? 4 + (Math.floor(tick / 6) & 1) : lv ? Math.floor(tick / 9) % 4 : 0], nx, S.crowdY);
+  if (S.live) S.live(g, nx, tick, lv, S);
+  if (lv > 0) {   // vent steam (alley grates, manholes)
+    for (const [vx, vy, n] of S.vents) {
       const x0 = vx + nx; if (x0 < -40 || x0 > W + 40) continue;
       for (let k = 0; k < n; k++) {
         const age = (tick * 0.55 + k * (150 / n)) % 150, f = age / 150, r = 3 + age * 0.09;
@@ -2000,16 +2260,17 @@ function drawStage(g, camX, tick) {
       g.globalAlpha = 1;
     }
     const cyc = tick % 780;   // a car passes behind camera: its headlights sweep the storefronts and the wet road
-    if (cyc < 200) {
+    if (S.car && cyc < 200) {
       const dir = (Math.floor(tick / 780) & 1) ? -1 : 1, p = cyc / 200, wxp = dir > 0 ? -160 + p * (STAGE_W + 320) : STAGE_W + 160 - p * (STAGE_W + 320), x = Math.round(wxp + nx);
       g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.8; g.drawImage(BG.head, x - 80, 150); g.drawImage(BG.head, x - 30, 154);
       g.globalAlpha = 0.35; g.drawImage(BG.head, x - 80, 222, 160, 30); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
     }
   }
-  for (const l of LAMPS) {
-    const x = l - 10 + nx; if (x < -70 || x > W + 70) continue;
-    if (lv > 0) { g.globalCompositeOperation = 'lighter'; g.drawImage(BG.glow, x - 60, 120 - 60); g.drawImage(BG.cone, x - 40, 122); g.globalAlpha = 0.6; g.drawImage(BG.glow, x - 60, 236 - 60); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
-    else { g.globalAlpha = 0.5; g.drawImage(BG.glow, x - 60, 120 - 60); g.globalAlpha = 1; }
+  for (const l of S.lamps) {
+    const x = l.x + nx; if (x < -70 || x > W + 70) continue;
+    const a = (l.a || 1) * (l.flick ? l.flick(tick) : 1); if (a <= 0.05) continue;
+    if (lv > 0) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = a; g.drawImage(BG.glow, x - 60, l.y - 60); if (l.cone) g.drawImage(BG.cone, x - 40, l.y + 2); if (l.pool) { g.globalAlpha = 0.6 * a; g.drawImage(BG.glow, x - 60, l.pool - 60); } g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
+    else { g.globalAlpha = 0.5 * a; g.drawImage(BG.glow, x - 60, l.y - 60); g.globalAlpha = 1; }
   }
 }
 function drawSnow(g, tick, near) {
@@ -2096,8 +2357,8 @@ function drawFightFX(g, t, camX) {
     if (f.mv === 'tnt' && M && M.shout && f.mf < M.s + M.a + 34) txt = M.shout;
     else if (f.ch === 'dirty' && M && (f.mv === 'sp' || f.mv === 'sp2' || f.mv === 'sp3') && f.mf < M.s + M.a + 14) txt = 'NICE NICE NICE!';
     else if (G.steal && G.steal.i === f.i && G.steal.t < 70) txt = 'NICE NICE NICE!';
-    else if (f.st === 'win' && (G.phase === 'roundEnd' || G.phase === 'matchEnd') && (f.ch === 'dirty' || f.ch === 'bino') && f.t > 10 && f.t < 200) txt = f.ch === 'dirty' ? 'NICE NICE NICE NICE NICE!' : 'ALL GOD DAMN DAY!';
-    if (txt) worldBubble(g, x, y, txt, f.mv === 'tnt' ? '#ffe0b0' : null);
+    else if (f.st === 'win' && G.phase === 'roundEnd' && (f.ch === 'dirty' || f.ch === 'bino') && f.t > 10 && f.t < 200) txt = f.ch === 'dirty' ? 'NICE NICE NICE NICE NICE!' : 'ALL GOD DAMN DAY!';
+    if (txt && G.phase !== 'matchEnd') worldBubble(g, x, y, txt, f.mv === 'tnt' ? '#ffe0b0' : null);   // the winner card owns the quote at match end
     if (f.dz > 0) for (let k = 0; k < 3; k++) { const a = t * 0.18 + k * 2.09; star5(g, Math.round(x + Math.cos(a) * 11), Math.round(y - 4 + Math.sin(a) * 3), 2, k & 1 ? '#ffe066' : '#ffffff'); }
   }
   // SMOOCH! burst covers the spot - comic star + lip print, never contact
@@ -2231,7 +2492,7 @@ function drawHUD(g) {
       const lines = wrapTxt('"' + winQuote(C) + '"', 26);
       R(g, OUT, 150, 132, 300, 14 + lines.length * 12); R(g, '#f4f0e0', 151, 133, 298, 12 + lines.length * 12); R(g, '#f4f0e0', 144, 150, 7, 6); R(g, OUT, 143, 150, 1, 6);
       lines.forEach((l, j) => drawTxt(g, l, 158, 139 + j * 12, 1, OUT));
-      drawText(g, C.title + ' TAKES BAY STREET', 150, 160 + lines.length * 12, 1, 'gold', 'l');
+      drawText(g, C.title + ' TAKES ' + stageInfo(G.stage).takes, 150, 160 + lines.length * 12, 1, 'gold', 'l');
     }
   }
 }
@@ -2257,10 +2518,10 @@ function paintLogo(t) {   // chrome logo with a sweeping shine and a flickering 
 }
 
 /* ---------- attract mode behind the title ---------- */
-const ATTRACT = { pair: null, at: -1 };
+const ATTRACT = { pair: null, at: -1, stage: 'bay' };
 function renderAttract() {
   const cyc = Math.floor(frame / 420);
-  if (ATTRACT.at !== cyc) { ATTRACT.at = cyc; const a = CHAR_IDS[cyc % CHAR_IDS.length], b = CHAR_IDS[(cyc + 1 + (cyc >> 2)) % CHAR_IDS.length]; ATTRACT.pair = [newFighter(a, 0), newFighter(b === a ? CHAR_IDS[(cyc + 2) % CHAR_IDS.length] : b, 1)]; }
+  if (ATTRACT.at !== cyc) { ATTRACT.at = cyc; ATTRACT.stage = (cyc & 1) && STAGES.alley ? 'alley' : 'bay'; const a = CHAR_IDS[cyc % CHAR_IDS.length], b = CHAR_IDS[(cyc + 1 + (cyc >> 2)) % CHAR_IDS.length]; ATTRACT.pair = [newFighter(a, 0), newFighter(b === a ? CHAR_IDS[(cyc + 2) % CHAR_IDS.length] : b, 1)]; }
   const camX = (STAGE_W - W) / 2 + Math.sin(frame / 300) * 140;
   drawStage(wx, camX, frame); drawSnow(wx, frame, false);
   const [p, q] = ATTRACT.pair, ph = frame % 420;
@@ -2325,7 +2586,7 @@ function render() {
   for (const f of order) drawFighter(wx, f, t, camX);
   for (const p of G.proj) drawProj(wx, p, t, camX);
   for (const s of G.sparks) drawSpark(wx, s, camX);
-  if (BG.fg) wx.drawImage(BG.fg, -Math.round(camX * FG_PAR), H - 40);   // foreground parallax: snowbank, parked cars, hydrant, mailbox
+  wx.drawImage(stageOf().fg, -Math.round(camX * FG_PAR), H - 40);   // foreground parallax (Bay St: snowbank, parked cars, hydrant, mailbox; alley: slush, can, pylon, tire)
   drawSnow(wx, t, true);
   if (G.phase !== 'vs') drawFightFX(wx, t, camX);
   if (SHOW_BOXES) drawBoxes(wx);
@@ -2346,7 +2607,7 @@ function render() {
 }
 
 /* ---------- build everything once at load ---------- */
-const BUILD_MS = (() => { const t0 = performance.now(); buildFighterArt(); buildStage(); buildSparks(); buildProj(); buildHUD(); return Math.round(performance.now() - t0); })();
+const BUILD_MS = (() => { const t0 = performance.now(); buildFighterArt(); buildStage(); STAGES.alley = buildAlley(); buildSparks(); buildProj(); buildHUD(); return Math.round(performance.now() - t0); })();
 
 /* ---------- tiny synth SFX ---------- */
 let AC = null;
@@ -2387,7 +2648,7 @@ function playEvents() { if (!G) return; for (const e of G.ev) if (e.id > lastEv)
    UI, INPUT WIRING, ONLINE, MAIN LOOP
    ===================================================================== */
 const $ = (id) => document.getElementById(id);
-let frame = 0, pick = 'craig', pendingMode = 'solo';
+let frame = 0, pick = 'craig', pendingMode = 'solo', stagePick = STAGE_IDS.includes(QS.get('stage')) || QS.get('stage') === 'random' ? QS.get('stage') : 'bay';
 function show(id) { for (const s of document.querySelectorAll('.scr')) s.classList.toggle('on', s.id === id); }
 function inGameUI(on) { $('ctl').classList.toggle('on', on && ('ontouchstart' in window || navigator.maxTouchPoints > 0)); $('b-pause').classList.toggle('on', on); }
 function fit() {
@@ -2398,7 +2659,7 @@ addEventListener('resize', fit); fit();
 paintLogo(0);
 /* ---- stale-cache guard: GitHub Pages lets browsers keep the page ~10 min. If the live copy has a
    newer build id than the one running, reload once onto it. ---- */
-const BUILD_ID = '93844013';
+const BUILD_ID = '8f5eebe4';
 if ($('build')) $('build').textContent = 'build ' + BUILD_ID;
 (function freshCheck() {
   if (location.protocol === 'file:' || QS.has('nofresh') || !window.fetch) return;
@@ -2439,30 +2700,55 @@ function drawCards() {
     G = save;
   }
 }
+/* ---- stage select: live thumbnails rendered from the real stage layers ---- */
+const STAGE_CARDS = STAGE_IDS.concat(['random']), THUMB = mk(W, H);
+function buildStages() {
+  const box = $('stages'); box.innerHTML = '';
+  for (const id of STAGE_CARDS) {
+    const I = id === 'random' ? { name: 'RANDOM', sub: 'LET THE CITY DECIDE' } : stageInfo(id), d = document.createElement('div');
+    d.className = 'scard' + (id === stagePick ? ' sel' : ''); d.id = 'stage-' + id;
+    d.innerHTML = `<canvas width="240" height="135"></canvas><div class="nm">${I.name}</div><div class="ds">${I.sub}</div>`;
+    d.addEventListener('click', () => { stagePick = id; buildStages(); });
+    box.appendChild(d);
+  }
+  $('stage-note').textContent = pendingMode === 'online' ? 'Online: the host\'s stage is used. Guests can skip this.' : '';
+}
+function drawStageCards() {
+  for (const id of STAGE_CARDS) {
+    const el = document.querySelector('#stage-' + id + ' canvas'); if (!el) continue;
+    const g = el.getContext('2d'), rid = id === 'random' ? STAGE_IDS[Math.floor(frame / 50) % STAGE_IDS.length] : id, tg = THUMB.g;
+    tg.imageSmoothingEnabled = false; drawStage(tg, (STAGE_W - W) / 2 + Math.sin(frame / 160 + rid.length) * 120, frame, rid); drawSnow(tg, frame, true);
+    g.imageSmoothingEnabled = false; g.drawImage(THUMB, 0, 0, 240, 135);
+    if (id === 'random') { g.fillStyle = 'rgba(5,6,15,0.55)'; g.fillRect(0, 0, 240, 135); drawText(g, '?', 120, 44, 6, (frame >> 3) & 1 ? 'gold' : 'fire', 'c'); }
+  }
+}
+function goStage() { $('btn-stage-go').textContent = pendingMode === 'solo' ? 'FIGHT!' : 'NEXT'; buildStages(); show('s-stage'); }
 /* ---- buttons ---- */
-$('btn-solo').onclick = () => { audioInit(); pendingMode = 'solo'; $('btn-fight').textContent = 'FIGHT!'; buildCards(); show('s-select'); };
+$('btn-solo').onclick = () => { audioInit(); pendingMode = 'solo'; $('btn-fight').textContent = 'NEXT'; buildCards(); show('s-select'); };
 $('btn-online').onclick = () => { audioInit(); pendingMode = 'online'; $('btn-fight').textContent = 'NEXT'; buildCards(); show('s-select'); };
 $('btn-howto').onclick = () => show('s-howto');
 $('btn-howto-back').onclick = () => show('s-title');
 $('btn-sel-back').onclick = () => show('s-title');
-$('btn-fight').onclick = () => {
+$('btn-fight').onclick = () => { audioInit(); goStage(); };
+$('btn-stage-back').onclick = () => show('s-select');
+$('btn-stage-go').onclick = () => {
   audioInit();
-  if (pendingMode === 'solo') { const pool = CHAR_IDS.filter(c => c !== pick), q = QS.get('cpu'); startSolo(pick, CHARS[q] ? q : pool[Math.floor(Math.random() * pool.length)]); }
+  if (pendingMode === 'solo') { const pool = CHAR_IDS.filter(c => c !== pick), q = QS.get('cpu'); startSolo(pick, CHARS[q] ? q : pool[Math.floor(Math.random() * pool.length)], stagePick); }
   else { $('srv').value = $('srv').value || localStorage.getItem('tbb-server') || defaultServer(); $('net-status').textContent = ''; $('bigcode').textContent = ''; show('s-online'); }
 };
-$('btn-online-back').onclick = () => { netClose(); show('s-select'); };
+$('btn-online-back').onclick = () => { netClose(); goStage(); };
 $('b-pause').onclick = () => { if (!G) return; if (G.mode === 'solo') paused = true; $('btn-resume').style.display = G.mode === 'solo' ? '' : 'none'; $('btn-restart').style.display = G.mode === 'guest' ? 'none' : ''; show('s-pause'); };
 $('btn-resume').onclick = () => { paused = false; localIn.clear(); show(null); };
-$('btn-restart').onclick = () => { paused = false; show(null); if (G.mode === 'solo') startSolo(G.chars[0], G.chars[1]); else if (G.mode === 'host') hostStart(G.chars[0], G.chars[1]); };
+$('btn-restart').onclick = () => { paused = false; show(null); if (G.mode === 'solo') startSolo(G.chars[0], G.chars[1], G.stage); else if (G.mode === 'host') hostStart(G.chars[0], G.chars[1], G.stage); };
 $('btn-quit').onclick = () => quitToMenu();
 $('btn-menu').onclick = () => quitToMenu();
 $('btn-rematch').onclick = () => {
-  if (G.mode === 'solo') startSolo(G.chars[0], G.chars[1]);
-  else if (G.mode === 'host') hostStart(G.chars[0], G.chars[1]);
+  if (G.mode === 'solo') startSolo(G.chars[0], G.chars[1], G.stage);
+  else if (G.mode === 'host') hostStart(G.chars[0], G.chars[1], G.stage);
   else { netSend({ t: 'rematch' }); $('end-note').textContent = 'Asked the host for a rematch...'; }
 };
 function quitToMenu() { paused = false; netClose(); G = null; inGameUI(false); show('s-title'); }
-function startSolo(c1, c2) { me = 0; paused = false; lastEv = 0; localIn.clear(); newMatch('solo', c1, c2); show(null); inGameUI(true); }
+function startSolo(c1, c2, st) { me = 0; paused = false; lastEv = 0; localIn.clear(); newMatch('solo', c1, c2, st); show(null); inGameUI(true); }
 
 /* ---- touch: floating stick - touch anywhere on the left half, the stick appears under your thumb ---- */
 function vsSkip() { if (G && G.phase === 'vs') localIn.latch.lp = true; }
@@ -2548,11 +2834,12 @@ $('btn-join').onclick = () => {
   if (!/^[A-Z]{4}$/.test(code)) { status('Room codes are 4 letters.'); return; }
   netOpen(() => { NET.role = 'guest'; netSend({ t: 'join', code, char: pick }); });
 };
-function hostStart(c1, c2) { me = 0; paused = false; lastEv = 0; localIn.clear(); remoteIn.clear(); newMatch('host', c1, c2); show(null); inGameUI(true); netSend({ t: 'snap', g: G }); }
+// the host's stage pick rides along to the guest in every snapshot (G.stage); the guest's own pick is ignored
+function hostStart(c1, c2, st) { me = 0; paused = false; lastEv = 0; localIn.clear(); remoteIn.clear(); newMatch('host', c1, c2, st); show(null); inGameUI(true); netSend({ t: 'snap', g: G }); }
 function onNet(m) {
   switch (m.t) {
-    case 'created': NET.code = m.code; $('bigcode').textContent = m.code; status('Room ready. On the other phone: ONLINE 2P → pick a fighter → type this code → JOIN.'); break;
-    case 'peer': status('Opponent joined!'); hostStart(pick, CHARS[m.char] ? m.char : CHAR_IDS.filter(c => c !== pick)[Math.floor(Math.random() * (CHAR_IDS.length - 1))]); break;
+    case 'created': NET.code = m.code; $('bigcode').textContent = m.code; status('Room ready. On the other phone: ONLINE 2P → pick a fighter → NEXT → NEXT → type this code → JOIN.'); break;
+    case 'peer': status('Opponent joined!'); hostStart(pick, CHARS[m.char] ? m.char : CHAR_IDS.filter(c => c !== pick)[Math.floor(Math.random() * (CHAR_IDS.length - 1))], stagePick); break;
     case 'joined': NET.code = m.code; me = 1; lastEv = 0; localIn.clear(); status('Joined room ' + m.code + '. Waiting for the host...'); break;
     case 'snap':
       if (NET.role !== 'guest') break;
@@ -2562,7 +2849,7 @@ function onNet(m) {
       if (G.phase !== 'matchEnd' && $('s-end').classList.contains('on')) show(null);
       break;
     case 'in': if (NET.role === 'host') { remoteIn.held = m.h || {}; for (const k of (m.p || [])) remoteIn.latch[k] = true; } break;
-    case 'rematch': if (NET.role === 'host' && G && G.phase === 'matchEnd') hostStart(G.chars[0], G.chars[1]); break;
+    case 'rematch': if (NET.role === 'host' && G && G.phase === 'matchEnd') hostStart(G.chars[0], G.chars[1], G.stage); break;
     case 'left': status('Opponent left the room.'); const wasGame = !!G; netClose(); G = null; inGameUI(false); show('s-online'); if (wasGame) status('Opponent left the match.'); break;
     case 'err': status(m.msg || 'Server error.'); netClose(); break;
   }
@@ -2599,6 +2886,7 @@ function loop(now) {
     }
   }
   if ($('s-select').classList.contains('on')) drawCards();
+  if ($('s-stage').classList.contains('on') && !(frame & 1)) drawStageCards();
   const vsOn = !!(G && G.phase === 'vs'); if (vsOn !== $('ctl').classList.contains('vs')) $('ctl').classList.toggle('vs', vsOn);
   if (!G && $('s-title').classList.contains('on') && (frame & 1)) paintLogo(frame);
   render(); qualTick(dt);
@@ -2608,7 +2896,7 @@ requestAnimationFrame(loop);
 /* ---- test / debug hooks ---- */
 window.FIGHT = {
   get G() { return G; },
-  state() { if (!G) return { phase: 'menu' }; const f = G.f.map(x => ({ ch: x.ch, x: Math.round(x.x), y: Math.round(x.y), hp: x.hp, red: x.red, st: x.st, mv: x.mv, face: x.face, buff: x.buff || 0, dz: x.dz || 0, tcd: x.tcd || 0 })); return { mode: G.mode, phase: G.phase, round: G.round, wins: G.wins, timer: G.timer, banner: G.banner && G.banner.txt, result: G.result, f, stat: G.stat, proj: G.proj.length, tick: G.tick, me, snaps: NET.snaps, code: NET.code, q: QUAL.lv, crt: CRT.on, steal: G.steal && { i: G.steal.i, v: G.steal.v, item: G.steal.item, t: G.steal.t, T: G.steal.T }, kiss: !!G.kiss, ctr: !!G.ctr, sfz: !!G.sfz, combo: G.combo && G.combo.n, vsLine: G.vsLine, banter: G.f && banterFor(G.f[0].ch, G.f[1].ch, G.vsLine), pt: G.pt }; },
+  state() { if (!G) return { phase: 'menu' }; const f = G.f.map(x => ({ ch: x.ch, x: Math.round(x.x), y: Math.round(x.y), hp: x.hp, red: x.red, st: x.st, mv: x.mv, face: x.face, buff: x.buff || 0, dz: x.dz || 0, tcd: x.tcd || 0 })); return { mode: G.mode, phase: G.phase, round: G.round, wins: G.wins, timer: G.timer, banner: G.banner && G.banner.txt, result: G.result, f, stat: G.stat, proj: G.proj.length, tick: G.tick, me, snaps: NET.snaps, code: NET.code, q: QUAL.lv, crt: CRT.on, steal: G.steal && { i: G.steal.i, v: G.steal.v, item: G.steal.item, t: G.steal.t, T: G.steal.T }, kiss: !!G.kiss, ctr: !!G.ctr, sfz: !!G.sfz, combo: G.combo && G.combo.n, vsLine: G.vsLine, stage: G.stage, banter: G.f && banterFor(G.f[0].ch, G.f[1].ch, G.vsLine), pt: G.pt }; },
   setHp(i, v) { G.f[i].hp = v; G.f[i].red = v; },
   cpu(on) { cpuOn = on; cpuIn.clear(); },
   press(i, k) { (i === me ? localIn : G.mode === 'host' ? remoteIn : cpuIn).latch[k] = true; },

@@ -34,6 +34,12 @@ table.keys td:first-child{color:#ffd23a;text-align:right}
 .card canvas{width:100%;aspect-ratio:7/5;height:auto;max-height:26vh;object-fit:contain;image-rendering:pixelated;display:block}
 .card .nm{font-size:min(4.2vh,16px);color:#ffd23a}
 .card .ds{font-size:min(2.7vh,10.5px);font-family:Arial,sans-serif;font-weight:bold;color:#cfd6ff;min-height:2.6em}
+.scards{display:flex;gap:min(1.6vw,14px);margin:8px 0;justify-content:center}
+.scard{width:min(29vw,250px);border:3px solid #000;border-radius:8px;background:linear-gradient(#1c2450,#0d1128);padding:4px 4px 6px;cursor:pointer}
+.scard.sel{outline:4px solid #ffd23a;background:linear-gradient(#3b2a10,#1a1206)}
+.scard canvas{width:100%;aspect-ratio:16/9;height:auto;max-height:34vh;object-fit:cover;image-rendering:pixelated;display:block;border:2px solid #000}
+.scard .nm{font-size:min(3.8vh,15px);color:#ffd23a;margin-top:4px}
+.scard .ds{font-size:min(2.6vh,10px);font-family:Arial,sans-serif;font-weight:bold;color:#cfd6ff}
 .stat{display:flex;align-items:center;gap:4px;font-size:min(2.5vh,10px);font-family:Arial,sans-serif;font-weight:bold}
 .stat b{width:46px;text-align:right;color:#9fd0ff}
 .stat i{flex:1;height:6px;background:#222;border:1px solid #000;position:relative}
@@ -115,6 +121,13 @@ input.code{width:5.2em;text-transform:uppercase;letter-spacing:4px}
   <div style="color:#ffd23a;font-size:min(5vh,20px)">CHOOSE YOUR FIGHTER</div>
   <div class="cards" id="cards"></div>
   <div class="row"><button class="btn dim" id="btn-sel-back">BACK</button><button class="btn" id="btn-fight">FIGHT!</button></div>
+</div>
+
+<div class="scr" id="s-stage">
+  <div style="color:#ffd23a;font-size:min(5vh,20px)">CHOOSE YOUR STAGE</div>
+  <div class="scards" id="stages"></div>
+  <div class="small" id="stage-note"></div>
+  <div class="row"><button class="btn dim" id="btn-stage-back">BACK</button><button class="btn" id="btn-stage-go">FIGHT!</button></div>
 </div>
 
 <div class="scr" id="s-online">

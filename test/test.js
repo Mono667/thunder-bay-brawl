@@ -38,8 +38,21 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   await page.tap('#pick-craig'); await W(page, 300);
   ok('craig selected', await page.$eval('#pick-craig', e => e.classList.contains('sel')));
   await page.screenshot({ path: '../shot-select.png' });
-  await page.tap('#btn-fight'); await W(page, 300);
+  await page.tap('#btn-fight'); await W(page, 400);
+  ok('stage select after character select', await page.isVisible('#s-stage') && !(await S(page)).mode);
+  ok('stage cards: BAY, ALLEY, RANDOM', (await page.$$eval('.scard', es => es.map(e => e.id).join(','))) === 'stage-bay,stage-alley,stage-random');
+  ok('stage names shown', (await page.textContent('#stages')).includes('BAY STREET') && (await page.textContent('#stages')).includes('MAY STREET ALLEY BAR') && (await page.textContent('#stages')).includes('RANDOM'));
+  ok('BAY STREET is the default', await page.$eval('#stage-bay', e => e.classList.contains('sel')));
+  ok('stage thumbnails painted', await page.$$eval('.scard canvas', cs => cs.every(c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 60) n++; return n > 3000; })));
+  ok('stage cards fit on screen', await page.$$eval('.scard, #btn-stage-go', es => es.every(e => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1; })));
+  await page.tap('#stage-alley'); await W(page, 500);
+  ok('tap picks a stage', await page.$eval('#stage-alley', e => e.classList.contains('sel')) && !(await page.$eval('#stage-bay', e => e.classList.contains('sel'))));
+  await page.screenshot({ path: '../shot-stage-select.png' });
+  await page.tap('#btn-stage-back'); await W(page, 150); ok('stage BACK returns to fighters', await page.isVisible('#s-select'));
+  await page.tap('#btn-fight'); await W(page, 200); await page.tap('#stage-bay'); await W(page, 100);
+  await page.tap('#btn-stage-go'); await W(page, 300);
   let s = await S(page);
+  ok('CPU match uses the picked stage (' + s.stage + ')', s.stage === 'bay');
   ok('match started: ' + s.mode + ' ' + s.f.map(f => f.ch).join(' vs '), s.mode === 'solo' && s.f[0].ch === 'craig' && s.f[1].ch === 'aj');
   ok('VS showdown first', s.phase === 'vs');
   ok('VS banter for CRAIG vs AJ: "' + (s.banter || []).join('" / "') + '"', Array.isArray(s.banter) && s.banter.length === 2 && s.banter.every(t => t && t.length > 3));
@@ -190,12 +203,13 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
     await page.keyboard.down('ArrowRight'); await W(page, 40); await page.keyboard.up('ArrowDown'); await W(page, 40);
     await page.keyboard.press(btn); await page.keyboard.up('ArrowRight');
   };
-  const solo = async (pk, url) => {
+  const solo = async (pk, url, st) => {
     await page.goto(BASE + url); await W(page, 900); await page.tap('#btn-solo'); await W(page, 150); await page.tap('#pick-' + pk); await page.tap('#btn-fight');
+    await W(page, 100); await page.tap('#stage-' + (st || 'bay')); await page.tap('#btn-stage-go');
     await until(page, x => x.phase === 'vs', 2000); await page.evaluate(() => FIGHT.skipVS());
     await until(page, x => x.phase === 'fight', 6000); await page.evaluate(() => FIGHT.cpu(false));
   };
-  await page.tap('#btn-solo'); await W(page, 150); await page.tap('#pick-craig'); await page.tap('#btn-fight');
+  await page.tap('#btn-solo'); await W(page, 150); await page.tap('#pick-craig'); await page.tap('#btn-fight'); await W(page, 100); await page.tap('#btn-stage-go');
   await until(page, x => x.phase === 'vs', 2000); await page.evaluate(() => FIGHT.skipVS());
   await until(page, x => x.phase === 'fight', 6000);
   await page.evaluate(() => FIGHT.cpu(false));
@@ -325,13 +339,36 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   await W(page, 600);
   ok('quality level stays 2 with ?q=2', (await S(page)).q === 2);
   await page.tap('#b-pause'); await W(page, 150); await page.tap('#btn-quit');
+  // MAY STREET ALLEY BAR: second stage, live fight screenshot, patrons cheer on KO, no bubble over the win card
+  await solo('dirty', '/?q=2&cpu=bino', 'alley');
+  s = await S(page); ok('MAY STREET ALLEY BAR picked (stage ' + s.stage + ')', s.stage === 'alley' && s.f[0].ch === 'dirty');
+  ok('alley layers built (sky/far/mid/near/crowd/fg, neon sign, 3 lamps)', await page.evaluate(() => { const A = STAGES.alley; return A.sky && A.far && A.mid && A.near && A.crowd.length === 6 && A.fg && A.neon[0].txt === 'THE MAY ST. TAVERN' && A.neon[0].on && A.lamps.length === 3; }));
+  ok('stage registry: BAY STREET still stage 1', await page.evaluate(() => STAGE_INFO[0].id === 'bay' && STAGE_INFO[1].name === 'MAY STREET ALLEY BAR'));
+  await page.evaluate(() => { FIGHT.place(0, 370); FIGHT.place(1, 420); }); await W(page, 120);
+  await page.evaluate(() => FIGHT.press(0, 'hp')); await W(page, 150);
+  await page.screenshot({ path: '../shot-alleybar.png' });
+  s = await until(page, x => x.f[1].hp < 1000, 900); ok('combat on the alley stage (BINO hp ' + s.f[1].hp + ')', s.f[1].hp < 1000);
+  await page.evaluate(() => { window._wb = { me: 0, n: 0 }; const o = worldBubble; window.worldBubble = function () { _wb.n++; if (FIGHT.G.phase === 'matchEnd') _wb.me++; return o.apply(this, arguments); }; });
+  await W(page, 900);
+  for (let r = 0; r < 2; r++) { await ko(); await until(page, x => x.phase === 'fight' || x.phase === 'matchEnd', 9000); if ((await S(page)).phase === 'matchEnd') break; await page.evaluate(() => FIGHT.cpu(false)); }
+  s = await until(page, x => x.phase === 'matchEnd' && x.pt > 120, 9000);
+  ok('DIRTY wins on the alley (result ' + s.result + ')', s.phase === 'matchEnd' && s.result === 0);
+  const wb = await page.evaluate(() => _wb);
+  ok('win bubble shown in-round (' + wb.n + ') but never over the win card (' + wb.me + ')', wb.n > 0 && wb.me === 0);
+  await page.screenshot({ path: '../shot-alley-win.png' });
+  // RANDOM resolves to a real stage
+  for (let i = 0; i < 2; i++) { await solo('craig', '/?q=2&cpu=aj', 'random'); s = await S(page); ok('RANDOM stage -> ' + s.stage, ['bay', 'alley'].includes(s.stage)); }
+  await page.tap('#b-pause'); await W(page, 150); await page.tap('#btn-quit');
 
   // ---------------- ONLINE (two phones through the server) ----------------
   const A = await mkPage(), B = await mkPage();
   for (const P of [A, B]) { await P.page.goto(BASE + '/?q=2'); await W(P.page, 900); await P.page.tap('#btn-online'); await W(P.page, 150); }
   ok('online select shows all 5', (await B.page.$$eval('.card', es => es.length)) === 5);
   await A.page.tap('#pick-dirty'); await B.page.tap('#pick-bino');
-  for (const P of [A, B]) { await P.page.tap('#btn-fight'); await W(P.page, 150); }
+  for (const P of [A, B]) { await P.page.tap('#btn-fight'); await W(P.page, 200); }
+  ok('online: stage select shows the host note', (await A.page.textContent('#stage-note')).includes('host'));
+  await A.page.tap('#stage-alley'); await B.page.tap('#stage-bay');   // guest's own pick must be ignored
+  for (const P of [A, B]) { await P.page.tap('#btn-stage-go'); await W(P.page, 150); }
   ok('server field defaults to page host', (await A.page.inputValue('#srv')) === new URL(BASE).host);
   await A.page.tap('#btn-create');
   await A.page.waitForFunction(() => /^[A-Z]{4}$/.test(document.getElementById('bigcode').textContent), null, { timeout: 4000 });
@@ -342,6 +379,7 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   let sb = await until(B.page, x => x.mode === 'guest' && x.phase === 'vs' && x.pt > 20, 4000);
   sa = await S(A.page);
   ok('guest sees the host\'s VS line ("' + (sb.banter || []).join('" / "') + '")', sb.phase === 'vs' && sb.vsLine === sa.vsLine && JSON.stringify(sb.banter) === JSON.stringify(sa.banter));
+  ok('guest gets the host\'s stage (host ' + sa.stage + ', guest ' + sb.stage + ')', sa.stage === 'alley' && sb.stage === 'alley');
   sb = await until(B.page, x => x.mode === 'guest' && x.phase === 'fight', 9000);
   ok('guest receives state (' + sb.snaps + ' snaps, me=' + sb.me + ')', sb.mode === 'guest' && sb.me === 1 && sb.snaps > 20);
   await A.page.evaluate(() => { FIGHT.place(0, 380); FIGHT.place(1, 416); });

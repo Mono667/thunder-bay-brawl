@@ -223,10 +223,17 @@ function newFighter(ch, i) {
   return { ch, i, x: STAGE_W / 2 + (i ? 70 : -70), y: 0, vx: 0, vy: 0, face: i ? -1 : 1, hp: C.hp, max: C.hp, red: C.hp, redDelay: 0,
     st: 'idle', t: 0, mv: null, mf: 0, hitC: false, airAtk: false, cr: false, blk: false, stun: 0, inv: 0, pb: 0, walkT: 0, buff: 0, tcd: 0 };
 }
-function newMatch(mode, c1, c2) {
+const STAGE_INFO = [
+  { id: 'bay', name: 'BAY STREET', sub: 'PORT ARTHUR, THUNDER BAY', takes: 'BAY STREET' },
+  { id: 'alley', name: 'MAY STREET ALLEY BAR', sub: 'FORT WILLIAM, THUNDER BAY', takes: 'MAY STREET' }
+];
+const STAGE_IDS = STAGE_INFO.map(s => s.id);
+function stageInfo(id) { return STAGE_INFO.find(s => s.id === id) || STAGE_INFO[0]; }
+function resolveStage(p) { return STAGE_IDS.includes(p) ? p : STAGE_IDS[Math.floor(Math.random() * STAGE_IDS.length)]; }   // 'random' (or anything unknown) rolls one
+function newMatch(mode, c1, c2, stage) {
   G = { mode, chars: [c1, c2], round: 1, wins: [0, 0], timer: 99, tt: 0, phase: 'intro', pt: 0, banner: null, f: [], proj: [], sparks: [],
     shake: 0, hitstop: 0, slow: 0, camX: (STAGE_W - W) / 2, ev: [], evId: 0, tick: 0, result: null, stat: { hits: [0, 0], blocks: [0, 0], specials: [0, 0] } };
-  startRound(); G.phase = 'vs'; G.pt = 0; G.banner = null; G.vsLine = Math.random() * 1000 | 0;   // face-to-face VS showdown before round 1
+  G.stage = resolveStage(stage); startRound(); G.phase = 'vs'; G.pt = 0; G.banner = null; G.vsLine = Math.random() * 1000 | 0;   // face-to-face VS showdown before round 1
 }
 const VS_T = 230, VS_SKIP = 200, SFZ_T = 16;   // showdown: slide in 0-30, P1 line 40-130, P2 reply 120-215
 function startRound() {
