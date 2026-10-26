@@ -1,0 +1,10 @@
+{
+  "name": "thunder-bay-brawl-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LAN/online relay + static file server for Thunder Bay Brawl",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "ws": "^8.18.0" }
+}

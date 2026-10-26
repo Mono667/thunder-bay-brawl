@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#05060f">
+<title>THUNDER BAY BRAWL</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{width:100%;height:100%;background:#05060f;overflow:hidden;touch-action:none;font-family:"Arial Black",Impact,Arial,sans-serif;color:#fff}
+#game{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
+.scr{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(5,6,15,.82);z-index:20;padding:8px 12px;text-align:center}
+.scr.on{display:flex}
+.logo{font-family:Impact,"Arial Black",sans-serif;font-size:min(13vh,64px);line-height:.95;letter-spacing:2px;background:linear-gradient(#fff36a,#ff8a1f 55%,#d8231a);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:2px #2a0400;filter:drop-shadow(3px 4px 0 #000)}
+.sub{font-size:min(3.6vh,14px);color:#9fd0ff;margin:4px 0 10px;letter-spacing:1px}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+.btn{font-family:inherit;font-size:min(4.6vh,18px);padding:min(2.2vh,10px) 18px;border:3px solid #000;border-radius:6px;background:linear-gradient(#ffd23a,#ff7a00);color:#200;box-shadow:0 4px 0 #000;letter-spacing:1px;touch-action:manipulation;cursor:pointer}
+.btn.alt{background:linear-gradient(#7fd3ff,#2a6cff);color:#001}
+.btn.dim{background:linear-gradient(#bbb,#777);color:#111}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+.small{font-size:min(3.1vh,12px);color:#cfd6ff;line-height:1.35;font-family:Arial,sans-serif;font-weight:bold}
+.panel{background:rgba(20,24,52,.92);border:3px solid #000;border-radius:8px;padding:8px 14px;max-width:96vw}
+table.keys{border-collapse:collapse;margin:4px auto}
+table.keys td{padding:1px 8px;font-family:Arial,sans-serif;font-weight:bold;font-size:min(3.1vh,12px);text-align:left}
+table.keys td:first-child{color:#ffd23a;text-align:right}
+.cards{display:flex;gap:14px;margin:6px 0}
+.card{width:min(30vw,210px);border:3px solid #000;border-radius:8px;background:linear-gradient(#1c2450,#0d1128);padding:4px 6px 6px;cursor:pointer}
+.card.sel{outline:4px solid #ffd23a;background:linear-gradient(#3b2a10,#1a1206)}
+.card canvas{width:100%;height:min(24vh,110px);image-rendering:pixelated;display:block}
+.card .nm{font-size:min(4.2vh,16px);color:#ffd23a}
+.card .ds{font-size:min(2.7vh,10.5px);font-family:Arial,sans-serif;font-weight:bold;color:#cfd6ff;min-height:2.6em}
+.stat{display:flex;align-items:center;gap:4px;font-size:min(2.5vh,10px);font-family:Arial,sans-serif;font-weight:bold}
+.stat b{width:46px;text-align:right;color:#9fd0ff}
+.stat i{flex:1;height:6px;background:#222;border:1px solid #000;position:relative}
+.stat i s{position:absolute;left:0;top:0;bottom:0;background:#ffd23a}
+input.tx{font-family:inherit;font-size:min(4.2vh,16px);padding:6px 8px;border:3px solid #000;border-radius:6px;width:13em;text-align:center;background:#fff;color:#000;-webkit-user-select:text;user-select:text}
+input.code{width:5.2em;text-transform:uppercase;letter-spacing:4px}
+#net-status{min-height:1.4em;color:#ffd23a;margin-top:6px}
+#bigcode{font-size:min(11vh,48px);letter-spacing:10px;color:#fff36a;-webkit-text-stroke:1px #000}
+/* touch controls */
+#ctl{position:absolute;inset:0;z-index:10;display:none;pointer-events:none}
+#ctl.on{display:block}
+#stick{position:absolute;left:calc(env(safe-area-inset-left) + 14px);bottom:12px;width:min(34vh,150px);height:min(34vh,150px);border-radius:50%;background:radial-gradient(rgba(255,255,255,.10),rgba(255,255,255,.04));border:3px solid rgba(255,255,255,.28);pointer-events:auto;touch-action:none}
+#knob{position:absolute;left:50%;top:50%;width:42%;height:42%;margin:-21% 0 0 -21%;border-radius:50%;background:rgba(255,210,58,.55);border:3px solid rgba(0,0,0,.6)}
+#stick .ar{position:absolute;color:rgba(255,255,255,.35);font-size:14px;font-family:Arial}
+#pad{position:absolute;right:calc(env(safe-area-inset-right) + 10px);bottom:10px;width:min(52vh,226px);height:min(40vh,172px);pointer-events:none}
+.pb{position:absolute;width:min(14.5vh,62px);height:min(14.5vh,62px);border-radius:50%;border:3px solid rgba(0,0,0,.7);color:#000;font-size:min(3.6vh,14px);display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;opacity:.78;box-shadow:0 3px 0 rgba(0,0,0,.6)}
+.pb.dn{transform:scale(.9);opacity:1;filter:brightness(1.35)}
+#b-lp{right:min(17vh,72px);top:0;background:#7fd3ff}#b-hp{right:0;top:min(4vh,16px);background:#2a8cff}
+#b-lk{right:min(17vh,72px);bottom:0;background:#ffb36b}#b-hk{right:0;bottom:min(4vh,16px);background:#ff5a2a}
+#b-bl{right:min(34vh,146px);bottom:min(9vh,40px);background:#bdbdbd;width:min(12.5vh,54px);height:min(12.5vh,54px);font-size:min(3vh,12px)}
+#b-sp{right:min(34vh,146px);top:min(-6vh,-26px);background:#ffd23a;width:min(12.5vh,54px);height:min(12.5vh,54px);font-size:min(3vh,12px)}
+#b-pause{position:absolute;left:50%;top:min(11vh,46px);transform:translateX(-50%);width:44px;height:26px;border-radius:6px;border:2px solid #000;background:rgba(255,255,255,.75);color:#000;font-size:12px;z-index:11;display:none;pointer-events:auto;touch-action:manipulation}
+#b-pause.on{display:block}
+#rotate{position:absolute;inset:0;z-index:50;background:#05060f;display:none;align-items:center;justify-content:center;flex-direction:column;font-size:20px;text-align:center;padding:20px}
+@media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
+</style>
+</head>
+<body>
+<canvas id="game" width="960" height="540"></canvas>
+
+<div id="ctl">
+  <div id="stick"><span class="ar" style="left:46%;top:2px">▲</span><span class="ar" style="left:46%;bottom:2px">▼</span><span class="ar" style="left:4px;top:42%">◀</span><span class="ar" style="right:4px;top:42%">▶</span><div id="knob"></div></div>
+  <div id="pad">
+    <div class="pb" id="b-sp">SP</div>
+    <div class="pb" id="b-bl">BLK</div>
+    <div class="pb" id="b-lp">LP</div><div class="pb" id="b-hp">HP</div>
+    <div class="pb" id="b-lk">LK</div><div class="pb" id="b-hk">HK</div>
+  </div>
+</div>
+<button id="b-pause">II</button>
+
+<div class="scr on" id="s-title">
+  <div class="logo">THUNDER BAY<br>BRAWL</div>
+  <div class="sub">BAY STREET · PORT ARTHUR · 2 AM · NO RULES</div>
+  <div class="row">
+    <button class="btn" id="btn-solo">1P VS CPU</button>
+    <button class="btn alt" id="btn-online">ONLINE 2P</button>
+    <button class="btn dim" id="btn-howto">CONTROLS</button>
+  </div>
+  <div class="small" style="margin-top:10px">Best of 3 rounds · 99 seconds · hold BACK or BLK to block</div>
+  <div class="small" style="margin-top:4px;opacity:.8">Keyboard: Arrows/WASD move · J/K punch · U/I kick · L block · O special · P pause</div>
+</div>
+
+<div class="scr" id="s-howto">
+  <div class="panel">
+    <div style="color:#ffd23a;font-size:min(4.6vh,18px);margin-bottom:4px">CONTROLS</div>
+    <table class="keys">
+      <tr><td>Move</td><td>Left stick ◀ ▶ (touch) · Arrows / A D (keys)</td></tr>
+      <tr><td>Jump / Crouch</td><td>Stick ▲ / ▼ · Up / W · Down / S</td></tr>
+      <tr><td>Punch</td><td>LP / HP buttons · J = light, K = heavy</td></tr>
+      <tr><td>Kick</td><td>LK / HK buttons · U = light, I = heavy</td></tr>
+      <tr><td>Block</td><td>Hold BACK (away from foe) or BLK · L key. Crouch-block lows, stand-block jump-ins</td></tr>
+      <tr><td>Special</td><td>▼ ↘ ▶ + Punch, or LP+HP together, or SP button · O key</td></tr>
+      <tr><td>Pause</td><td>II button · Esc / P</td></tr>
+    </table>
+    <div class="small">LYNX special: LAKEHEAD RUSH (dashing knee). THE PERSIAN special: DONUT TOSS (fireball).<br>Crouch + HK = sweep. Jump attacks hit crouchers. Specials can cancel a normal that connects.</div>
+  </div>
+  <button class="btn" id="btn-howto-back" style="margin-top:8px">BACK</button>
+</div>
+
+<div class="scr" id="s-select">
+  <div style="color:#ffd23a;font-size:min(5vh,20px)">CHOOSE YOUR FIGHTER</div>
+  <div class="cards" id="cards"></div>
+  <div class="row"><button class="btn dim" id="btn-sel-back">BACK</button><button class="btn" id="btn-fight">FIGHT!</button></div>
+</div>
+
+<div class="scr" id="s-online">
+  <div class="panel">
+    <div style="color:#7fd3ff;font-size:min(4.6vh,18px)">ONLINE 2P</div>
+    <div class="small" style="margin:2px 0 6px">Both phones on the same Wi-Fi as the server laptop.</div>
+    <div class="row" style="margin-bottom:6px"><span class="small">Server</span><input class="tx" id="srv" placeholder="192.168.1.20:8080" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="row"><button class="btn" id="btn-create">CREATE ROOM</button><span class="small">or</span><input class="tx code" id="code" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn alt" id="btn-join">JOIN</button></div>
+    <div id="bigcode"></div>
+    <div class="small" id="net-status"></div>
+  </div>
+  <button class="btn dim" id="btn-online-back" style="margin-top:8px">BACK</button>
+</div>
+
+<div class="scr" id="s-pause">
+  <div class="logo" style="font-size:min(10vh,44px)">PAUSED</div>
+  <div class="row" style="margin-top:10px"><button class="btn" id="btn-resume">RESUME</button><button class="btn alt" id="btn-restart">RESTART</button><button class="btn dim" id="btn-quit">QUIT</button></div>
+</div>
+
+<div class="scr" id="s-end" style="background:rgba(5,6,15,.35);justify-content:flex-end;padding-bottom:6vh">
+  <div class="row"><button class="btn" id="btn-rematch">REMATCH</button><button class="btn dim" id="btn-menu">MENU</button></div>
+  <div class="small" id="end-note" style="margin-top:6px"></div>
+</div>
+
+<div id="rotate"><div style="font-size:48px">⟳</div>Turn your phone sideways<br>to brawl.</div>
