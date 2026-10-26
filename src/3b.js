@@ -34,24 +34,24 @@ const ART = {
       ink: { neck: 1, chest: 1, armF: 1, armB: 1 }, win: 'pump', toss: 'ink' }
   },
   aj: {
-    D: { thigh: 17, shin: 16, ank: 3, torso: 23, neck: 3, ua: 12, fa: 12, shX: 2, hipH: 34, crH: 19, lean0: 0.06, tw: 8, hs: 1,
-      st: [9, -8], gF: [9, -3], gB: [6, 1], legW: [7, 6], armW: [5.2, 4.6], fist: 2.7, walkDiv: 3, stride: 6 },
+    D: { thigh: 20, shin: 19, ank: 3, torso: 32, neck: 2.5, ua: 15, fa: 14.5, shX: 4, hipH: 40, crH: 24, lean0: 0.04, tw: 14.5, hs: 1.12,
+      st: [12, -11], gF: [11, 2], gB: [7, 6], legW: [12.5, 10.5], armW: [10.4, 9], fist: 4.8, walkDiv: 5, stride: 5 },
     M: { skin: ['#6a3a28', '#b07656', '#dea282', '#f8c8a4'], hair: ['#3a2814', '#6a4a28', '#8a6a40', '#a8885a'],
       top: ['#050508', '#121218', '#24242e', '#3c3c4a'], print: ['#8a2a08', '#e05a1a', '#ff9a4a'],
       pants: ['#0a1a4a', '#1a3a8a', '#3a6ac8', '#7aa8f0'], pat: ['#081028', '#bcd8ff'], ink: ['#1a2030', '#2c3a4e'],
       can: ['#4a5060', '#98a2b4', '#d8dee8', '#ffffff'], misc: ['#f4f4f4', '#6a1a14', '#f4f0e8', '#3a0a08'] },
     L: { top: 'tee', sleevePrint: 1, hemPrint: 1, lower: 'shorts', pattern: 1, feet: 'bare', footInk: 1, hair: 'buzz', beard: 'stubble',
-      ink: { neck: 1, armF: 1, armB: 1 }, can: 1, win: 'can' }
+      ink: { neck: 1, armF: 1, armB: 1 }, can: 1, muscle: 1, win: 'can' }
   },
   bino: {
-    D: { thigh: 18, shin: 17, ank: 3, torso: 28, neck: 2, ua: 13.5, fa: 13, shX: 3, hipH: 36, crH: 21, lean0: 0.05, tw: 12, hs: 1.12,
-      st: [11, -10], gF: [10, 3], gB: [6, 6], legW: [10.5, 8.5], armW: [8.6, 7.2], fist: 4, walkDiv: 4, stride: 5 },
+    D: { thigh: 17.5, shin: 16.5, ank: 3, torso: 26, neck: 2, ua: 13, fa: 12.5, shX: 2.5, hipH: 35, crH: 20, lean0: 0.1, tw: 10.4, hs: 1.08,
+      st: [11, -9], gF: [10, -2], gB: [7, 2], legW: [9.4, 7.8], armW: [7.6, 6.4], fist: 3.6, walkDiv: 3, stride: 6 },
     M: { skin: ['#5a2e18', '#9a5a36', '#cc8a5c', '#eab088'], hair: ['#6a1a04', '#b0400e', '#e8661e', '#ffa04a'],
       hat: ['#5a0606', '#a81812', '#e03a22', '#ff7a5a'], pants: ['#0c1018', '#1a2232', '#2c3a54', '#465a7c'],
       shoe: ['#1c1008', '#3a2414', '#5a3c22', '#7a5834'], chain: ['#3e4654', '#808ca0', '#c4d0e0', '#f4f8ff'],
       misc: ['#3aa0ff', '#6a1a14', '#f4f0e8', '#3a0a08'] },
     L: { top: 'none', muscle: 1, lower: 'pants', feet: 'boot', hair: 'curly', beard: 'huge', hat: 'snapback', chain: 1, belt: 1,
-      eyeC: 1, win: 'flex' }
+      eyeC: 1, win: 'flex', toss: 'chain' }
   },
   sara: {
     D: { thigh: 17, shin: 17, ank: 3, torso: 22, neck: 3.4, ua: 12, fa: 11.5, shX: 1.5, hipH: 35, crH: 19, lean0: 0.06, tw: 6.9, hs: 0.96,
@@ -190,6 +190,13 @@ function canProp(g, p, d, M) {  // silver drinks can, unbranded
   const T = (x, y) => A2(A2(p, M2(d, x)), M2(up, y));
   shadeShape(g, polyP([T(-2.4, -4.4), T(2.4, -4.4), T(2.4, 4.2), T(-2.4, 4.2)]), [C[0], C[1], C[2]], 1.2, 0.8);
   line(g, T(-2, -3.6), T(2, -3.6), 1, C[3]); line(g, T(-1.4, -1), T(-1.4, 2.6), 1, C[3]); line(g, T(-2, 1), T(2, 1), 1, M.print ? M.print[1] : C[0]);
+}
+function chainSpark(g, c, s, a) {   // CHAIN SPARK: a spinning loop of chain crackling with sparks
+  s = s || 1; a = a || 0; const pts = [];
+  for (let k = 0; k <= 8; k++) { const t = a + k / 8 * Math.PI * 2; pts.push([c[0] + Math.cos(t) * 4.6 * s, c[1] + Math.sin(t) * 3.4 * s]); }
+  chainLinks(g, pts, [FXP[2], FXP[9], FXP[10], FXP[5]], 1.3 * s);
+  for (let k = 0; k < 4; k++) { const t = a * 1.7 + k * 1.57, r = 6.2 * s; line(g, [c[0] + Math.cos(t) * r * 0.6, c[1] + Math.sin(t) * r * 0.6], [c[0] + Math.cos(t + 0.3) * r, c[1] + Math.sin(t + 0.3) * r], 1, k % 2 ? FXP[4] : FXP[5], true); }
+  px(g, c, FXP[10], 2, 2);
 }
 function chainLinks(g, pts, C, r) {   // a run of steel links along a polyline
   r = r || 1.6; let k = 0;
@@ -464,7 +471,28 @@ function animsFor(ch) {
     Q(D, { fHa: [30, -60], reach: 'fH', reachMax: 6, lean: ln + 0.3, fF: [D.st[0] + 6, ank], bH: [-6, 6], chain: 'out2', tip, expr: 'l' }),
     Q(D, { fH: [16, -2], hip: [3, hy], lean: ln + 0.2, fF: [D.st[0] + 4, ank], chain: 'curl', tip }),
     Q(D, { fH: [11, 1], hip: [1, hy], lean: ln + 0.08, chain: 'hang' })]); }
-  if (MV.sp2) add('sp2', { ph: ['s', 's', 'a', 'a', 'r'] }, [
+  if (SP.anim === 'grab') { const top = -D.hipH - D.torso - 26; add('sp', { ph: ['s', 's', 'a', 'r', 'r', 'r'] }, [
+    Q(D, { hip: [-2, hy + 2], lean: ln - 0.05, fH: [-4, 6], bH: [-6, 6], expr: 'g' }),
+    Q(D, { hip: [3, hy + 3], lean: ln + 0.3, fF: [D.st[0] + 5, ank], fHa: [30, -58], bHa: [28, -50], expr: 's' }),
+    Q(D, { hip: [4, hy + 3], lean: ln + 0.34, fF: [D.st[0] + 6, ank], fHa: [32, -60], bHa: [30, -52], expr: 'l' }),
+    Q(D, { hip: [0, hy - 1], lean: -0.22, tilt: -0.2, fHa: [6, top], bHa: [-2, top + 2], expr: 'l', hairK: -2 }),
+    crouchQ(D, { hip: [3, -D.crH - 4], lean: ln + 0.55, fH: [16, 12], bH: [13, 12], expr: 's', speedV: 1 }),
+    Q(D, { hip: [1, hy + 3], lean: ln + 0.12, fH: [10, 2], expr: 's' })]); }
+  if (MV.sp2 && MV.sp2.anim === 'stomp') add('sp2', { ph: ['s', 's', 's', 'a', 'r', 'r'] }, [
+    Q(D, { hip: [-1, hy], lean: ln - 0.08, fF: [9, hy + 24], fH: [-2, -10], bH: [-6, -8], expr: 'g' }),
+    Q(D, { hip: [-2, hy - 1], lean: ln - 0.14, fF: [10, hy + 18], fH: [-4, -16], bH: [-8, -14], expr: 'l', hairK: -2 }),
+    Q(D, { hip: [-2, hy - 2], lean: ln - 0.16, fF: [11, hy + 16], fH: [-4, -18], bH: [-8, -16], expr: 'l', hairK: -3 }),
+    Q(D, { hip: [2, hy + 7], lean: ln + 0.28, fF: [D.st[0] + 6, ank], bF: [D.st[1] - 4, ank], fH: [12, 12], bH: [8, 12], expr: 's', speedV: 2 }),
+    Q(D, { hip: [1, hy + 5], lean: ln + 0.2, fF: [D.st[0] + 5, ank], fH: [10, 8], bH: [6, 8], expr: 's' }),
+    Q(D, { hip: [0, hy + 2], lean: ln + 0.08 })]);
+  if (MV.sp2 && MV.sp2.anim === 'fury') { const tip = T('sp2', 4), lo = A2(tip, [-6, 14]), hi = A2(tip, [-8, -14]); add('sp2', { ph: ['s', 'a', 'a', 'a', 'a', 'r'] }, [
+    Q(D, { fH: [-12, -6], lean: ln - 0.1, hip: [-3, hy], bH: [-6, 2], chain: 'back', expr: 'g' }),
+    Q(D, { fHa: [24, -70], reach: 'fH', reachMax: 6, bH: [-2, 4], lean: ln + 0.3, fF: [D.st[0] + 6, ank], chain: 'out', tip: hi, expr: 'l', speed: 1 }),
+    Q(D, { fH: [4, 6], bHa: [26, -48], lean: ln + 0.34, fF: [D.st[0] + 7, ank], chain: 'out2', tip: lo, expr: 'l', speed: 2, hairK: 2 }),
+    Q(D, { fHa: [26, -60], reach: 'fH', reachMax: 6, bH: [-4, 4], lean: ln + 0.32, fF: [D.st[0] + 6, ank], chain: 'out', tip, expr: 'l', speed: 1, hairK: -1 }),
+    Q(D, { fH: [16, -4], bHa: [24, -40], lean: ln + 0.36, fF: [D.st[0] + 8, ank], chain: 'curl', tip, expr: 'l', speed: 2, hairK: 3 }),
+    Q(D, { fH: [11, 1], hip: [1, hy], lean: ln + 0.08, chain: 'hang' })]); }
+  if (MV.sp2 && MV.sp2.tele) add('sp2', { ph: ['s', 's', 'a', 'a', 'r'] }, [
     crouchQ(D, { hip: [-1, -D.crH - 2], lean: ln + 0.5, fH: [-4, 8], bH: [-8, 6], expr: 's' }),
     air({ hip: [0, hy - 2], fF: [6, hy + 24], bF: [-4, hy + 26], fH: [4, -16], bH: [-2, -18], lean: -0.1, expr: 's', hairK: -3 }),
     Q(D, { hip: [-7, -27], lean: -0.42, fF: [13, -1], kick: 'point', bF: [-4, -13], fH: [-8, -6], bH: [-11, -2], expr: 's', hairK: -4, speedV: 1 }),
@@ -493,6 +521,7 @@ function paintFrame(g, ch, q) {
   paintFighter(g, J, q, D, M, L, false);
   if (q.hold === 'ink') inkBlob(g, A2(J.fH, [0, -3.5]), 0.85);
   if (q.hold === 'wire') wireCoil(g, A2(J.fH, [0, -3.5]), 0.75, 0);
+  if (q.hold === 'chain') chainSpark(g, A2(J.fH, [0, -3.5]), 0.7, 0.6);
   if (q.peace) { line(g, A2(J.fH, [-0.6, -2]), A2(J.fH, [-1.6, -6]), 1, M.skin[2], true); line(g, A2(J.fH, [0.8, -2]), A2(J.fH, [1.8, -6]), 1, M.skin[2], true); }
 }
 function buildSheet(ch) {

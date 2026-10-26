@@ -9,8 +9,8 @@ A mobile-first 2D street fighter in the style of SF2 and MK3, set on Bay Street 
 ## What's in it
 - **Fighters** (procedural pixel art, generated at load: 2–3 tone cel shading, dark outlines, and multi-frame animations for idle, walk, jump, crouch, every attack with anticipation/active/recovery frames, block, hit, knockdown, get-up, win and specials). All four are stylized likenesses drawn in code, never photos:
   - **CRAIG** is a scrappy all-round brawler with 1000 HP. Special: **INK SPLASH**, a thrown blob of tattoo ink.
-  - **AJ** is a fast all-rounder with 980 HP. Special: **BEVERAGE BREAK**, a can-first shoulder rush that knocks down.
-  - **BINO** is a slow, heavy bruiser with 1150 HP and huge reach. Special: **CHAIN WHIP**, a long steel-chain swing.
+  - **AJ** is the big man: the largest sprite, 1200 HP, the slowest walk and the heaviest hits with big knockback. His heavy attacks have armor against light hits, and he is hard to juggle. Specials: **BACKYARD SLAM** (SP), an unblockable grab and over-the-shoulder slam, and **PATIO QUAKE** (SP + down), a ground stomp that hits grounded opponents across a wide range.
+  - **BINO** is a shirtless, mid-speed rushdown fighter with 1000 HP, fast slashing chains and strong close pressure. Specials: **CHAIN SPARK** (SP), a thrown chain projectile, and **BEARD FURY** (SP + down), a forward-drifting multi-hit chain flurry.
   - **SARA** is the fastest fighter, with 900 HP, a dash (tap forward twice) and quick chains. Specials: **WIRE TOSS** (projectile) and **DROP IN** (SP + down, or down, down-forward, forward + kick), a teleport drop kick.
 - **Match flow:** best of 3 rounds with a 99-second timer. Pixel-font banners show ROUND 1, FIGHT!, K.O. (with a white flash), TIME and the winner. The match end shows the winner's portrait and taunt.
 - **Combat:**
@@ -34,6 +34,7 @@ A mobile-first 2D street fighter in the style of SF2 and MK3, set on Bay Street 
 | Light / heavy kick | LK / HK | U / I |
 | Block | BLK, or hold **back** | L, or hold back |
 | Special | SP, or LP+HP together, or ↓ ↘ → + punch | O, or ↓ ↘ → + J/K |
+| Special 2 (AJ, BINO, SARA) | SP + down, or ↓ ↘ → + kick | O + ↓, or ↓ ↘ → + U/I |
 | Pause | ❚❚ button | P / Esc |
 
 Add `?boxes` to the URL to see hitboxes (red) and hurtboxes (green).

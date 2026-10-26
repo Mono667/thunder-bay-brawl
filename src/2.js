@@ -22,7 +22,7 @@ const CHARS = {
     name: 'CRAIG', title: 'CRAIG', hp: 1000, walk: 2.3, back: 2.0, jumpV: 7.2, jumpX: 2.8, grav: 0.42, scale: 1, bodyW: 24,
     blurb: 'Scrappy brawler. Solid all-round hits. Special: INK SPLASH (thrown blob of tattoo ink).',
     taunt: 'YOU JUST GOT INKED!',
-    stats: { speed: 3, power: 3, reach: 3 },
+    stats: { speed: 3, power: 3, health: 3, reach: 3 },
     hurt: { st: [-13, 0, 26, 72], cr: [-14, 0, 28, 46], air: [-13, 8, 26, 58] },
     colors: { skin: '#eaa880', top: '#1a2030', top2: '#0b0712', pants: '#2e4466', hair: '#94663a', band: '#b0b0c0', glove: '#eaa880', shoe: '#1e1e22' },
     render: 'pixel', sprite: null,
@@ -42,54 +42,58 @@ const CHARS = {
     }
   },
   aj: {
-    name: 'AJ', title: 'AJ', hp: 980, walk: 2.7, back: 2.3, jumpV: 7.5, jumpX: 3.0, grav: 0.42, scale: 1, bodyW: 22,
-    blurb: 'Fast all-rounder. Quick pokes, sneaky range. Special: BEVERAGE BREAK (can-first shoulder rush).',
+    name: 'AJ', title: 'AJ', hp: 1200, walk: 1.4, back: 1.2, jumpV: 6.6, jumpX: 2.0, grav: 0.4, scale: 1, bodyW: 36, kb: 1.35, nojug: 1,
+    blurb: 'The big man. Slowest walk, biggest hits, shrugs off light hits during heavies. Specials: BACKYARD SLAM (SP, grab) and PATIO QUAKE (SP + down, ground quake).',
     taunt: 'HOLD MY CAN.',
-    stats: { speed: 4, power: 3, reach: 2 },
-    hurt: { st: [-12, 0, 24, 73], cr: [-13, 0, 26, 45], air: [-12, 8, 24, 57] },
+    stats: { speed: 1, power: 5, health: 5, reach: 4 },
+    hurt: { st: [-19, 0, 38, 98], cr: [-20, 0, 40, 60], air: [-18, 8, 36, 74] },
     colors: { skin: '#e2a682', top: '#121218', top2: '#e05a1a', pants: '#3a6ac8', hair: '#8a6a40', band: '#e05a1a', glove: '#e2a682', shoe: '#e2a682' },
     render: 'pixel', sprite: null,
     moves: {
-      lp:  { s: 3, a: 2, r: 6,  dmg: 30, hs: 13, bs: 9,  box: [12, 54, 24, 9],  lvl: 'mid', push: 2.6, anim: 'punch' },
-      hp:  { s: 6, a: 3, r: 14, dmg: 72, hs: 19, bs: 13, box: [12, 52, 32, 10], lvl: 'mid', push: 4.2, anim: 'punch', heavy: 1 },
-      lk:  { s: 4, a: 3, r: 8,  dmg: 40, hs: 14, bs: 9,  box: [10, 24, 30, 10], lvl: 'mid', push: 2.8, anim: 'kick' },
-      hk:  { s: 8, a: 4, r: 16, dmg: 85, hs: 20, bs: 13, box: [10, 42, 38, 12], lvl: 'mid', push: 4.8, anim: 'kick', heavy: 1 },
-      clp: { s: 3, a: 2, r: 6,  dmg: 25, hs: 12, bs: 8,  box: [12, 22, 24, 9],  lvl: 'low', push: 2.4, anim: 'punch' },
-      chp: { s: 6, a: 4, r: 16, dmg: 66, hs: 19, bs: 12, box: [8, 38, 26, 30],  lvl: 'mid', push: 3.4, anim: 'upper', heavy: 1 },
-      clk: { s: 4, a: 3, r: 8,  dmg: 30, hs: 13, bs: 8,  box: [10, 2, 32, 9],   lvl: 'low', push: 2.4, anim: 'sweep' },
-      chk: { s: 7, a: 4, r: 20, dmg: 70, hs: 20, bs: 13, box: [10, 1, 42, 9],   lvl: 'low', push: 3.0, anim: 'sweep', kd: 1, heavy: 1 },
-      jp:  { s: 4, a: 7, r: 0,  dmg: 55, hs: 17, bs: 11, box: [8, 26, 26, 16],  lvl: 'high', push: 3.0, anim: 'jpunch' },
-      jk:  { s: 5, a: 9, r: 0,  dmg: 65, hs: 18, bs: 12, box: [6, 6, 32, 16],   lvl: 'high', push: 3.4, anim: 'jkick', heavy: 1 },
-      sp:  { s: 8, a: 16, r: 16, dmg: 110, hs: 28, bs: 18, chip: 28, box: [6, 30, 34, 38], lvl: 'mid', push: 3.6, anim: 'rush', kd: 1, dash: 6.4, heavy: 1, name: 'BEVERAGE BREAK' }
+      lp:  { s: 4, a: 3, r: 9,  dmg: 40,  hs: 14, bs: 9,  box: [16, 68, 30, 11], lvl: 'mid', push: 3.4, anim: 'punch' },
+      hp:  { s: 9, a: 4, r: 20, dmg: 112, hs: 21, bs: 15, box: [16, 64, 44, 14], lvl: 'mid', push: 6.4, anim: 'punch', heavy: 1, armor: 1 },
+      lk:  { s: 6, a: 3, r: 11, dmg: 50,  hs: 15, bs: 10, box: [14, 30, 38, 12], lvl: 'mid', push: 3.6, anim: 'kick' },
+      hk:  { s: 11, a: 5, r: 22, dmg: 125, hs: 22, bs: 16, box: [14, 52, 52, 14], lvl: 'mid', push: 7.0, anim: 'kick', heavy: 1, armor: 1 },
+      clp: { s: 4, a: 3, r: 9,  dmg: 34,  hs: 13, bs: 9,  box: [16, 28, 30, 10], lvl: 'low', push: 3.0, anim: 'punch' },
+      chp: { s: 9, a: 5, r: 20, dmg: 105, hs: 21, bs: 14, box: [12, 50, 34, 34], lvl: 'mid', push: 4.6, anim: 'upper', heavy: 1, armor: 1 },
+      clk: { s: 6, a: 3, r: 11, dmg: 40,  hs: 14, bs: 9,  box: [14, 2, 40, 10],  lvl: 'low', push: 3.0, anim: 'sweep' },
+      chk: { s: 11, a: 5, r: 26, dmg: 100, hs: 22, bs: 15, box: [14, 1, 58, 10], lvl: 'low', push: 3.6, anim: 'sweep', kd: 1, heavy: 1, armor: 1 },
+      jp:  { s: 6, a: 7, r: 0,  dmg: 80,  hs: 18, bs: 12, box: [10, 34, 32, 18], lvl: 'high', push: 3.6, anim: 'jpunch', heavy: 1 },
+      jk:  { s: 7, a: 8, r: 0,  dmg: 90,  hs: 19, bs: 13, box: [8, 8, 40, 18],   lvl: 'high', push: 3.8, anim: 'jkick', heavy: 1 },
+      sp:  { s: 8, a: 4, r: 30, dmg: 150, hs: 30, bs: 0, box: [8, 26, 34, 46], lvl: 'mid', push: 4.0, anim: 'grab', kd: 1, heavy: 1, grab: 1, name: 'BACKYARD SLAM' },
+      sp2: { s: 18, a: 4, r: 24, dmg: 80, hs: 24, bs: 16, chip: 16, box: [-30, 0, 190, 14], lvl: 'low', push: 3.0, anim: 'stomp', kd: 1, heavy: 1, armor: 1, quake: 1, name: 'PATIO QUAKE' }
     }
   },
   bino: {
-    name: 'BINO', title: 'BINO', hp: 1150, walk: 1.6, back: 1.4, jumpV: 6.7, jumpX: 2.2, grav: 0.4, scale: 1, bodyW: 32,
-    blurb: 'Slow heavy bruiser. Huge reach, huge damage. Special: CHAIN WHIP (long-range steel chain swing).',
+    name: 'BINO', title: 'BINO', hp: 1000, walk: 2.6, back: 2.2, jumpV: 7.3, jumpX: 2.9, grav: 0.42, scale: 1, bodyW: 28,
+    blurb: 'Shirtless rushdown. Fast slashing strings, nasty up close. Specials: CHAIN SPARK (SP, thrown chain) and BEARD FURY (SP + down, chain flurry).',
     taunt: "BEARD'S UNDEFEATED, EH.",
-    stats: { speed: 1, power: 5, reach: 5 },
-    hurt: { st: [-17, 0, 34, 86], cr: [-18, 0, 36, 54], air: [-16, 8, 32, 66] },
-    colors: { skin: '#cc8a5c', top: '#b81a12', top2: '#6a0808', pants: '#2c3a54', hair: '#e8661e', band: '#c8d4e4', glove: '#cc8a5c', shoe: '#3e2a1a', beard: 1 },
+    stats: { speed: 4, power: 4, health: 3, reach: 3 },
+    hurt: { st: [-14, 0, 28, 82], cr: [-15, 0, 30, 52], air: [-14, 8, 28, 62] },
+    colors: { skin: '#cc8a5c', top: '#cc8a5c', top2: '#9a5a36', pants: '#2c3a54', hair: '#e8661e', band: '#c8d4e4', glove: '#cc8a5c', shoe: '#3e2a1a', beard: 1 },
     render: 'pixel', sprite: null,
+    chain: 1,
     moves: {
-      lp:  { s: 4, a: 3, r: 8,  dmg: 42,  hs: 14, bs: 9,  box: [14, 64, 32, 10], lvl: 'mid', push: 3.0, anim: 'punch' },
-      hp:  { s: 9, a: 4, r: 20, dmg: 115, hs: 21, bs: 15, box: [14, 60, 46, 14], lvl: 'mid', push: 6.0, anim: 'punch', heavy: 1 },
-      lk:  { s: 6, a: 3, r: 11, dmg: 52,  hs: 15, bs: 10, box: [12, 28, 38, 11], lvl: 'mid', push: 3.2, anim: 'kick' },
-      hk:  { s: 12, a: 5, r: 22, dmg: 135, hs: 22, bs: 16, box: [12, 46, 52, 14], lvl: 'mid', push: 6.6, anim: 'kick', heavy: 1 },
-      clp: { s: 4, a: 3, r: 8,  dmg: 36,  hs: 13, bs: 9,  box: [14, 26, 30, 9],  lvl: 'low', push: 2.8, anim: 'punch' },
-      chp: { s: 9, a: 5, r: 20, dmg: 105, hs: 21, bs: 14, box: [10, 48, 32, 30], lvl: 'mid', push: 4.0, anim: 'upper', heavy: 1 },
-      clk: { s: 6, a: 3, r: 11, dmg: 42,  hs: 14, bs: 9,  box: [12, 2, 40, 9],   lvl: 'low', push: 2.6, anim: 'sweep' },
-      chk: { s: 11, a: 5, r: 26, dmg: 105, hs: 22, bs: 15, box: [12, 1, 58, 9],  lvl: 'low', push: 3.2, anim: 'sweep', kd: 1, heavy: 1 },
-      jp:  { s: 6, a: 7, r: 0,  dmg: 82,  hs: 18, bs: 12, box: [8, 30, 30, 18],  lvl: 'high', push: 3.4, anim: 'jpunch', heavy: 1 },
-      jk:  { s: 7, a: 8, r: 0,  dmg: 92,  hs: 19, bs: 13, box: [6, 8, 36, 18],   lvl: 'high', push: 3.6, anim: 'jkick', heavy: 1 },
-      sp:  { s: 13, a: 5, r: 24, dmg: 120, hs: 26, bs: 16, chip: 26, box: [18, 50, 72, 14], lvl: 'mid', push: 5.0, anim: 'whip', kd: 1, heavy: 1, name: 'CHAIN WHIP' }
+      lp:  { s: 3, a: 2, r: 6,  dmg: 30, hs: 13, bs: 9,  box: [13, 60, 28, 10], lvl: 'mid', push: 2.2, anim: 'punch' },
+      hp:  { s: 6, a: 3, r: 14, dmg: 76, hs: 19, bs: 13, box: [13, 56, 38, 12], lvl: 'mid', push: 4.0, anim: 'punch', heavy: 1 },
+      lk:  { s: 4, a: 3, r: 8,  dmg: 38, hs: 14, bs: 9,  box: [12, 26, 34, 10], lvl: 'mid', push: 2.4, anim: 'kick' },
+      hk:  { s: 8, a: 4, r: 16, dmg: 86, hs: 20, bs: 13, box: [12, 44, 44, 13], lvl: 'mid', push: 4.6, anim: 'kick', heavy: 1 },
+      clp: { s: 3, a: 2, r: 6,  dmg: 24, hs: 12, bs: 8,  box: [13, 24, 28, 9],  lvl: 'low', push: 2.0, anim: 'punch' },
+      chp: { s: 6, a: 4, r: 16, dmg: 68, hs: 19, bs: 12, box: [10, 44, 30, 30], lvl: 'mid', push: 3.4, anim: 'upper', heavy: 1 },
+      clk: { s: 4, a: 3, r: 8,  dmg: 30, hs: 13, bs: 8,  box: [12, 2, 38, 9],   lvl: 'low', push: 2.2, anim: 'sweep' },
+      chk: { s: 8, a: 4, r: 20, dmg: 74, hs: 20, bs: 13, box: [12, 1, 48, 9],   lvl: 'low', push: 3.0, anim: 'sweep', kd: 1, heavy: 1 },
+      jp:  { s: 4, a: 7, r: 0,  dmg: 60, hs: 17, bs: 11, box: [8, 28, 28, 17],  lvl: 'high', push: 3.0, anim: 'jpunch' },
+      jk:  { s: 5, a: 8, r: 0,  dmg: 70, hs: 18, bs: 12, box: [6, 8, 34, 17],   lvl: 'high', push: 3.4, anim: 'jkick', heavy: 1 },
+      sp:  { s: 11, a: 1, r: 20, dmg: 80, hs: 23, bs: 15, chip: 20, box: [0, 0, 0, 0], lvl: 'mid', push: 3.2, anim: 'toss', heavy: 1, name: 'CHAIN SPARK',
+             proj: { vx: 4.8, w: 20, h: 14, y: 58, x: 26, art: 'chain' } },
+      sp2: { s: 7, a: 24, r: 18, dmg: 26, hs: 14, bs: 10, chip: 6, box: [14, 34, 56, 34], lvl: 'mid', push: 1.0, anim: 'fury', kd: 1, multi: 6, dash: 1.6, name: 'BEARD FURY' }
     }
   },
   sara: {
     name: 'SARA', title: 'SARA', hp: 900, walk: 3.1, back: 2.6, jumpV: 8.0, jumpX: 3.4, grav: 0.45, scale: 1, bodyW: 20,
     blurb: 'Fastest fighter. Dash (tap forward twice), quick chains. Specials: WIRE TOSS, and DROP IN (SP + down) teleport kick.',
     taunt: 'TOO SLOW!',
-    stats: { speed: 5, power: 2, reach: 3 },
+    stats: { speed: 5, power: 2, health: 2, reach: 3 },
     hurt: { st: [-11, 0, 22, 70], cr: [-12, 0, 24, 44], air: [-11, 8, 22, 56] },
     colors: { skin: '#f0c0a4', top: '#46464e', top2: '#2e2e34', pants: '#22304e', hair: '#140c0a', band: '#d8e0e8', glove: '#f0c0a4', shoe: '#1e1e22' },
     render: 'pixel', sprite: null,
@@ -263,6 +267,11 @@ function stepFighter(f, inp, o) {
         if (f.mf >= M.s && f.mf < M.s + M.a && !f.hitC) f.vx = M.dash * f.face; else f.vx *= 0.8;
         f.x += f.vx;
       }
+      if (M.multi && f.mf > M.s && f.mf < M.s + M.a && (f.mf - M.s) % M.multi === 0) f.hitC = false;   // BEARD FURY: every swipe can hit
+      if (M.quake && f.mf === M.s) {   // PATIO QUAKE: shockwave rolls along the ground
+        for (let k = -1; k < 6; k++) G.sparks.push({ x: f.x + f.face * (k * 30 + 10), y: 0, t: 0, k: 'D' });
+        G.shake = Math.max(G.shake, 9); ev('thud');
+      }
       if (M.proj && f.mf === M.s) {
         G.proj.push({ o: f.i, x: f.x + f.face * M.proj.x, y: M.proj.y, vx: M.proj.vx * f.face, w: M.proj.w, h: M.proj.h, t: 0, dead: 0, art: M.proj.art || 'ink' });
         ev('toss');
@@ -311,8 +320,15 @@ function tryBlock(d, lvl) {
 }
 function applyHit(a, d, M, at, fromProj) {
   const away = d.x >= a.x ? 1 : -1;
-  const sx = at[0], sy = at[1];
-  if (tryBlock(d, M.lvl)) {
+  const sx = at[0], sy = at[1], kb = CHARS[a.ch].kb || 1, DM = d.st === 'atk' ? moveDef(d) : null;
+  if (DM && DM.armor && !M.heavy && !M.grab && d.mf < DM.s + DM.a) {   // armored heavy: soak a light hit without flinching
+    damage(d, Math.round(M.dmg * 0.8));
+    G.sparks.push({ x: sx, y: sy, t: 0, k: 'b' }); G.hitstop = 3; G.stat.hits[a.i]++; ev('block');
+    if (!fromProj) { a.hitC = true; a.pb = -away * M.push * 0.6; }
+    if (d.hp <= 0) { d.st = 'kd'; d.vy = 5.5; d.vx = away * 3.2; d.y = 1; d.mv = null; d.t = 0; }
+    return;
+  }
+  if (!M.grab && tryBlock(d, M.lvl)) {
     d.st = 'block'; d.stun = M.bs; d.vx = away * M.push * 0.8; d.mv = null;
     damage(d, M.chip != null ? M.chip : Math.max(4, Math.round(M.dmg * 0.12)));
     G.sparks.push({ x: sx, y: sy, t: 0, k: 'b' }); G.hitstop = 4; G.stat.blocks[d.i]++; ev('block');
@@ -322,11 +338,12 @@ function applyHit(a, d, M, at, fromProj) {
     damage(d, M.dmg);
     d.mv = null; d.airAtk = true;
     if (d.mv === 'sp2' && d.y > 0) d.y = Math.max(d.y, 1);
-    if (d.y > 0 || M.kd || d.hp <= 0) { d.st = 'kd'; d.vy = d.hp <= 0 ? 5.5 : 4.5; d.vx = away * (d.hp <= 0 ? 3.2 : 2.2); d.y = Math.max(d.y, 1); }
-    else { d.st = 'hit'; d.stun = M.hs; d.vx = away * M.push; }
+    if (d.y > 0 || M.kd || d.hp <= 0) { d.st = 'kd'; d.vy = (d.hp <= 0 ? 5.5 : 4.5) * (CHARS[d.ch].nojug ? 0.75 : 1); d.vx = away * (d.hp <= 0 ? 3.2 : 2.2) * kb; d.y = Math.max(d.y, 1); }
+    else { d.st = 'hit'; d.stun = M.hs; d.vx = away * M.push * kb; }
+    if (M.grab) { d.x = a.x + a.face * 14; d.vy = 7.2; d.vx = -a.face * 3.0; d.y = Math.max(d.y, 2); G.shake = 10; }   // BACKYARD SLAM: up and over
     d.t = 0;   // animation clock only
     G.sparks.push({ x: sx, y: sy, t: 0, k: d.hp <= 0 ? 'K' : M.heavy ? 'H' : 'h' });
-    G.shake = Math.max(G.shake, M.heavy ? 6 : 3); G.hitstop = M.heavy ? 8 : 5; G.stat.hits[a.i]++;
+    G.shake = Math.max(G.shake, M.heavy ? 6 * kb : 3); G.hitstop = M.grab ? 12 : M.heavy ? 8 : 5; G.stat.hits[a.i]++;
     ev(M.heavy ? 'hitH' : 'hit');
   }
   if (!fromProj) {
@@ -341,11 +358,13 @@ function checkHits(a, d) {
   const M = moveDef(a);
   if (M.proj || M.nohit) return;
   if (a.mf < M.s || a.mf >= M.s + M.a) return;
-  if (d.inv > 0 || d.st === 'lie' || d.st === 'rise' || d.st === 'ko' || (d.st === 'kd' && d.hp <= 0)) return;
+  if (d.inv > 0 || d.st === 'lie' || d.st === 'rise' || d.st === 'ko' || (d.st === 'kd' && (d.hp <= 0 || CHARS[d.ch].nojug))) return;
+  if ((M.grab || M.quake) && (d.y > 0 || d.st === 'kd' || d.st === 'jump')) return;   // grabs and quakes only catch grounded fighters
   const hb = worldBox(a, M.box), hu = hurtBox(d);
   if (overlap(hb, hu)) {
     const ix = Math.max(hb[0], hu[0]) + 2 * (a.face > 0 ? 1 : 0), iy = (Math.max(hb[1], hu[1]) + Math.min(hb[1] + hb[3], hu[1] + hu[3])) / 2;
-    return { a, d, M, at: [a.face > 0 ? Math.max(hb[0], hu[0]) + 3 : Math.min(hb[0] + hb[2], hu[0] + hu[2]) - 3, iy] };
+    const M2 = M.multi && a.mf < M.s + M.a - M.multi ? Object.assign({}, M, { kd: 0 }) : M;   // only the last swipe knocks down
+    return { a, d, M: M2, at: [a.face > 0 ? Math.max(hb[0], hu[0]) + 3 : Math.min(hb[0] + hb[2], hu[0] + hu[2]) - 3, iy] };
   }
 }
 function stepProjectiles() {
@@ -353,7 +372,7 @@ function stepProjectiles() {
     p.t++; p.x += p.vx;
     const d = G.f[1 - p.o], a = G.f[p.o];
     const box = [p.x - p.w / 2, p.y - p.h / 2, p.w, p.h];
-    if (!(d.inv > 0 || d.st === 'lie' || d.st === 'rise' || d.st === 'ko') && overlap(box, hurtBox(d))) {
+    if (!(d.inv > 0 || d.st === 'lie' || d.st === 'rise' || d.st === 'ko' || (d.st === 'kd' && CHARS[d.ch].nojug)) && overlap(box, hurtBox(d))) {
       const M = Object.assign({}, CHARS[a.ch].moves.sp); M.kd = 0;
       applyHit(a, d, M, [p.x, p.y], true); p.dead = 1;
     }
@@ -481,7 +500,8 @@ const cpuBrain = {
       const r = Math.random();
       if (dist > range + 20) {
         if (C.moves.sp.proj && dist > 150 && r < 0.18 && specialReady(c)) this.press('sp');
-        else if (C.moves.sp2 && dist > 90 && r < 0.26) { this.press('sp'); this.hold.d = true; this.next = t + 40; }
+        else if (C.moves.sp2 && C.moves.sp2.tele && dist > 90 && r < 0.26) { this.press('sp'); this.hold.d = true; this.next = t + 40; }
+        else if (C.moves.sp2 && C.moves.sp2.quake && dist < 165 && o.y <= 0 && r < 0.16) { this.press('sp'); this.hold.d = true; this.next = t + 50; }
         else if (C.dashV && r < 0.36) { this.dashAt = t; this.hold[towards] = true; }
         else if (r < 0.09) { this.hold.u = true; this.hold[towards] = true; }
         else this.hold[towards] = true;
@@ -494,6 +514,7 @@ const cpuBrain = {
           if (pick[0] === 'c') { this.hold.d = true; pick = pick.slice(1); }
           this.press(pick);
           if (!C.moves.sp.proj && Math.random() < 0.12 && specialReady(c)) this.press('sp');
+          else if (C.moves.sp2 && C.moves.sp2.multi && Math.random() < 0.1) { this.press('sp'); this.hold.d = true; }
           if (C.chain && Math.random() < 0.5) this.chainAt = t + 5;
           this.next = t + 16 + (Math.random() * 20 | 0);
         } else if (r < this.aggr + 0.15) { this.hold[away] = true; this.next = t + 14; }

@@ -211,12 +211,12 @@ function buildSparks() {
 /* ---------- projectile sprites ---------- */
 const PROJ = {};
 function buildProj() {
-  for (const art of ['ink', 'wire']) {
+  for (const art of ['ink', 'wire', 'chain']) {
     PROJ[art] = [];
     for (let i = 0; i < 8; i++) {
       const c = mk(32, 32, true), g = c.g;
       g.translate(16, 16); g.rotate(art === 'ink' ? Math.sin(i / 8 * Math.PI * 2) * 0.25 : 0); g.translate(-16, -16);
-      if (art === 'ink') { inkBlob(g, [16, 16], 1.7 + Math.sin(i / 8 * Math.PI * 2) * 0.12); } else wireCoil(g, [16, 16], 1.6, i / 8 * Math.PI * 2);
+      if (art === 'ink') { inkBlob(g, [16, 16], 1.7 + Math.sin(i / 8 * Math.PI * 2) * 0.12); } else if (art === 'chain') chainSpark(g, [16, 16], 1.55, i / 8 * Math.PI * 2); else wireCoil(g, [16, 16], 1.6, i / 8 * Math.PI * 2);
       PROJ[art].push(pixelate(c, [OUT].concat(FXP), null));
     }
   }
