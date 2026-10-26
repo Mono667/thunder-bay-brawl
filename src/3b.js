@@ -867,6 +867,7 @@ function warmStealSheets() {   // called during the VS splash so the swap never 
   }
 }
 function buildFighterArt() {
+  preloadSprites();
   for (const ch of CHAR_IDS) {
     SHEETS[ch] = buildSheet(ch);
     PORTRAITS[ch] = { n: makePortrait(ch, 30 * RES, 1.25 * RES, 'n'), h: makePortrait(ch, 30 * RES, 1.25 * RES, 'h'), big: makePortrait(ch, 96 * RES, 3.6 * RES, 'n'), win: makePortrait(ch, 96 * RES, 3.6 * RES, 's') };
@@ -934,11 +935,24 @@ function drawFromSheet(g, f, S, sx, sy, tick, mirrorY, rim) {
               (falls back to 'pixel' until the image has loaded) */
 const RENDERERS = {
   pixel(g, f, C, sx, sy, tick, my, rim) { drawFromSheet(g, f, sheetFor(f), sx, sy, tick, my, rim); },
-  sprite(g, f, C, sx, sy, tick, my) {
+  sprite(g, f, C, sx, sy, tick, my, rim) {
     const S = C.sprite;
-    if (!S || !S.img) { if (S && !S.loading) { S.loading = 1; const im = new Image(); im.onload = () => { S.img = im; }; im.src = S.src; } return RENDERERS.pixel(g, f, C, sx, sy, tick, my); }
+    // code-drawn art while the PNG loads, if it failed to load, or while a stolen-item look is being worn
+    if (!S || !S.img || stealLookOn(f)) { if (S && !S.loading) loadSprite(S); return RENDERERS.pixel(g, f, C, sx, sy, tick, my, rim); }
     drawFromSheet(g, f, S, sx, sy, tick, my);
   }
 };
+function loadSprite(S) {
+  S.loading = 1; const im = new Image();
+  im.onload = () => { if (im.naturalWidth >= S.fw && im.naturalHeight >= S.fh) S.img = im; else S.failed = 1; };
+  im.onerror = () => { S.failed = 1; };   // stays on the code-drawn art for this session
+  im.src = S.src;
+}
+function stealLookOn(f) {
+  const st = G && G.steal; if (!st || !(st.t < st.T)) return false;
+  const k = stealKeys(st), key = f.i === st.i ? k.thief : f.i === st.v ? k.victim : null, L = key && STEAL_LOOK[f.ch + ':' + key];
+  return !!(L && Object.keys(L).length);
+}
+function preloadSprites() { for (const id of CHAR_IDS) { const S = CHARS[id].sprite; if (CHARS[id].render === 'sprite' && S && !S.loading) loadSprite(S); } }
 RENDERERS.shapes = RENDERERS.pixel;
 </script>

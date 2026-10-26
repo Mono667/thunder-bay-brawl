@@ -193,9 +193,11 @@ function drawFighter(g, f, tick, camX) {
   rend(g, f, C, sx, sy, tick, false, QUAL.lv > 0 ? 0.7 : 0);
   g.globalAlpha = 1;
   // white hit-flash while the hit-stop holds
-  if (G && G.hitstop > 0 && (f.st === 'hit' || f.st === 'kd') && (G.hitstop & 2) && S && S.lazy) {
-    const A = animOf(f, S), [Rw, i] = readyRow(S, A, frameOf(f, A, tick)), fg = FLASH.g; fg.clearRect(0, 0, FLASH.width, FLASH.height);
-    fg.globalCompositeOperation = 'source-over'; fg.drawImage(Rw.img, i * Rw.fw, 0, Rw.fw, Rw.fh, 0, 0, Rw.fw, Rw.fh);
+  const SP = C.render === 'sprite' && C.sprite && C.sprite.img && !stealLookOn(f) ? C.sprite : null;   // PNG-sheet fighter: flash its own frame
+  if (G && G.hitstop > 0 && (f.st === 'hit' || f.st === 'kd') && (G.hitstop & 2) && (SP || (S && S.lazy))) {
+    let Rw, i; if (SP) { const A = animOf(f, SP); i = frameOf(f, A, tick); Rw = { img: SP.img, fw: SP.fw, fh: SP.fh, ox: SP.ox, oy: SP.oy, sy: A.row * SP.fh }; } else { const A = animOf(f, S); [Rw, i] = readyRow(S, A, frameOf(f, A, tick)); }
+    const fg = FLASH.g; fg.clearRect(0, 0, FLASH.width, FLASH.height);
+    fg.globalCompositeOperation = 'source-over'; fg.drawImage(Rw.img, i * Rw.fw, Rw.sy || 0, Rw.fw, Rw.fh, 0, 0, Rw.fw, Rw.fh);
     fg.globalCompositeOperation = 'source-in'; fg.fillStyle = '#ffffff'; fg.fillRect(0, 0, Rw.fw, Rw.fh); fg.globalCompositeOperation = 'source-over';
     const sq = squashOf(f) || [1, 1]; g.save(); g.globalAlpha = 0.75; g.translate(sx, sy); g.scale(f.face * sq[0] / SD, sq[1] / SD); g.drawImage(FLASH, 0, 0, Rw.fw, Rw.fh, -Rw.ox, -Rw.oy, Rw.fw, Rw.fh); g.restore();
   }

@@ -26,6 +26,7 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   ok('title visible', await page.isVisible('#s-title'));
   ok('pixel logo painted', await page.$eval('#logo', c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n > 5000; }));
   ok('fighter art + stage built (' + await page.evaluate(() => BUILD_MS) + ' ms)', await page.evaluate(() => CHAR_IDS.every(c => SHEETS[c] && PORTRAITS[c].big) && !!(STAGES.bay && STAGES.bay.near && STAGES.alley && STAGES.alley.near) && !!SPK.K));
+  ok('CRAIG AI sprite sheet loaded (' + await page.evaluate(() => CHARS.craig.sprite.img && CHARS.craig.sprite.img.naturalWidth + 'x' + CHARS.craig.sprite.img.naturalHeight) + ')', await page.evaluate(() => CHARS.craig.render === 'sprite' && !!CHARS.craig.sprite.img && !CHARS.craig.sprite.failed));
   await page.tap('#btn-crt'); await W(page, 100); ok('CRT toggle', (await page.textContent('#btn-crt')).includes('ON'));
   await page.screenshot({ path: '../shot-title-crt.png' });
   await page.tap('#btn-crt'); await W(page, 100);
@@ -359,6 +360,29 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   // RANDOM resolves to a real stage
   for (let i = 0; i < 2; i++) { await solo('craig', '/?q=2&cpu=aj', 'random'); s = await S(page); ok('RANDOM stage -> ' + s.stage, ['bay', 'alley'].includes(s.stage)); }
   await page.tap('#b-pause'); await W(page, 150); await page.tap('#btn-quit');
+
+  // CRAIG's PNG sheet is what's drawn in a fight; if the PNG can't load he falls back to the code-drawn art
+  await solo('craig', '/?q=2&cpu=bino');
+  await page.evaluate(() => { window._spr = { s: 0, p: 0 }; const o = drawFromSheet; window.drawFromSheet = function (g, f, S) { if (f.ch === 'craig') S === CHARS.craig.sprite ? _spr.s++ : _spr.p++; return o.apply(this, arguments); }; });
+  await page.evaluate(() => { FIGHT.place(0, 360); FIGHT.place(1, 400); }); await W(page, 300);
+  for (const m of ['hp', 'hk', 'sp']) { await page.evaluate(n => FIGHT.press(0, n), m); await W(page, 700); }
+  let spr = await page.evaluate(() => _spr); ok('CRAIG drawn from the sprite sheet in a fight (' + spr.s + ' sprite / ' + spr.p + ' code-drawn draws)', spr.s > 30 && spr.p === 0);
+  s = await S(page); ok('CRAIG still hits with the sprite art (BINO hp ' + s.f[1].hp + ')', s.f[1].hp < 1000);
+  await page.tap('#b-pause'); await W(page, 150); await page.tap('#btn-quit');
+  {
+    const ctx = await browser.newContext({ ...devices['iPhone 13 landscape'] }), fp = await ctx.newPage(), perr = [];
+    fp.on('pageerror', e => perr.push(e.message));
+    await ctx.route('**/art/craig.png*', r => r.abort());
+    await fp.goto(BASE + '/?q=2&cpu=bino'); await W(fp, 1200);
+    await fp.tap('#btn-solo'); await W(fp, 150); await fp.tap('#pick-craig'); await fp.tap('#btn-fight'); await W(fp, 100); await fp.tap('#btn-stage-go');
+    await until(fp, x => x.phase === 'vs', 2000); await fp.evaluate(() => FIGHT.skipVS()); await until(fp, x => x.phase === 'fight', 6000);
+    await fp.evaluate(() => { window._spr = 0; const o = drawFromSheet; window.drawFromSheet = function (g, f, S) { if (f.ch === 'craig' && S === SHEETS.craig) _spr++; return o.apply(this, arguments); }; });
+    await W(fp, 600);
+    const fb = await fp.evaluate(() => ({ failed: !!CHARS.craig.sprite.failed, img: !!CHARS.craig.sprite.img, n: _spr }));
+    ok('sprite PNG blocked -> CRAIG falls back to the code-drawn art (' + fb.n + ' draws, no page errors)', fb.failed && !fb.img && fb.n > 10 && perr.length === 0);
+    await fp.screenshot({ path: '../shot-craig-fallback.png' });
+    await ctx.close();
+  }
 
   // ---------------- ONLINE (two phones through the server) ----------------
   const A = await mkPage(), B = await mkPage();

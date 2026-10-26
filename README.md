@@ -109,7 +109,8 @@ sprite: { src: 'art/sara.png', fw: 180, fh: 128, ox: 86, oy: 116, scale: 1,
 - **Facing:** draw facing **right**; the game mirrors it.
 - **Phases:** `ph` maps each frame to startup (`s`), active (`a`) or recovery (`r`) so the art stays in sync with the hitboxes.
 - **Fallbacks:** crouching moves fall back to the standing anim, and any missing anim uses `idle`.
-- **Loading:** the procedural art is drawn until the image finishes loading.
+- **Loading:** the procedural art is drawn until the image finishes loading (preloaded at boot). If the PNG fails to load, the fighter stays on the procedural art for the session; it also switches back to it while a stolen-item look is worn.
+- **CRAIG** uses one: `art/craig.png` (AI-generated stylized frames, cleaned up into a 20-colour sheet). Hitboxes, stats and netcode are unchanged.
 
 Hitboxes are defined per move and are independent of the art. Use stylized likenesses only, not photos. After editing `src/`, run `node build.js` to rebuild `index.html`.
 

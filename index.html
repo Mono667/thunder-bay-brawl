@@ -183,7 +183,18 @@ const CHARS = {
     stats: { speed: 3, power: 3, health: 3, reach: 3 },
     hurt: { st: [-13, 0, 26, 72], cr: [-14, 0, 28, 46], air: [-13, 8, 26, 58] },
     colors: { skin: '#eaa880', top: '#1a2030', top2: '#0b0712', pants: '#2e4466', hair: '#94663a', band: '#b0b0c0', glove: '#eaa880', shoe: '#1e1e22' },
-    render: 'pixel', sprite: null,
+    // AI-generated sprite sheet (art/craig.png, built by spritetest/process_live.py); falls back to the code-drawn art if it fails to load
+    render: 'sprite', sprite: { src: 'art/craig.png?v=ae995220', fw: 360, fh: 256, ox: 172, oy: 236, scale: 0.5, anims: {
+      idle: { row: 0, n: 4, fps: 5 }, walk: { row: 1, n: 4, by: 'walk', div: 6 },
+      punch: { row: 2, n: 3, ph: ['s', 'a', 'r'] }, lp: { row: 2, n: 3, ph: ['s', 'a', 'r'] }, hp: { row: 2, n: 3, ph: ['s', 'a', 'r'] },
+      kick: { row: 3, n: 3, ph: ['s', 'a', 'r'] }, lk: { row: 3, n: 3, ph: ['s', 'a', 'r'] }, hk: { row: 3, n: 3, ph: ['s', 'a', 'r'] },
+      clp: { row: 17, n: 3, ph: ['s', 'a', 'r'] }, chp: { row: 17, n: 3, ph: ['s', 'a', 'r'] }, upper: { row: 17, n: 3, ph: ['s', 'a', 'r'] },
+      clk: { row: 18, n: 3, ph: ['s', 'a', 'r'] }, chk: { row: 18, n: 3, ph: ['s', 'a', 'r'] }, sweep: { row: 18, n: 3, ph: ['s', 'a', 'r'] },
+      jump: { row: 10, n: 3, by: 'vy' }, jp: { row: 11, n: 2, ph: ['s', 'a'] }, jpunch: { row: 11, n: 2, ph: ['s', 'a'] }, jk: { row: 12, n: 2, ph: ['s', 'a'] }, jkick: { row: 12, n: 2, ph: ['s', 'a'] },
+      sp: { row: 5, n: 3, ph: ['s', 'a', 'r'] }, toss: { row: 5, n: 3, ph: ['s', 'a', 'r'] },
+      hit: { row: 4, n: 2 }, stagger: { row: 4, n: 2 }, hitlo: { row: 15, n: 2 }, chit: { row: 8, n: 1 }, kd: { row: 13, n: 3, by: 't', t: [4, 10] },
+      lie: { row: 7, n: 1 }, ko: { row: 7, n: 1 }, rise: { row: 14, n: 3, by: 't', t: [5, 10] }, land: { row: 16, n: 1 },
+      crouch: { row: 8, n: 2, fps: 3 }, block: { row: 9, n: 1 }, cblock: { row: 8, n: 1 }, win: { row: 6, n: 1 }, lose: { row: 15, n: 1 } } },
     moves: {
       lp:  { s: 3, a: 2, r: 7,  dmg: 32, hs: 13, bs: 9,  box: [12, 54, 25, 9],  lvl: 'mid', push: 2.6, anim: 'punch' },
       hp:  { s: 7, a: 3, r: 15, dmg: 80, hs: 19, bs: 13, box: [12, 52, 34, 11], lvl: 'mid', push: 4.6, anim: 'punch', heavy: 1 },
@@ -1825,6 +1836,7 @@ function warmStealSheets() {   // called during the VS splash so the swap never 
   }
 }
 function buildFighterArt() {
+  preloadSprites();
   for (const ch of CHAR_IDS) {
     SHEETS[ch] = buildSheet(ch);
     PORTRAITS[ch] = { n: makePortrait(ch, 30 * RES, 1.25 * RES, 'n'), h: makePortrait(ch, 30 * RES, 1.25 * RES, 'h'), big: makePortrait(ch, 96 * RES, 3.6 * RES, 'n'), win: makePortrait(ch, 96 * RES, 3.6 * RES, 's') };
@@ -1892,12 +1904,25 @@ function drawFromSheet(g, f, S, sx, sy, tick, mirrorY, rim) {
               (falls back to 'pixel' until the image has loaded) */
 const RENDERERS = {
   pixel(g, f, C, sx, sy, tick, my, rim) { drawFromSheet(g, f, sheetFor(f), sx, sy, tick, my, rim); },
-  sprite(g, f, C, sx, sy, tick, my) {
+  sprite(g, f, C, sx, sy, tick, my, rim) {
     const S = C.sprite;
-    if (!S || !S.img) { if (S && !S.loading) { S.loading = 1; const im = new Image(); im.onload = () => { S.img = im; }; im.src = S.src; } return RENDERERS.pixel(g, f, C, sx, sy, tick, my); }
+    // code-drawn art while the PNG loads, if it failed to load, or while a stolen-item look is being worn
+    if (!S || !S.img || stealLookOn(f)) { if (S && !S.loading) loadSprite(S); return RENDERERS.pixel(g, f, C, sx, sy, tick, my, rim); }
     drawFromSheet(g, f, S, sx, sy, tick, my);
   }
 };
+function loadSprite(S) {
+  S.loading = 1; const im = new Image();
+  im.onload = () => { if (im.naturalWidth >= S.fw && im.naturalHeight >= S.fh) S.img = im; else S.failed = 1; };
+  im.onerror = () => { S.failed = 1; };   // stays on the code-drawn art for this session
+  im.src = S.src;
+}
+function stealLookOn(f) {
+  const st = G && G.steal; if (!st || !(st.t < st.T)) return false;
+  const k = stealKeys(st), key = f.i === st.i ? k.thief : f.i === st.v ? k.victim : null, L = key && STEAL_LOOK[f.ch + ':' + key];
+  return !!(L && Object.keys(L).length);
+}
+function preloadSprites() { for (const id of CHAR_IDS) { const S = CHARS[id].sprite; if (CHARS[id].render === 'sprite' && S && !S.loading) loadSprite(S); } }
 RENDERERS.shapes = RENDERERS.pixel;
 </script>
 <script>
@@ -2648,9 +2673,11 @@ function drawFighter(g, f, tick, camX) {
   rend(g, f, C, sx, sy, tick, false, QUAL.lv > 0 ? 0.7 : 0);
   g.globalAlpha = 1;
   // white hit-flash while the hit-stop holds
-  if (G && G.hitstop > 0 && (f.st === 'hit' || f.st === 'kd') && (G.hitstop & 2) && S && S.lazy) {
-    const A = animOf(f, S), [Rw, i] = readyRow(S, A, frameOf(f, A, tick)), fg = FLASH.g; fg.clearRect(0, 0, FLASH.width, FLASH.height);
-    fg.globalCompositeOperation = 'source-over'; fg.drawImage(Rw.img, i * Rw.fw, 0, Rw.fw, Rw.fh, 0, 0, Rw.fw, Rw.fh);
+  const SP = C.render === 'sprite' && C.sprite && C.sprite.img && !stealLookOn(f) ? C.sprite : null;   // PNG-sheet fighter: flash its own frame
+  if (G && G.hitstop > 0 && (f.st === 'hit' || f.st === 'kd') && (G.hitstop & 2) && (SP || (S && S.lazy))) {
+    let Rw, i; if (SP) { const A = animOf(f, SP); i = frameOf(f, A, tick); Rw = { img: SP.img, fw: SP.fw, fh: SP.fh, ox: SP.ox, oy: SP.oy, sy: A.row * SP.fh }; } else { const A = animOf(f, S); [Rw, i] = readyRow(S, A, frameOf(f, A, tick)); }
+    const fg = FLASH.g; fg.clearRect(0, 0, FLASH.width, FLASH.height);
+    fg.globalCompositeOperation = 'source-over'; fg.drawImage(Rw.img, i * Rw.fw, Rw.sy || 0, Rw.fw, Rw.fh, 0, 0, Rw.fw, Rw.fh);
     fg.globalCompositeOperation = 'source-in'; fg.fillStyle = '#ffffff'; fg.fillRect(0, 0, Rw.fw, Rw.fh); fg.globalCompositeOperation = 'source-over';
     const sq = squashOf(f) || [1, 1]; g.save(); g.globalAlpha = 0.75; g.translate(sx, sy); g.scale(f.face * sq[0] / SD, sq[1] / SD); g.drawImage(FLASH, 0, 0, Rw.fw, Rw.fh, -Rw.ox, -Rw.oy, Rw.fw, Rw.fh); g.restore();
   }
@@ -2989,7 +3016,7 @@ addEventListener('resize', fit); fit();
 paintLogo(0);
 /* ---- stale-cache guard: GitHub Pages lets browsers keep the page ~10 min. If the live copy has a
    newer build id than the one running, reload once onto it. ---- */
-const BUILD_ID = 'e969870e';
+const BUILD_ID = 'ae3df8dc';
 if ($('build')) $('build').textContent = 'build ' + BUILD_ID;
 (function freshCheck() {
   if (location.protocol === 'file:' || QS.has('nofresh') || !window.fetch) return;

@@ -28,7 +28,18 @@ const CHARS = {
     stats: { speed: 3, power: 3, health: 3, reach: 3 },
     hurt: { st: [-13, 0, 26, 72], cr: [-14, 0, 28, 46], air: [-13, 8, 26, 58] },
     colors: { skin: '#eaa880', top: '#1a2030', top2: '#0b0712', pants: '#2e4466', hair: '#94663a', band: '#b0b0c0', glove: '#eaa880', shoe: '#1e1e22' },
-    render: 'pixel', sprite: null,
+    // AI-generated sprite sheet (art/craig.png, built by spritetest/process_live.py); falls back to the code-drawn art if it fails to load
+    render: 'sprite', sprite: { src: 'art/craig.png?v=ae995220', fw: 360, fh: 256, ox: 172, oy: 236, scale: 0.5, anims: {
+      idle: { row: 0, n: 4, fps: 5 }, walk: { row: 1, n: 4, by: 'walk', div: 6 },
+      punch: { row: 2, n: 3, ph: ['s', 'a', 'r'] }, lp: { row: 2, n: 3, ph: ['s', 'a', 'r'] }, hp: { row: 2, n: 3, ph: ['s', 'a', 'r'] },
+      kick: { row: 3, n: 3, ph: ['s', 'a', 'r'] }, lk: { row: 3, n: 3, ph: ['s', 'a', 'r'] }, hk: { row: 3, n: 3, ph: ['s', 'a', 'r'] },
+      clp: { row: 17, n: 3, ph: ['s', 'a', 'r'] }, chp: { row: 17, n: 3, ph: ['s', 'a', 'r'] }, upper: { row: 17, n: 3, ph: ['s', 'a', 'r'] },
+      clk: { row: 18, n: 3, ph: ['s', 'a', 'r'] }, chk: { row: 18, n: 3, ph: ['s', 'a', 'r'] }, sweep: { row: 18, n: 3, ph: ['s', 'a', 'r'] },
+      jump: { row: 10, n: 3, by: 'vy' }, jp: { row: 11, n: 2, ph: ['s', 'a'] }, jpunch: { row: 11, n: 2, ph: ['s', 'a'] }, jk: { row: 12, n: 2, ph: ['s', 'a'] }, jkick: { row: 12, n: 2, ph: ['s', 'a'] },
+      sp: { row: 5, n: 3, ph: ['s', 'a', 'r'] }, toss: { row: 5, n: 3, ph: ['s', 'a', 'r'] },
+      hit: { row: 4, n: 2 }, stagger: { row: 4, n: 2 }, hitlo: { row: 15, n: 2 }, chit: { row: 8, n: 1 }, kd: { row: 13, n: 3, by: 't', t: [4, 10] },
+      lie: { row: 7, n: 1 }, ko: { row: 7, n: 1 }, rise: { row: 14, n: 3, by: 't', t: [5, 10] }, land: { row: 16, n: 1 },
+      crouch: { row: 8, n: 2, fps: 3 }, block: { row: 9, n: 1 }, cblock: { row: 8, n: 1 }, win: { row: 6, n: 1 }, lose: { row: 15, n: 1 } } },
     moves: {
       lp:  { s: 3, a: 2, r: 7,  dmg: 32, hs: 13, bs: 9,  box: [12, 54, 25, 9],  lvl: 'mid', push: 2.6, anim: 'punch' },
       hp:  { s: 7, a: 3, r: 15, dmg: 80, hs: 19, bs: 13, box: [12, 52, 34, 11], lvl: 'mid', push: 4.6, anim: 'punch', heavy: 1 },
