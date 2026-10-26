@@ -13,6 +13,9 @@ html,body{width:100%;height:100%;background:#05060f;overflow:hidden;touch-action
 #game{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges;background:#000}
 .scr{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(5,6,15,.82);z-index:20;padding:8px 12px;text-align:center}
 .scr.on{display:flex}
+#s-title{background:linear-gradient(rgba(5,6,15,.15),rgba(5,6,15,.05) 45%,rgba(5,6,15,.7))}
+#logo{width:min(78vw,96vh,600px);height:auto;image-rendering:pixelated;filter:drop-shadow(0 0 14px rgba(255,120,30,.35))}
+#btn-crt{font-size:min(2.6vh,11px);padding:4px 10px;margin-top:8px}
 .logo{font-family:Impact,"Arial Black",sans-serif;font-size:min(13vh,64px);line-height:.95;letter-spacing:2px;background:linear-gradient(#fff36a,#ff8a1f 55%,#d8231a);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:2px #2a0400;filter:drop-shadow(3px 4px 0 #000)}
 .sub{font-size:min(3.6vh,14px);color:#9fd0ff;margin:4px 0 10px;letter-spacing:1px}
 .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
@@ -25,10 +28,10 @@ html,body{width:100%;height:100%;background:#05060f;overflow:hidden;touch-action
 table.keys{border-collapse:collapse;margin:4px auto}
 table.keys td{padding:1px 8px;font-family:Arial,sans-serif;font-weight:bold;font-size:min(3.1vh,12px);text-align:left}
 table.keys td:first-child{color:#ffd23a;text-align:right}
-.cards{display:flex;gap:14px;margin:6px 0}
-.card{width:min(30vw,210px);border:3px solid #000;border-radius:8px;background:linear-gradient(#1c2450,#0d1128);padding:4px 6px 6px;cursor:pointer}
+.cards{display:flex;gap:min(1.2vw,10px);margin:6px 0;flex-wrap:nowrap;justify-content:center}
+.card{width:min(23vw,190px);border:3px solid #000;border-radius:8px;background:linear-gradient(#1c2450,#0d1128);padding:4px 6px 6px;cursor:pointer}
 .card.sel{outline:4px solid #ffd23a;background:linear-gradient(#3b2a10,#1a1206)}
-.card canvas{width:100%;height:min(24vh,110px);image-rendering:pixelated;display:block}
+.card canvas{width:100%;aspect-ratio:7/5;height:auto;max-height:26vh;object-fit:contain;image-rendering:pixelated;display:block}
 .card .nm{font-size:min(4.2vh,16px);color:#ffd23a}
 .card .ds{font-size:min(2.7vh,10.5px);font-family:Arial,sans-serif;font-weight:bold;color:#cfd6ff;min-height:2.6em}
 .stat{display:flex;align-items:center;gap:4px;font-size:min(2.5vh,10px);font-family:Arial,sans-serif;font-weight:bold}
@@ -73,7 +76,7 @@ input.code{width:5.2em;text-transform:uppercase;letter-spacing:4px}
 <button id="b-pause">II</button>
 
 <div class="scr on" id="s-title">
-  <div class="logo">THUNDER BAY<br>BRAWL</div>
+  <canvas id="logo" width="420" height="140" aria-label="THUNDER BAY BRAWL"></canvas>
   <div class="sub">BAY STREET · PORT ARTHUR · 2 AM · NO RULES</div>
   <div class="row">
     <button class="btn" id="btn-solo">1P VS CPU</button>
@@ -82,6 +85,7 @@ input.code{width:5.2em;text-transform:uppercase;letter-spacing:4px}
   </div>
   <div class="small" style="margin-top:10px">Best of 3 rounds · 99 seconds · hold BACK or BLK to block</div>
   <div class="small" style="margin-top:4px;opacity:.8">Keyboard: Arrows/WASD move · J/K punch · U/I kick · L block · O special · P pause</div>
+  <button class="btn dim" id="btn-crt">CRT SCANLINES: OFF</button>
 </div>
 
 <div class="scr" id="s-howto">
@@ -96,7 +100,7 @@ input.code{width:5.2em;text-transform:uppercase;letter-spacing:4px}
       <tr><td>Special</td><td>▼ ↘ ▶ + Punch, or LP+HP together, or SP button · O key</td></tr>
       <tr><td>Pause</td><td>II button · Esc / P</td></tr>
     </table>
-    <div class="small">LYNX special: LAKEHEAD RUSH (dashing knee). THE PERSIAN special: DONUT TOSS (fireball).<br>Crouch + HK = sweep. Jump attacks hit crouchers. Specials can cancel a normal that connects.</div>
+    <div class="small">CRAIG: INK SPLASH (projectile) · AJ: BEVERAGE BREAK (rushing shoulder) · BINO: CHAIN WHIP (long-reach swing)<br>SARA: WIRE TOSS (projectile) · DROP IN (SP + ▼, or ▼ ↘ ▶ + Kick: teleport drop kick) · DASH (tap ▶ twice)<br>Crouch + HK = sweep. Jump attacks hit crouchers. Specials can cancel a normal that connects.</div>
   </div>
   <button class="btn" id="btn-howto-back" style="margin-top:8px">BACK</button>
 </div>

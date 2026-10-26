@@ -4,7 +4,7 @@
    UI, INPUT WIRING, ONLINE, MAIN LOOP
    ===================================================================== */
 const $ = (id) => document.getElementById(id);
-let frame = 0, pick = 'lynx', pendingMode = 'solo';
+let frame = 0, pick = 'craig', pendingMode = 'solo';
 function show(id) { for (const s of document.querySelectorAll('.scr')) s.classList.toggle('on', s.id === id); }
 function inGameUI(on) { $('ctl').classList.toggle('on', on && ('ontouchstart' in window || navigator.maxTouchPoints > 0)); $('b-pause').classList.toggle('on', on); }
 function fit() {
@@ -12,6 +12,9 @@ function fit() {
   cv.style.width = Math.floor(960 * s) + 'px'; cv.style.height = Math.floor(540 * s) + 'px';
 }
 addEventListener('resize', fit); fit();
+paintLogo();
+function crtLabel() { const b = $('btn-crt'); if (b) b.textContent = 'CRT SCANLINES: ' + (CRT.on ? 'ON' : 'OFF'); }
+if ($('btn-crt')) { crtLabel(); $('btn-crt').onclick = () => { CRT.on = !CRT.on; localStorage.setItem('tbb-crt', CRT.on ? '1' : '0'); crtLabel(); }; }
 
 /* ---- character select cards ---- */
 function buildCards() {
@@ -20,7 +23,7 @@ function buildCards() {
     const C = CHARS[id], d = document.createElement('div');
     d.className = 'card' + (id === pick ? ' sel' : ''); d.id = 'pick-' + id;
     const st = Object.entries(C.stats).map(([k, v]) => `<div class="stat"><b>${k.toUpperCase()}</b><i><s style="width:${v * 20}%"></s></i></div>`).join('');
-    d.innerHTML = `<canvas width="120" height="64"></canvas><div class="nm">${C.title}</div><div class="ds">${C.blurb}</div>${st}`;
+    d.innerHTML = `<canvas width="140" height="100"></canvas><div class="nm">${C.title}</div><div class="ds">${C.blurb}</div>${st}`;
     d.addEventListener('click', () => { pick = id; buildCards(); });
     box.appendChild(d);
   }
@@ -28,16 +31,16 @@ function buildCards() {
 function drawCards() {
   for (const id of CHAR_IDS) {
     const el = document.querySelector('#pick-' + id + ' canvas'); if (!el) continue;
-    const g = el.getContext('2d'); g.clearRect(0, 0, 120, 64);
-    const gr = g.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, '#1a1442'); gr.addColorStop(1, '#3a2457'); g.fillStyle = gr; g.fillRect(0, 0, 120, 64);
-    g.fillStyle = '#24222c'; g.fillRect(0, 56, 120, 8);
-    const f = newFighter(id, 0); f.st = id === pick ? 'win' : 'idle'; f.t = frame;
+    const g = el.getContext('2d'), sel = id === pick; g.imageSmoothingEnabled = false; g.clearRect(0, 0, 140, 100);
+    const gr = g.createLinearGradient(0, 0, 0, 100); gr.addColorStop(0, sel ? '#3a1a10' : '#120f2a'); gr.addColorStop(1, sel ? '#a0401a' : '#2a1d48'); g.fillStyle = gr; g.fillRect(0, 0, 140, 100);
+    g.globalAlpha = sel ? 1 : 0.85; g.drawImage(PORTRAITS[id][sel ? 'win' : 'big'], 0, 2); g.globalAlpha = 1;
+    g.fillStyle = '#0b0712'; g.fillRect(0, 92, 140, 8);
+    const f = newFighter(id, 0); f.face = -1; f.st = sel ? 'win' : 'idle'; f.t = frame % 240;
     const save = G; if (!G) G = { camX: 0 };
-    g.save(); g.translate(60, 58); g.scale(0.56, 0.56); RENDERERS.shapes(g, f, CHARS[id], 0, 0, frame); g.restore();
+    g.save(); g.translate(112, 96); g.scale(0.62, 0.62); (RENDERERS[CHARS[id].render] || RENDERERS.pixel)(g, f, CHARS[id], 0, 0, frame); g.restore();
     G = save;
   }
 }
-
 /* ---- buttons ---- */
 $('btn-solo').onclick = () => { audioInit(); pendingMode = 'solo'; $('btn-fight').textContent = 'FIGHT!'; buildCards(); show('s-select'); };
 $('btn-online').onclick = () => { audioInit(); pendingMode = 'online'; $('btn-fight').textContent = 'NEXT'; buildCards(); show('s-select'); };
@@ -46,7 +49,7 @@ $('btn-howto-back').onclick = () => show('s-title');
 $('btn-sel-back').onclick = () => show('s-title');
 $('btn-fight').onclick = () => {
   audioInit();
-  if (pendingMode === 'solo') { const other = CHAR_IDS.find(c => c !== pick); startSolo(pick, QS.get('cpu') || other); }
+  if (pendingMode === 'solo') { const pool = CHAR_IDS.filter(c => c !== pick), q = QS.get('cpu'); startSolo(pick, CHARS[q] ? q : pool[Math.floor(Math.random() * pool.length)]); }
   else { $('srv').value = $('srv').value || localStorage.getItem('tbb-server') || defaultServer(); $('net-status').textContent = ''; $('bigcode').textContent = ''; show('s-online'); }
 };
 $('btn-online-back').onclick = () => { netClose(); show('s-select'); };
@@ -140,7 +143,7 @@ function hostStart(c1, c2) { me = 0; paused = false; lastEv = 0; localIn.clear()
 function onNet(m) {
   switch (m.t) {
     case 'created': NET.code = m.code; $('bigcode').textContent = m.code; status('Room ready. On the other phone: ONLINE 2P → pick a fighter → type this code → JOIN.'); break;
-    case 'peer': status('Opponent joined!'); hostStart(pick, CHARS[m.char] ? m.char : CHAR_IDS.find(c => c !== pick)); break;
+    case 'peer': status('Opponent joined!'); hostStart(pick, CHARS[m.char] ? m.char : CHAR_IDS.filter(c => c !== pick)[Math.floor(Math.random() * (CHAR_IDS.length - 1))]); break;
     case 'joined': NET.code = m.code; me = 1; lastEv = 0; localIn.clear(); status('Joined room ' + m.code + '. Waiting for the host...'); break;
     case 'snap':
       if (NET.role !== 'guest') break;
@@ -187,14 +190,14 @@ function loop(now) {
     }
   }
   if ($('s-select').classList.contains('on')) drawCards();
-  render();
+  render(); qualTick(dt);
 }
 requestAnimationFrame(loop);
 
 /* ---- test / debug hooks ---- */
 window.FIGHT = {
   get G() { return G; },
-  state() { if (!G) return { phase: 'menu' }; const f = G.f.map(x => ({ ch: x.ch, x: Math.round(x.x), y: Math.round(x.y), hp: x.hp, red: x.red, st: x.st, mv: x.mv, face: x.face })); return { mode: G.mode, phase: G.phase, round: G.round, wins: G.wins, timer: G.timer, banner: G.banner && G.banner.txt, result: G.result, f, stat: G.stat, proj: G.proj.length, tick: G.tick, me, snaps: NET.snaps, code: NET.code }; },
+  state() { if (!G) return { phase: 'menu' }; const f = G.f.map(x => ({ ch: x.ch, x: Math.round(x.x), y: Math.round(x.y), hp: x.hp, red: x.red, st: x.st, mv: x.mv, face: x.face })); return { mode: G.mode, phase: G.phase, round: G.round, wins: G.wins, timer: G.timer, banner: G.banner && G.banner.txt, result: G.result, f, stat: G.stat, proj: G.proj.length, tick: G.tick, me, snaps: NET.snaps, code: NET.code, q: QUAL.lv, crt: CRT.on }; },
   setHp(i, v) { G.f[i].hp = v; G.f[i].red = v; },
   cpu(on) { cpuOn = on; cpuIn.clear(); },
   press(i, k) { (i === me ? localIn : G.mode === 'host' ? remoteIn : cpuIn).latch[k] = true; },

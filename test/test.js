@@ -22,19 +22,26 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   // ---------------- SOLO ----------------
   const { page, cdp } = await mkPage();
   const T = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
-  await page.goto(BASE + '/'); await W(page, 1200);
+  await page.goto(BASE + '/?q=2&cpu=aj'); await W(page, 1500);
   ok('title visible', await page.isVisible('#s-title'));
+  ok('pixel logo painted', await page.$eval('#logo', c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n > 5000; }));
+  ok('fighter art + stage built (' + await page.evaluate(() => BUILD_MS) + ' ms)', await page.evaluate(() => CHAR_IDS.every(c => SHEETS[c] && PORTRAITS[c].big) && !!BG.near && !!SPK.K));
+  await page.tap('#btn-crt'); await W(page, 100); ok('CRT toggle', (await page.textContent('#btn-crt')).includes('ON'));
+  await page.screenshot({ path: '../shot-title-crt.png' });
+  await page.tap('#btn-crt'); await W(page, 100);
   await page.screenshot({ path: '../shot-title.png' });
   await page.tap('#btn-howto'); await W(page, 200); ok('controls screen', await page.isVisible('#s-howto'));
   await page.tap('#btn-howto-back'); await W(page, 150);
   await page.tap('#btn-solo'); await W(page, 250); ok('select screen', await page.isVisible('#s-select'));
-  await page.tap('#pick-lynx'); await W(page, 100);
-  ok('lynx selected', await page.$eval('#pick-lynx', e => e.classList.contains('sel')));
+  ok('select shows all 4 fighters', (await page.$$eval('.card', es => es.map(e => e.id).join(','))) === 'pick-craig,pick-aj,pick-bino,pick-sara');
+  await page.tap('#pick-craig'); await W(page, 300);
+  ok('craig selected', await page.$eval('#pick-craig', e => e.classList.contains('sel')));
   await page.screenshot({ path: '../shot-select.png' });
   await page.tap('#btn-fight'); await W(page, 300);
   let s = await S(page);
-  ok('match started: ' + s.mode + ' ' + s.f.map(f => f.ch).join(' vs '), s.mode === 'solo' && s.f[0].ch === 'lynx' && s.f[1].ch === 'persian');
+  ok('match started: ' + s.mode + ' ' + s.f.map(f => f.ch).join(' vs '), s.mode === 'solo' && s.f[0].ch === 'craig' && s.f[1].ch === 'aj');
   ok('ROUND 1 banner', s.banner === 'ROUND 1');
+  await W(page, 250); await page.screenshot({ path: '../shot-round.png' });
   s = await until(page, x => x.banner === 'FIGHT!', 3000); ok('FIGHT! banner', s.banner === 'FIGHT!');
   s = await until(page, x => x.phase === 'fight', 4000); ok('phase fight', s.phase === 'fight');
   ok('touch controls shown', await page.isVisible('#stick') && await page.isVisible('#b-hp'));
@@ -70,7 +77,7 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   const hpB = (await S(page)).f[0].hp, blocks0 = (await S(page)).stat.blocks[0];
   let sawBlock = false;
   for (let i = 0; i < 3; i++) {
-    await page.evaluate(() => FIGHT.press(1, 'hp'));
+    await page.evaluate(() => { FIGHT.place(1, FIGHT.G.f[0].x + 36); FIGHT.press(1, 'hp'); });   // re-close the gap after block pushback
     for (let k = 0; k < 8; k++) { const q = await S(page); if (q.f[0].st === 'block') sawBlock = true; await W(page, 40); }
     await W(page, 300);
   }
@@ -106,7 +113,7 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   ok('K.O. (banner ' + s.banner + ', wins ' + s.wins + ')', s.phase === 'roundEnd' && s.banner === 'K.O.' && s.wins[0] === 1);
   await W(page, 350);
   await page.screenshot({ path: '../shot-ko.png' });
-  s = await until(page, x => x.banner === 'LYNX WINS', 4000); ok('round-winner banner', s.banner === 'LYNX WINS');
+  s = await until(page, x => x.banner === 'CRAIG WINS', 4000); ok('round-winner banner', s.banner === 'CRAIG WINS');
   s = await until(page, x => x.round === 2 && x.phase === 'fight', 8000); ok('round 2 starts', s.round === 2 && s.phase === 'fight');
   await page.evaluate(() => FIGHT.cpu(false));
   await ko();
@@ -123,22 +130,57 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   await page.tap('#btn-resume'); await W(page, 300); ok('resume', (await S(page)).tick > p2);
   await page.tap('#b-pause'); await W(page, 150); await page.tap('#btn-quit'); await W(page, 200);
   ok('quit to title', await page.isVisible('#s-title'));
-  // persian special = projectile via motion input on keyboard
-  await page.tap('#btn-solo'); await W(page, 150); await page.tap('#pick-persian'); await page.tap('#btn-fight');
+  // CRAIG special = INK SPLASH projectile via motion input on keyboard
+  const motion = async (btn) => {
+    await page.keyboard.down('ArrowDown'); await W(page, 40);
+    await page.keyboard.down('ArrowRight'); await W(page, 40); await page.keyboard.up('ArrowDown'); await W(page, 40);
+    await page.keyboard.press(btn); await page.keyboard.up('ArrowRight');
+  };
+  const solo = async (pk, url) => {
+    await page.goto(BASE + url); await W(page, 900); await page.tap('#btn-solo'); await W(page, 150); await page.tap('#pick-' + pk); await page.tap('#btn-fight');
+    await until(page, x => x.phase === 'fight', 4000); await page.evaluate(() => FIGHT.cpu(false));
+  };
+  await page.tap('#btn-solo'); await W(page, 150); await page.tap('#pick-craig'); await page.tap('#btn-fight');
   await until(page, x => x.phase === 'fight', 4000);
   await page.evaluate(() => FIGHT.cpu(false));
-  for (const k of ['ArrowDown']) await page.keyboard.down(k); await W(page, 40);
-  await page.keyboard.down('ArrowRight'); await W(page, 40); await page.keyboard.up('ArrowDown'); await W(page, 40);
-  await page.keyboard.press('KeyJ'); await page.keyboard.up('ArrowRight');
-  s = await until(page, x => x.proj > 0, 1500); ok('keyboard down,down-fwd,fwd+J -> DONUT TOSS projectile', s.proj > 0);
+  await motion('KeyJ');
+  s = await until(page, x => x.proj > 0, 1500); ok('keyboard down,down-fwd,fwd+J -> INK SPLASH projectile', s.proj > 0);
   await W(page, 120); await page.screenshot({ path: '../shot-special.png' });
   s = await until(page, x => x.stat.hits[0] + x.stat.blocks[1] > 0, 4000); ok('projectile connects', s.stat.hits[0] > 0 || s.stat.blocks[1] > 0);
+  // random CPU opponent (no ?cpu=)
+  const seen = new Set();
+  for (let i = 0; i < 3; i++) { await solo('bino', '/?q=2'); s = await S(page); seen.add(s.f[1].ch); ok('random CPU for BINO: ' + s.f[1].ch, s.f[0].ch === 'bino' && s.f[1].ch !== 'bino' && ['craig', 'aj', 'sara'].includes(s.f[1].ch)); }
+  // SARA: WIRE TOSS projectile, DROP IN teleport, dash
+  await solo('sara', '/?q=2&cpu=bino');
+  s = await S(page); ok('SARA vs BINO', s.f[0].ch === 'sara' && s.f[1].ch === 'bino');
+  await motion('KeyJ'); s = await until(page, x => x.proj > 0, 1500); ok('SARA WIRE TOSS projectile', s.proj > 0);
+  await W(page, 100); await page.screenshot({ path: '../shot-sara-bino.png' });
+  await W(page, 1200);
+  await page.evaluate(() => { FIGHT.place(0, 300); FIGHT.place(1, 420); });
+  await W(page, 300);
+  const x0 = (await S(page)).f[0].x;
+  await page.keyboard.down('ArrowDown'); await W(page, 50); await page.keyboard.press('KeyO');
+  s = await until(page, x => x.f[0].mv === 'sp2', 800); ok('SARA DROP IN starts (SP + down)', s.f[0].mv === 'sp2');
+  await page.keyboard.up('ArrowDown');
+  await W(page, 230); await page.screenshot({ path: '../shot-dropin.png' });
+  s = await until(page, x => x.f[0].mv !== 'sp2', 2500); ok('DROP IN teleports toward BINO (' + x0 + ' -> ' + s.f[0].x + ')', Math.abs(s.f[0].x - s.f[1].x) < Math.abs(x0 - 420));
+  await W(page, 800);
+  // AJ vs SARA and BINO vs CRAIG matchups (screenshots with live combat)
+  for (const [a, b, n] of [['aj', 'sara', 'aj-sara'], ['bino', 'craig', 'bino-craig']]) {
+    await solo(a, '/?q=2&cpu=' + b);
+    await page.evaluate(() => { FIGHT.place(0, FIGHT.G.f[1].x - 42); });
+    await W(page, 100); await page.keyboard.press('KeyO'); await W(page, a === 'aj' ? 330 : 380);
+    await page.screenshot({ path: '../shot-' + n + '.png' });
+    s = await S(page); ok('matchup ' + a.toUpperCase() + ' vs ' + b.toUpperCase(), s.f[0].ch === a && s.f[1].ch === b);
+    await W(page, 1000);
+  }
+  ok('quality level stays 2 with ?q=2', (await S(page)).q === 2);
   await page.tap('#b-pause'); await W(page, 150); await page.tap('#btn-quit');
 
   // ---------------- ONLINE (two phones through the server) ----------------
   const A = await mkPage(), B = await mkPage();
-  for (const P of [A, B]) { await P.page.goto(BASE + '/'); await W(P.page, 600); await P.page.tap('#btn-online'); await W(P.page, 150); }
-  await B.page.tap('#pick-persian');
+  for (const P of [A, B]) { await P.page.goto(BASE + '/?q=2'); await W(P.page, 900); await P.page.tap('#btn-online'); await W(P.page, 150); }
+  await A.page.tap('#pick-sara'); await B.page.tap('#pick-bino');
   for (const P of [A, B]) { await P.page.tap('#btn-fight'); await W(P.page, 150); }
   ok('server field defaults to page host', (await A.page.inputValue('#srv')) === new URL(BASE).host);
   await A.page.tap('#btn-create');
@@ -146,7 +188,7 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   const code = await A.page.textContent('#bigcode'); ok('room code ' + code, /^[A-Z]{4}$/.test(code));
   await A.page.screenshot({ path: '../shot-online.png' });
   await B.page.fill('#code', code.toLowerCase()); await B.page.tap('#btn-join');
-  let sa = await until(A.page, x => x.mode === 'host', 4000); ok('host started match', sa.mode === 'host' && sa.f[1].ch === 'persian');
+  let sa = await until(A.page, x => x.mode === 'host', 4000); ok('host started match', sa.mode === 'host' && sa.f[0].ch === 'sara' && sa.f[1].ch === 'bino');
   let sb = await until(B.page, x => x.mode === 'guest' && x.phase === 'fight', 6000);
   ok('guest receives state (' + sb.snaps + ' snaps, me=' + sb.me + ')', sb.mode === 'guest' && sb.me === 1 && sb.snaps > 20);
   await A.page.evaluate(() => { FIGHT.place(0, 380); FIGHT.place(1, 416); });
