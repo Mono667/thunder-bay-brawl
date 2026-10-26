@@ -29,7 +29,7 @@ table.keys{border-collapse:collapse;margin:4px auto}
 table.keys td{padding:1px 8px;font-family:Arial,sans-serif;font-weight:bold;font-size:min(3.1vh,12px);text-align:left}
 table.keys td:first-child{color:#ffd23a;text-align:right}
 .cards{display:flex;gap:min(1.2vw,10px);margin:6px 0;flex-wrap:nowrap;justify-content:center}
-.card{width:min(23vw,190px);border:3px solid #000;border-radius:8px;background:linear-gradient(#1c2450,#0d1128);padding:4px 6px 6px;cursor:pointer}
+.card{width:min(18.6vw,170px);border:3px solid #000;border-radius:8px;background:linear-gradient(#1c2450,#0d1128);padding:4px 6px 6px;cursor:pointer}
 .card.sel{outline:4px solid #ffd23a;background:linear-gradient(#3b2a10,#1a1206)}
 .card canvas{width:100%;aspect-ratio:7/5;height:auto;max-height:26vh;object-fit:contain;image-rendering:pixelated;display:block}
 .card .nm{font-size:min(4.2vh,16px);color:#ffd23a}
@@ -45,17 +45,18 @@ input.code{width:5.2em;text-transform:uppercase;letter-spacing:4px}
 /* touch controls */
 #ctl{position:absolute;inset:0;z-index:10;display:none;pointer-events:none}
 #ctl.on{display:block}
-#stick{position:absolute;left:calc(env(safe-area-inset-left) + 14px);bottom:12px;width:min(34vh,150px);height:min(34vh,150px);border-radius:50%;background:radial-gradient(rgba(255,255,255,.10),rgba(255,255,255,.04));border:3px solid rgba(255,255,255,.28);pointer-events:auto;touch-action:none}
-#knob{position:absolute;left:50%;top:50%;width:42%;height:42%;margin:-21% 0 0 -21%;border-radius:50%;background:rgba(255,210,58,.55);border:3px solid rgba(0,0,0,.6)}
-#stick .ar{position:absolute;color:rgba(255,255,255,.35);font-size:14px;font-family:Arial}
-#pad{position:absolute;right:calc(env(safe-area-inset-right) + 10px);bottom:10px;width:min(52vh,226px);height:min(40vh,172px);pointer-events:none}
-.pb{position:absolute;width:min(14.5vh,62px);height:min(14.5vh,62px);border-radius:50%;border:3px solid rgba(0,0,0,.7);color:#000;font-size:min(3.6vh,14px);display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;opacity:.78;box-shadow:0 3px 0 rgba(0,0,0,.6)}
-.pb.dn{transform:scale(.9);opacity:1;filter:brightness(1.35)}
-#b-lp{right:min(17vh,72px);top:0;background:#7fd3ff}#b-hp{right:0;top:min(4vh,16px);background:#2a8cff}
-#b-lk{right:min(17vh,72px);bottom:0;background:#ffb36b}#b-hk{right:0;bottom:min(4vh,16px);background:#ff5a2a}
-#b-bl{right:min(34vh,146px);bottom:min(9vh,40px);background:#bdbdbd;width:min(12.5vh,54px);height:min(12.5vh,54px);font-size:min(3vh,12px)}
-#b-sp{right:min(34vh,146px);top:min(-6vh,-26px);background:#ffd23a;width:min(12.5vh,54px);height:min(12.5vh,54px);font-size:min(3vh,12px)}
-#b-pause{position:absolute;left:50%;top:min(11vh,46px);transform:translateX(-50%);width:44px;height:26px;border-radius:6px;border:2px solid #000;background:rgba(255,255,255,.75);color:#000;font-size:12px;z-index:11;display:none;pointer-events:auto;touch-action:manipulation}
+#ctl.vs #pad{opacity:0}#ctl.vs .pb{pointer-events:none}
+#lzone{position:absolute;left:0;top:18%;width:50%;bottom:0;pointer-events:auto;touch-action:none}
+#stick{position:absolute;left:0;top:0;width:min(36vh,156px);height:min(36vh,156px);margin:calc(min(36vh,156px) / -2) 0 0 calc(min(36vh,156px) / -2);border-radius:50%;background:radial-gradient(rgba(255,255,255,.08),rgba(255,255,255,.02));border:2px solid rgba(255,255,255,.22);pointer-events:none;opacity:0;transition:opacity .25s}
+#stick.on{opacity:1;transition:opacity .05s}
+#knob{position:absolute;left:50%;top:50%;width:40%;height:40%;margin:-20% 0 0 -20%;border-radius:50%;background:rgba(255,210,58,.45);border:2px solid rgba(0,0,0,.5)}
+#pad{position:absolute;right:calc(env(safe-area-inset-right) + 8px);bottom:8px;width:min(64vh,280px);height:min(56vh,245px);pointer-events:none}
+.pb{position:absolute;width:30%;height:34.3%;transform:translate(-50%,-50%);border-radius:50%;border:3px solid rgba(0,0,0,.7);color:#000;font-size:min(4.4vh,18px);font-weight:bold;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;opacity:.3;box-shadow:0 3px 0 rgba(0,0,0,.6);transition:opacity .12s}
+.pb.dn{transform:translate(-50%,-50%) scale(.92);opacity:.9;filter:brightness(1.35);transition:none}
+#b-hk{left:84%;top:82%;background:#ff5a2a}#b-lk{left:50%;top:86%;background:#ffb36b}
+#b-hp{left:80%;top:44%;background:#2a8cff}#b-lp{left:48%;top:48%;background:#7fd3ff}
+#b-sp{left:19%;top:82%;width:26%;height:29.7%;background:#ffd23a}#b-bl{left:16%;top:44%;width:24%;height:27.4%;background:#bdbdbd;font-size:min(3.4vh,13px)}
+#b-pause{position:absolute;right:calc(env(safe-area-inset-right) + 6px);top:6px;width:34px;height:26px;border-radius:6px;border:2px solid #000;background:rgba(255,255,255,.45);color:#000;font-size:12px;z-index:11;display:none;pointer-events:auto;touch-action:manipulation}
 #b-pause.on{display:block}
 #rotate{position:absolute;inset:0;z-index:50;background:#05060f;display:none;align-items:center;justify-content:center;flex-direction:column;font-size:20px;text-align:center;padding:20px}
 @media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
@@ -65,7 +66,8 @@ input.code{width:5.2em;text-transform:uppercase;letter-spacing:4px}
 <canvas id="game" width="960" height="540"></canvas>
 
 <div id="ctl">
-  <div id="stick"><span class="ar" style="left:46%;top:2px">▲</span><span class="ar" style="left:46%;bottom:2px">▼</span><span class="ar" style="left:4px;top:42%">◀</span><span class="ar" style="right:4px;top:42%">▶</span><div id="knob"></div></div>
+  <div id="lzone"></div>
+  <div id="stick"><div id="knob"></div></div>
   <div id="pad">
     <div class="pb" id="b-sp">SP</div>
     <div class="pb" id="b-bl">BLK</div>
@@ -84,23 +86,27 @@ input.code{width:5.2em;text-transform:uppercase;letter-spacing:4px}
     <button class="btn dim" id="btn-howto">CONTROLS</button>
   </div>
   <div class="small" style="margin-top:10px">Best of 3 rounds · 99 seconds · hold BACK or BLK to block</div>
-  <div class="small" style="margin-top:4px;opacity:.8">Keyboard: Arrows/WASD move · J/K punch · U/I kick · L block · O special · P pause</div>
+  <div class="small" style="margin-top:4px;opacity:.8">Keyboard: Arrows/WASD move · J/K punch · U/I kick · L block · O special (+Down = special 2) · P pause</div>
   <button class="btn dim" id="btn-crt">CRT SCANLINES: OFF</button>
+  <div class="small" id="build" style="opacity:.45;margin-top:4px;font-size:9px"></div>
 </div>
 
 <div class="scr" id="s-howto">
   <div class="panel">
     <div style="color:#ffd23a;font-size:min(4.6vh,18px);margin-bottom:4px">CONTROLS</div>
     <table class="keys">
-      <tr><td>Move</td><td>Left stick ◀ ▶ (touch) · Arrows / A D (keys)</td></tr>
+      <tr><td>Move</td><td>Touch anywhere on the left half: a stick appears under your thumb · Arrows / A D (keys)</td></tr>
       <tr><td>Jump / Crouch</td><td>Stick ▲ / ▼ · Up / W · Down / S</td></tr>
       <tr><td>Punch</td><td>LP / HP buttons · J = light, K = heavy</td></tr>
       <tr><td>Kick</td><td>LK / HK buttons · U = light, I = heavy</td></tr>
       <tr><td>Block</td><td>Hold BACK (away from foe) or BLK · L key. Crouch-block lows, stand-block jump-ins</td></tr>
-      <tr><td>Special</td><td>▼ ↘ ▶ + Punch, or LP+HP together, or SP button · O key</td></tr>
+      <tr><td>Special</td><td>SP button, or ▼ ↘ ▶ + Punch, or LP+HP together · O key</td></tr>
+      <tr><td>Special 2</td><td>SP + ▼, or ▼ ↘ ▶ + Kick · O while holding Down (AJ, BINO, SARA, DIRTY)</td></tr>
+      <tr><td>Special 3</td><td>SP + ▶ (toward foe) · O while holding forward (DIRTY)</td></tr>
+      <tr><td>Taunt grab</td><td>SP + ▲ · O while holding Up (BINO)</td></tr>
       <tr><td>Pause</td><td>II button · Esc / P</td></tr>
     </table>
-    <div class="small">SP = special 1 · SP + ▼ (or ▼ ↘ ▶ + Kick) = special 2<br>CRAIG: INK SPLASH (projectile) · AJ: BACKYARD SLAM (grab) / PATIO QUAKE (ground quake) · BINO: CHAIN SPARK (projectile) / BEARD FURY (flurry)<br>SARA: WIRE TOSS (projectile) / DROP IN (teleport drop kick) · DASH (tap ▶ twice) · AJ's heavies shrug off light hits<br>Crouch + HK = sweep. Jump attacks hit crouchers. Specials can cancel a normal that connects.</div>
+    <div class="small">CRAIG (balanced): INK SPLASH (SP, projectile)<br>AJ (big, slow, tanky): BACKYARD SLAM (SP, unblockable grab) · PATIO QUAKE (SP+▼, ground quake) · heavies shrug off light hits, hard to juggle<br>BINO (shirtless rushdown): CHAIN SPARK (SP, thrown chain) · BEARD FURY (SP+▼, multi-hit chain flurry) · KISS MY BUTT (SP+▲, close taunt-grab: leaves them dizzy, +20% damage for 8 s; wide open and counter-hittable on a whiff, 15 s cooldown) · fast chains<br>SARA (fastest): WIRE TOSS (SP, projectile) · DROP IN (SP+▼, teleport drop kick) · DASH (tap ▶ twice)<br>DIRTY (lanky zoner, "Nice nice nice nice nice!"): NICE NICE NICE (SP, slow boombox sound blast) · VANISHING TRICK (SP+▼, teleport behind; hold ◀ to land in front) · FIVE-FINGER DISCOUNT (SP+▶, short grab that steals their gear ~6 s for a buff) · stretchy long-reach limbs, slow recovery<br>Crouch + HK = sweep. Jump attacks hit crouchers. Specials can cancel a normal that connects.</div>
   </div>
   <button class="btn" id="btn-howto-back" style="margin-top:8px">BACK</button>
 </div>

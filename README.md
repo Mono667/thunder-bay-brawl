@@ -7,11 +7,16 @@ A mobile-first 2D street fighter in the style of SF2 and MK3, set on Bay Street 
 ![fight](shot-fight.png)
 
 ## What's in it
-- **Fighters** (procedural pixel art, generated at load: 2–3 tone cel shading, dark outlines, and multi-frame animations for idle, walk, jump, crouch, every attack with anticipation/active/recovery frames, block, hit, knockdown, get-up, win and specials). All four are stylized likenesses drawn in code, never photos:
+- **Fighters** (procedural pixel art, generated at load: 2–3 tone cel shading, dark outlines, and multi-frame animations for idle, walk, jump, crouch, every attack with anticipation/active/recovery frames, block, hit, knockdown, get-up, win and specials). All five are stylized likenesses drawn in code, never photos. Fighters have squash and stretch on landings and hits, secondary motion on hair, chains and straps, a rim light from the street lamps, and soft ground shadows:
   - **CRAIG** is a scrappy all-round brawler with 1000 HP. Special: **INK SPLASH**, a thrown blob of tattoo ink.
   - **AJ** is the big man: the largest sprite, 1200 HP, the slowest walk and the heaviest hits with big knockback. His heavy attacks have armor against light hits, and he is hard to juggle. Specials: **BACKYARD SLAM** (SP), an unblockable grab and over-the-shoulder slam, and **PATIO QUAKE** (SP + down), a ground stomp that hits grounded opponents across a wide range.
-  - **BINO** is a shirtless, mid-speed rushdown fighter with 1000 HP, fast slashing chains and strong close pressure. Specials: **CHAIN SPARK** (SP), a thrown chain projectile, and **BEARD FURY** (SP + down), a forward-drifting multi-hit chain flurry.
-  - **SARA** is the fastest fighter, with 900 HP, a dash (tap forward twice) and quick chains. Specials: **WIRE TOSS** (projectile) and **DROP IN** (SP + down, or down, down-forward, forward + kick), a teleport drop kick.
+  - **BINO** is a shirtless, mid-speed rushdown fighter with 1000 HP, fast slashing chains and strong close pressure. Specials: **CHAIN SPARK** (SP), a thrown chain projectile, and **BEARD FURY** (SP + down), a forward-drifting multi-hit chain flurry. Taunt grab: **KISS MY BUTT** (SP + up), a short-range command grab. He shouts "ALL GOD DAMN DAY!", the opponent is pulled behind him and a SMOOCH! burst covers the moment. The opponent is left dizzy, and Bino gets an 8-second aura worth +20% damage. It has a 15-second cooldown, and a whiff leaves him open to a COUNTER hit.
+  - **SARA** is the fastest fighter, with 900 HP, a dash (tap forward twice) and quick chains. Specials: **WIRE TOSS** (projectile) and **DROP IN** (SP + down, or down, down-forward, forward + kick), a teleport drop kick. Her face has bright, open eyes behind thin clear frames, a big toothy grin on the select and win portraits, and a focused look in the fight.
+  - **DIRTY** is a lanky zoner with 900 HP, stretchy long-reach limbs, a floaty jump and the slowest walk. He wears a backwards white flat-brim cap, shades, a blue tee and a backpack, carries a boombox, and rides off on a BMX when he wins. His catchphrase is "Nice nice nice nice nice!". Specials:
+    - **NICE NICE NICE** (SP): a slow boombox sound wave.
+    - **VANISHING TRICK** (SP + down): a teleport behind the opponent. Hold back to land in front instead.
+    - **FIVE-FINGER DISCOUNT** (SP + forward): a grab that steals the opponent's cap, glasses or top for about 6 seconds and gives him a buff. The victim stays covered (bare head, or a white undershirt), and the item flies back when time is up.
+- **VS showdown:** the two portraits slide in nose to nose with lightning and a screen shake. Then P1 taunts and P2 replies, with matchup banter for every pair. It lasts about 3–4 s; tap or press any button to skip. Online, the host picks the line and both phones show it.
 - **Match flow:** best of 3 rounds with a 99-second timer. Pixel-font banners show ROUND 1, FIGHT!, K.O. (with a white flash), TIME and the winner. The match end shows the winner's portrait and taunt.
 - **Combat:**
   - Chrome health bars with portraits (they change to a hurt face when hit) and a delayed red drain.
@@ -19,23 +24,28 @@ A mobile-first 2D street fighter in the style of SF2 and MK3, set on Bay Street 
   - Chip damage on blocked hits, plus knockback and wall pushback.
   - Fighters turn to face each other automatically.
   - Jump and crouch attacks (crouching LK is a low sweep).
-  - Hit, heavy-hit and block sparks, landing dust, a white hit flash, afterimages on dashes, screen shake and sound effects.
-- **Modes:** a CPU opponent (picked at random from the other three; `?cpu=bino` forces one), a 4-slot character select with stat bars, a pause menu, and online 2P with room codes.
-- **Stage:** Bay Street, Port Arthur at 2 AM with parallax layers: the sky with stars, moon and a faint aurora; Lake Superior and the Sleeping Giant; the grain elevators, harbour cranes and skyline; and brick storefronts. It also has flickering neon (one sign is on the fritz), lamp glow, an animated crowd, two layers of snow, and wet-road reflections of the shops, neon and fighters.
-- **Title:** an attract mode where the camera pans down Bay Street while fighters idle and pose, under a pixel logo.
+  - Big hit, heavy-hit and block sparks, hitstop, landing dust, a white hit flash, afterimages on dashes and specials, screen shake and sound effects.
+  - A super-freeze with a darkened background and the move name on every special, an "N HITS!" combo counter, COUNTER callouts, and a slow-motion zoom on the K.O.
+- **Modes:** a CPU opponent (picked at random from the other four; `?cpu=dirty` forces one), a 5-slot character select with stat bars, a pause menu, and online 2P with room codes.
+- **Stage:** Bay Street, Port Arthur at 2 AM with parallax layers: the sky with stars, moon and a faint aurora; Lake Superior and the Sleeping Giant; the grain elevators, harbour cranes and skyline; and brick storefronts. It also has flickering neon (one sign is on the fritz), lamp glow, an animated crowd that cheers on a K.O., steam from the vents, passing headlights, snow gusts, two layers of snow, a foreground parallax layer, and wet-road reflections of the shops, neon and fighters.
+- **Title:** an attract mode where the camera pans down Bay Street while fighters idle and pose, under an animated pixel logo. Each round opens with a zoom-in.
 - **Options:** a CRT scanline toggle on the title screen (remembered; `?crt` turns it on).
 - **Performance:** everything is pre-rendered into offscreen canvases once at load (about 0.5 s). If the frame rate drops below 50, the game steps quality down from 2 to 1 to 0 (reflections and glow go first, then crowd animation and snow). `?q=0|1|2` locks the level.
 
 ## Controls
 | | Touch (landscape) | Keyboard |
 |---|---|---|
-| Move / jump / crouch | Left stick (up = jump, down = crouch) | Arrows or WASD |
+| Move / jump / crouch | Floating stick: put your thumb anywhere on the left half (up = jump, down = crouch, with generous diagonals) | Arrows or WASD |
 | Light / heavy punch | LP / HP | J / K |
 | Light / heavy kick | LK / HK | U / I |
 | Block | BLK, or hold **back** | L, or hold back |
 | Special | SP, or LP+HP together, or ↓ ↘ → + punch | O, or ↓ ↘ → + J/K |
-| Special 2 (AJ, BINO, SARA) | SP + down, or ↓ ↘ → + kick | O + ↓, or ↓ ↘ → + U/I |
-| Pause | ❚❚ button | P / Esc |
+| Special 2 (AJ, BINO, SARA, DIRTY) | SP + down, or ↓ ↘ → + kick | O + ↓, or ↓ ↘ → + U/I |
+| Special 3: FIVE-FINGER DISCOUNT (DIRTY) | SP + forward | O + → |
+| Taunt grab: KISS MY BUTT (BINO) | SP + up | O + ↑ |
+| Pause | ❚❚ button (top-right corner) | P / Esc |
+
+On touch screens the buttons are large and sit in an arc on the right. They are see-through at rest and light up when pressed. Nothing covers the health bars, and you can hold the stick and press buttons at the same time.
 
 Add `?boxes` to the URL to see hitboxes (red) and hurtboxes (green).
 

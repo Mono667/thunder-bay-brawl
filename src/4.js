@@ -12,18 +12,33 @@ function fit() {
   cv.style.width = Math.floor(960 * s) + 'px'; cv.style.height = Math.floor(540 * s) + 'px';
 }
 addEventListener('resize', fit); fit();
-paintLogo();
+paintLogo(0);
+/* ---- stale-cache guard: GitHub Pages lets browsers keep the page ~10 min. If the live copy has a
+   newer build id than the one running, reload once onto it. ---- */
+const BUILD_ID = '__BUILD__';
+if ($('build')) $('build').textContent = 'build ' + BUILD_ID;
+(function freshCheck() {
+  if (location.protocol === 'file:' || QS.has('nofresh') || !window.fetch) return;
+  fetch(location.pathname + '?fresh=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(t => {
+    const m = t.match(/const BUILD_ID = '([0-9a-f]{8})'/);
+    if (m && m[1] !== BUILD_ID && !G && !sessionStorage.getItem('tbb-fresh-' + m[1])) {
+      sessionStorage.setItem('tbb-fresh-' + m[1], '1'); const u = new URL(location.href); u.searchParams.set('v', m[1]); location.replace(u.toString());
+    }
+  }).catch(() => {});
+})();
 function crtLabel() { const b = $('btn-crt'); if (b) b.textContent = 'CRT SCANLINES: ' + (CRT.on ? 'ON' : 'OFF'); }
 if ($('btn-crt')) { crtLabel(); $('btn-crt').onclick = () => { CRT.on = !CRT.on; localStorage.setItem('tbb-crt', CRT.on ? '1' : '0'); crtLabel(); }; }
 
 /* ---- character select cards ---- */
+const CARD_TXT = { craig: 'Balanced brawler. INK SPLASH projectile.', aj: 'Big, slow, tanky. Grab slam + ground quake.', bino: 'Rushdown. Chain flurry + KISS MY BUTT taunt-grab.', sara: 'Fastest. Wire toss, teleport drop kick, dash.', dirty: '"NICE NICE NICE NICE NICE!" Lanky zoner, steals your gear.' };
 function buildCards() {
   const box = $('cards'); box.innerHTML = '';
   for (const id of CHAR_IDS) {
     const C = CHARS[id], d = document.createElement('div');
     d.className = 'card' + (id === pick ? ' sel' : ''); d.id = 'pick-' + id;
     const st = Object.entries(C.stats).map(([k, v]) => `<div class="stat"><b>${k.toUpperCase()}</b><i><s style="width:${v * 20}%"></s></i></div>`).join('');
-    d.innerHTML = `<canvas width="140" height="100"></canvas><div class="nm">${C.title}</div><div class="ds">${C.blurb}</div>${st}`;
+    d.title = C.blurb;
+    d.innerHTML = `<canvas width="140" height="100"></canvas><div class="nm">${C.title}</div><div class="ds">${CARD_TXT[id] || C.blurb}</div>${st}`;
     d.addEventListener('click', () => { pick = id; buildCards(); });
     box.appendChild(d);
   }
@@ -66,28 +81,39 @@ $('btn-rematch').onclick = () => {
 function quitToMenu() { paused = false; netClose(); G = null; inGameUI(false); show('s-title'); }
 function startSolo(c1, c2) { me = 0; paused = false; lastEv = 0; localIn.clear(); newMatch('solo', c1, c2); show(null); inGameUI(true); }
 
-/* ---- touch: virtual stick ---- */
+/* ---- touch: floating stick - touch anywhere on the left half, the stick appears under your thumb ---- */
+function vsSkip() { if (G && G.phase === 'vs') localIn.latch.lp = true; }
+const STICK = { pid: null, ox: 0, oy: 0 };
 (function stick() {
-  const el = $('stick'), knob = $('knob'); let pid = null;
-  const set = (e) => {
-    const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    let dx = e.clientX - cx, dy = e.clientY - cy; const R = r.width * 0.36, m = Math.hypot(dx, dy);
-    if (m > R) { dx *= R / m; dy *= R / m; }
-    knob.style.transform = `translate(${dx}px,${dy}px)`;
-    const dz = r.width * 0.12;
-    (dx < -dz ? localIn.down('l') : localIn.up('l')); (dx > dz ? localIn.down('r') : localIn.up('r'));
-    (dy < -r.width * 0.2 ? localIn.down('u') : localIn.up('u')); (dy > r.width * 0.16 ? localIn.down('d') : localIn.up('d'));
+  const zone = $('lzone'), el = $('stick'), knob = $('knob');
+  const dirs = (dx, dy, R) => {   // 8-way: each direction covers +-67.5deg, so diagonals are as wide as straights
+    const m = Math.hypot(dx, dy), ux = m ? dx / m : 0, uy = m ? dy / m : 0, on = m > R * 0.33;
+    return { l: on && ux < -0.38, r: on && ux > 0.38, d: on && uy > 0.38, u: m > R * 0.45 && uy < -0.38 };
   };
-  const end = (e) => { if (e.pointerId !== pid) return; pid = null; knob.style.transform = ''; for (const k of ['l', 'r', 'u', 'd']) localIn.up(k); };
-  el.addEventListener('pointerdown', (e) => { e.preventDefault(); audioInit(); pid = e.pointerId; try { el.setPointerCapture(pid); } catch (_) {} set(e); });
-  el.addEventListener('pointermove', (e) => { if (e.pointerId === pid) set(e); });
-  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  const set = (e) => {
+    const R = el.offsetWidth * 0.5 || 70;
+    let dx = e.clientX - STICK.ox, dy = e.clientY - STICK.oy; const m = Math.hypot(dx, dy);
+    if (m > R * 1.25) { const k = (m - R * 1.25) / m; STICK.ox += dx * k; STICK.oy += dy * k; dx -= dx * k; dy -= dy * k; place(); }   // base follows a long drag
+    const km = Math.min(1, R * 0.72 / (Math.hypot(dx, dy) || 1));
+    knob.style.transform = `translate(${dx * km}px,${dy * km}px)`;
+    const d = dirs(dx, dy, R); for (const k of ['l', 'r', 'u', 'd']) (d[k] ? localIn.down(k) : localIn.up(k));
+  };
+  const place = () => { el.style.left = STICK.ox + 'px'; el.style.top = STICK.oy + 'px'; };
+  const end = (e) => { if (e.pointerId !== STICK.pid) return; STICK.pid = null; knob.style.transform = ''; el.classList.remove('on'); for (const k of ['l', 'r', 'u', 'd']) localIn.up(k); };
+  zone.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); audioInit(); vsSkip(); if (STICK.pid != null) return;
+    STICK.pid = e.pointerId; try { zone.setPointerCapture(e.pointerId); } catch (_) {}
+    STICK.ox = e.clientX; STICK.oy = e.clientY; place(); el.classList.add('on'); set(e);
+  });
+  zone.addEventListener('pointermove', (e) => { if (e.pointerId === STICK.pid) set(e); });
+  zone.addEventListener('pointerup', end); zone.addEventListener('pointercancel', end);
 })();
+cv.addEventListener('pointerdown', vsSkip);
 /* ---- touch: attack buttons ---- */
 for (const [id, k] of [['b-lp', 'lp'], ['b-hp', 'hp'], ['b-lk', 'lk'], ['b-hk', 'hk'], ['b-bl', 'bl'], ['b-sp', 'sp']]) {
   const el = $(id);
   const up = (e) => { localIn.up(k); el.classList.remove('dn'); };
-  el.addEventListener('pointerdown', (e) => { e.preventDefault(); audioInit(); localIn.down(k); el.classList.add('dn'); });
+  el.addEventListener('pointerdown', (e) => { e.preventDefault(); audioInit(); vsSkip(); localIn.down(k); el.classList.add('dn'); });
   el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('pointerleave', up);
 }
 document.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -190,6 +216,8 @@ function loop(now) {
     }
   }
   if ($('s-select').classList.contains('on')) drawCards();
+  const vsOn = !!(G && G.phase === 'vs'); if (vsOn !== $('ctl').classList.contains('vs')) $('ctl').classList.toggle('vs', vsOn);
+  if (!G && $('s-title').classList.contains('on') && (frame & 1)) paintLogo(frame);
   render(); qualTick(dt);
 }
 requestAnimationFrame(loop);
@@ -197,12 +225,13 @@ requestAnimationFrame(loop);
 /* ---- test / debug hooks ---- */
 window.FIGHT = {
   get G() { return G; },
-  state() { if (!G) return { phase: 'menu' }; const f = G.f.map(x => ({ ch: x.ch, x: Math.round(x.x), y: Math.round(x.y), hp: x.hp, red: x.red, st: x.st, mv: x.mv, face: x.face })); return { mode: G.mode, phase: G.phase, round: G.round, wins: G.wins, timer: G.timer, banner: G.banner && G.banner.txt, result: G.result, f, stat: G.stat, proj: G.proj.length, tick: G.tick, me, snaps: NET.snaps, code: NET.code, q: QUAL.lv, crt: CRT.on }; },
+  state() { if (!G) return { phase: 'menu' }; const f = G.f.map(x => ({ ch: x.ch, x: Math.round(x.x), y: Math.round(x.y), hp: x.hp, red: x.red, st: x.st, mv: x.mv, face: x.face, buff: x.buff || 0, dz: x.dz || 0, tcd: x.tcd || 0 })); return { mode: G.mode, phase: G.phase, round: G.round, wins: G.wins, timer: G.timer, banner: G.banner && G.banner.txt, result: G.result, f, stat: G.stat, proj: G.proj.length, tick: G.tick, me, snaps: NET.snaps, code: NET.code, q: QUAL.lv, crt: CRT.on, steal: G.steal && { i: G.steal.i, v: G.steal.v, item: G.steal.item, t: G.steal.t, T: G.steal.T }, kiss: !!G.kiss, ctr: !!G.ctr, sfz: !!G.sfz, combo: G.combo && G.combo.n, vsLine: G.vsLine, banter: G.f && banterFor(G.f[0].ch, G.f[1].ch, G.vsLine), pt: G.pt }; },
   setHp(i, v) { G.f[i].hp = v; G.f[i].red = v; },
   cpu(on) { cpuOn = on; cpuIn.clear(); },
   press(i, k) { (i === me ? localIn : G.mode === 'host' ? remoteIn : cpuIn).latch[k] = true; },
   hold(i, k, on) { const s = i === me ? localIn : G.mode === 'host' ? remoteIn : cpuIn; s.held[k] = !!on; },
-  place(i, x) { G.f[i].x = x; }
+  place(i, x) { G.f[i].x = x; },
+  skipVS() { if (G && G.phase === 'vs') G.pt = VS_T - 1; }
 };
 </script>
 </body>

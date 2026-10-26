@@ -30,7 +30,7 @@ function gradRows(g, x, y, w, h, cols) {   // dithered vertical gradient through
 function R(g, c, x, y, w, h) { g.fillStyle = c; g.fillRect(x | 0, y | 0, w | 0, h | 0); }
 function disc(g, c, x, y, r) { g.fillStyle = c; for (let yy = -r; yy <= r; yy++) { const hw = Math.floor(Math.sqrt(r * r - yy * yy)); g.fillRect(x - hw, y + yy, hw * 2 + 1, 1); } }
 
-const BG = {}, NEON = [], LAMPS = [120, 400, 680];
+const BG = {}, NEON = [], LAMPS = [120, 400, 680], FG_PAR = 1.3, WIND = { off: 0, last: 0, g: 0 };
 function buildStage() {
   seed = 4242;
   /* sky: deep night, sodium-orange city glow on the horizon, stars, moon, faint aurora */
@@ -154,20 +154,49 @@ function buildStage() {
   /* crowd on the sidewalk: 4 bob frames, parkas + toques, a few phones up */
   const PPL = []; for (let x = 6; x < STAGE_W - 6; x += 9 + rnd() * 12) if (LAMPS.every(l => Math.abs(x - l) > 10)) PPL.push({ x: x | 0, h: 18 + rnd() * 9 | 0, w: 11 + rnd() * 5 | 0, c: ['#2a2a4a', '#3a1e2a', '#1e3a3a', '#3a3a22', '#2a1a3a', '#40242a'][rnd() * 6 | 0], hat: ['#c02a2a', '#2a6ac0', '#e0c040', '#2a8a4a', '#d0d0e0', null][rnd() * 6 | 0], ph: rnd() * 4 | 0, arm: rnd() < 0.35, phone: rnd() < 0.2, skin: ['#c88a6a', '#e0b090', '#8a5a3a', '#f0c8a8'][rnd() * 4 | 0] });
   BG.crowd = [];
-  for (let fr = 0; fr < 4; fr++) {
-    const cc = mk(STAGE_W, 50), cg = cc.g;
+  for (let fr = 0; fr < 6; fr++) {   // 0-3 idle bob, 4-5 cheering (arms up, hopping)
+    const cc = mk(STAGE_W, 50), cg = cc.g, cheer = fr >= 4;
     for (const p of PPL) {
-      const b = [0, -1, -2, -1][(fr + p.ph) & 3], top = 50 - p.h + b, x = p.x;
+      const b = cheer ? (((fr + p.ph) & 1) ? -4 : -1) : [0, -1, -2, -1][(fr + p.ph) & 3], top = 50 - p.h + b, x = p.x;
       R(cg, '#0b0712', x, top + 6, p.w, 2); R(cg, '#0b0712', x - 1, top + 8, p.w + 2, p.h); R(cg, p.c, x + 1, top + 7, p.w - 2, 2); R(cg, p.c, x, top + 9, p.w, p.h);
       R(cg, 'rgba(0,0,0,0.35)', x + (p.w >> 1), top + 12, 1, p.h);
       R(cg, 'rgba(255,255,255,0.10)', x, top + 7, p.w, 1); R(cg, 'rgba(0,0,0,0.35)', x + p.w - 2, top + 8, 2, p.h);
       const hx = x + (p.w >> 1) - 4;
       R(cg, '#0b0712', hx - 1, top - 1, 9, 9); R(cg, p.skin, hx, top, 7, 8); R(cg, 'rgba(0,0,0,0.3)', hx + 5, top, 2, 8); R(cg, '#0b0712', hx + 2, top + 3, 1, 1); R(cg, '#0b0712', hx + 5, top + 3, 1, 1);
       if (p.hat) { R(cg, '#0b0712', hx - 1, top - 3, 9, 5); R(cg, p.hat, hx, top - 2, 7, 4); R(cg, 'rgba(255,255,255,0.35)', hx, top + 1, 7, 1); R(cg, '#ffffff', hx + 2, top - 4, 3, 2); } else R(cg, '#2a1a12', hx, top, 7, 2);
-      if (p.arm) { const up = ((fr + p.ph) & 2) ? 3 : 0; R(cg, '#0b0712', x + p.w - 1, top - 6 + up, 4, 14); R(cg, p.c, x + p.w, top - 5 + up, 2, 12); R(cg, p.skin, x + p.w, top - 7 + up, 2, 2); if (p.phone) R(cg, '#bfe8ff', x + p.w - 1, top - 10 + up, 3, 3); }
+      if (cheer) { for (const ax of [x - 3, x + p.w - 1]) { const up = ((fr + p.ph + (ax > x ? 1 : 0)) & 1) ? 0 : 2; R(cg, '#0b0712', ax, top - 8 + up, 4, 15); R(cg, p.c, ax + 1, top - 7 + up, 2, 13); R(cg, p.skin, ax + 1, top - 9 + up, 2, 2); } if (p.phone) R(cg, '#bfe8ff', x + p.w - 1, top - 12, 3, 3); }
+      else if (p.arm) { const up = ((fr + p.ph) & 2) ? 3 : 0; R(cg, '#0b0712', x + p.w - 1, top - 6 + up, 4, 14); R(cg, p.c, x + p.w, top - 5 + up, 2, 12); R(cg, p.skin, x + p.w, top - 7 + up, 2, 2); if (p.phone) R(cg, '#bfe8ff', x + p.w - 1, top - 10 + up, 3, 3); }
     }
     BG.crowd.push(cc);
   }
+
+  /* aurora curtains: 4 shimmering frames, cross-faded live */
+  BG.aur = [];
+  for (let k = 0; k < 4; k++) {
+    const ac = mk(W, 60), ag = ac.g, ph = k * 1.57;
+    for (let x = 0; x < W; x++) {
+      const y0 = 26 + Math.sin(x * 0.018 + ph * 0.5) * 9 + Math.sin(x * 0.051 - ph) * 4, len = 12 + Math.sin(x * 0.11 + ph * 1.3) * 6 + Math.sin(x * 0.023 - ph) * 5;
+      for (let j = 0; j < len; j++) { const f = j / len; if (dith(x, j + k) < 0.5 * (1 - f) * (0.6 + 0.4 * Math.sin(x * 0.2 + ph))) { ag.fillStyle = f < 0.15 && Math.sin(x * 0.03 + ph) > 0.5 ? '#c86ad8' : f < 0.5 ? '#5ae0a0' : '#2a8a7a'; ag.fillRect(x, Math.round(y0 - 12 + j), 1, 1); } }
+    }
+    BG.aur.push(ac);
+  }
+  /* passing-car headlight wash + soft drop shadow */
+  BG.head = mk(160, 60); { const gg = BG.head.g, gr = gg.createRadialGradient(80, 30, 2, 80, 30, 80); gr.addColorStop(0, 'rgba(255,246,220,0.55)'); gr.addColorStop(0.35, 'rgba(255,236,200,0.18)'); gr.addColorStop(1, 'rgba(255,236,200,0)'); gg.fillStyle = gr; gg.setTransform(1, 0, 0, 0.38, 0, 18.6); gg.fillRect(0, 0, 160, 160); }
+  BG.shadow = mk(64, 12); for (let y = 0; y < 12; y++) for (let x = 0; x < 64; x++) { const dx = (x - 31.5) / 32, dy = (y - 5.5) / 6, r = dx * dx + dy * dy; if (r < 1 && dith(x, y) < 1.15 - r) { BG.shadow.g.fillStyle = r < 0.35 ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.45)'; BG.shadow.g.fillRect(x, y, 1, 1); } }
+  /* foreground layer (parallax 1.3x, drawn over the fighters' reflections): snowbank, parked car, hydrant, mailbox */
+  BG.fgW = Math.ceil((STAGE_W - W) * FG_PAR + W); c = mk(BG.fgW, 40, true); g = c.g;
+  for (let x = 0; x < BG.fgW; x += 2) { const hh = 5 + Math.sin(x * 0.031) * 3 + Math.sin(x * 0.11) * 1.5 + (rnd() * 1.5 | 0); if (Math.sin(x * 0.009 + 1) > -0.55) { R(g, '#0b0712', x, 40 - hh - 1, 2, 1); R(g, '#cdd8ea', x, 40 - hh, 2, hh); R(g, '#f2f6ff', x, 40 - hh, 2, 1); if (dith(x, hh) < 0.35) R(g, '#9aa8c4', x, 40 - hh + 3, 2, 1); } }
+  const car = (x0) => {   // roof + windows of a parked car poking up from the bottom of frame, snow on the roof
+    R(g, '#0b0712', x0, 12, 126, 28); R(g, '#1c1a2c', x0 + 1, 13, 124, 27); R(g, '#2a2840', x0 + 1, 13, 124, 2);
+    R(g, '#0b0712', x0 + 22, 2, 76, 12); R(g, '#24223a', x0 + 23, 3, 74, 10);
+    gradRows(g, x0 + 26, 4, 30, 9, ['#c46aff', '#3a2a6a', '#14122a']); gradRows(g, x0 + 60, 4, 34, 9, ['#57e0ff', '#1e3a6a', '#14122a']);
+    R(g, '#0b0712', x0 + 57, 3, 3, 10); R(g, '#e8eef8', x0 + 24, 0, 72, 3); R(g, '#ffffff', x0 + 30, 0, 50, 1);
+    R(g, '#ff3a2a', x0 + 2, 18, 5, 3); R(g, '#ffb0a0', x0 + 3, 18, 2, 1); R(g, '#3a3850', x0 + 8, 24, 110, 1);
+  };
+  car(8); car(BG.fgW - 150);
+  { const hx = 470; R(g, '#0b0712', hx - 1, 16, 12, 24); R(g, '#c02a1a', hx, 18, 10, 22); R(g, '#e85a3a', hx + 1, 18, 2, 22); R(g, '#0b0712', hx - 3, 24, 16, 5); R(g, '#a01a10', hx - 2, 25, 14, 3); R(g, '#e8eef8', hx, 15, 10, 3); }   // hydrant
+  { const mx = 300; R(g, '#0b0712', mx - 1, 6, 20, 34); R(g, '#c01818', mx, 7, 18, 33); R(g, '#e84a3a', mx + 1, 8, 3, 32); R(g, '#0b0712', mx + 3, 14, 12, 2); R(g, '#f0f0f0', mx + 4, 20, 10, 3); R(g, '#e8eef8', mx, 4, 18, 4); }   // red street mailbox
+  BG.fg = c;
 
   /* snow flakes */
   BG.snow = []; for (let i = 0; i < 110; i++) BG.snow.push({ x: Math.random() * W, y: Math.random() * H, s: 0.25 + Math.random() * 0.85 });
@@ -182,13 +211,15 @@ function buildStage() {
 const SPARK_PAL = ['#ffffff', '#fff6b0', '#ffe066', '#ffb020', '#ff6a12', '#c82808', '#bfe8ff', '#7fd3ff', '#3a8aff', '#1a4ca0', '#d8d0c0', '#a89a88', '#6a6058', '#0b0712'];
 const SPK = {};
 function buildSparks() {
-  const life = { h: 16, H: 16, K: 28, b: 16, d: 16, D: 22 }, size = { h: 40, H: 64, K: 112, b: 40, d: 40, D: 72 };
+  const life = { h: 18, H: 22, K: 34, b: 16, d: 16, D: 22 }, size = { h: 56, H: 96, K: 150, b: 44, d: 40, D: 72 };
   for (const k in life) {
     const n = Math.ceil(life[k] / 2), S = size[k], arr = [];
     for (let i = 0; i < n; i++) {
       const c = mk(S, S, true), g = c.g, p = i / (n - 1), m = S / 2; seed = 99 + i * 7 + k.charCodeAt(0);
       if (k === 'h' || k === 'H' || k === 'K') {
-        const big = k === 'h' ? 1 : k === 'H' ? 1.6 : 2.8, rays = k === 'h' ? 8 : 12;
+        const big = k === 'h' ? 1.3 : k === 'H' ? 2.2 : 3.4, rays = k === 'h' ? 8 : 14;
+        if (i < 2) { g.fillStyle = '#ffffff'; g.fillRect(m - S * 0.45, m - 1.5, S * 0.9, 3); g.fillRect(m - 1.5, m - S * 0.32, 3, S * 0.64); }   // first frames: hard cross-flash
+        if (k !== 'h' && p > 0.1 && p < 0.7) { g.strokeStyle = '#ff6a12'; g.lineWidth = 1; for (let r = 0; r < 6; r++) { const a = r / 6 * 7 + i, L0 = (8 + p * 18) * big * 0.6; g.beginPath(); g.moveTo(m + Math.cos(a) * L0, m + Math.sin(a) * L0); g.lineTo(m + Math.cos(a + 0.25) * L0 * 1.5, m + Math.sin(a + 0.25) * L0 * 1.5); g.stroke(); } }
         const col = p < 0.25 ? '#ffffff' : p < 0.5 ? '#ffe066' : p < 0.75 ? '#ffb020' : '#ff6a12';
         if (p < 0.6) { g.fillStyle = p < 0.3 ? '#ffffff' : '#fff6b0'; g.beginPath(); g.arc(m, m, (5 - p * 6) * big, 0, 7); g.fill(); }
         g.strokeStyle = col; g.lineCap = 'round';
@@ -211,6 +242,8 @@ function buildSparks() {
 /* ---------- projectile sprites ---------- */
 const PROJ = {};
 function buildProj() {
+  PROJ.wave = [];
+  for (let i = 0; i < 8; i++) { const c = mk(32, 32, true); waveRings(c.g, [16, 16], 1, i / 8); PROJ.wave.push(pixelate(c, [OUT].concat(FXP, ['#ff6ad8', '#c03aa0']), null)); }
   for (const art of ['ink', 'wire', 'chain']) {
     PROJ[art] = [];
     for (let i = 0; i < 8; i++) {
@@ -231,6 +264,11 @@ function neonLevel(n, tick) {   // 1 = on, 0 = off; each sign has its own flicke
 function drawStage(g, camX, tick) {
   const lv = QUAL.lv;
   g.drawImage(BG.sky, 0, 0);
+  if (lv > 0) {   // aurora curtains drift and shimmer (cross-fade between 4 frames)
+    const u = tick / 70, k = Math.floor(u) % 4, fr = u - Math.floor(u), ax = Math.round(-camX * 0.06 + Math.sin(tick * 0.002) * 6);
+    g.globalAlpha = (0.45 + 0.2 * Math.sin(tick * 0.013)) * (1 - fr); g.drawImage(BG.aur[k], ax, 0);
+    g.globalAlpha = (0.45 + 0.2 * Math.sin(tick * 0.013)) * fr; g.drawImage(BG.aur[(k + 1) % 4], ax, 0); g.globalAlpha = 1;
+  }
   g.drawImage(BG.far, Math.round(-camX * 0.12), 0);
   g.drawImage(BG.mid, Math.round(-camX * 0.35), -34);
   const nx = Math.round(-camX);
@@ -240,7 +278,26 @@ function drawStage(g, camX, tick) {
     const on = neonLevel(n, tick); g.drawImage(on ? n.on : n.off, x, n.y - 4);
     if (on && lv > 0) { g.save(); g.globalAlpha = 0.28; g.translate(x, 2 * 229 - n.y + 30); g.scale(1, -1); g.drawImage(n.on, 0, 0); g.restore(); }
   }
-  g.drawImage(BG.crowd[lv ? Math.floor(tick / 9) % 4 : 0], nx, 178);
+  const cheer = G && ((G.phase === 'roundEnd' && G.koX != null) || G.phase === 'matchEnd');
+  g.drawImage(BG.crowd[cheer ? 4 + (Math.floor(tick / 6) & 1) : lv ? Math.floor(tick / 9) % 4 : 0], nx, 178);
+  if (lv > 0) {   // vent steam: the alley grate and a manhole on the road
+    for (const [vx, vy, n] of [[266, 214, 7], [560, 239, 6]]) {
+      const x0 = vx + nx; if (x0 < -40 || x0 > W + 40) continue;
+      for (let k = 0; k < n; k++) {
+        const age = (tick * 0.55 + k * (150 / n)) % 150, f = age / 150, r = 3 + age * 0.09;
+        g.globalAlpha = 0.22 * (1 - f) * Math.min(1, age / 12); g.fillStyle = k & 1 ? '#c8cede' : '#a8b0c8';
+        const x = x0 + Math.sin(age * 0.05 + k) * 4 + age * (0.18 + WIND.g * 0.9), y = vy - age * 0.45;
+        g.fillRect(Math.round(x - r), Math.round(y - r * 0.7), Math.round(r * 2), Math.round(r * 1.4)); g.fillRect(Math.round(x - r * 0.7), Math.round(y - r), Math.round(r * 1.4), Math.round(r * 2));
+      }
+      g.globalAlpha = 1;
+    }
+    const cyc = tick % 780;   // a car passes behind camera: its headlights sweep the storefronts and the wet road
+    if (cyc < 200) {
+      const dir = (Math.floor(tick / 780) & 1) ? -1 : 1, p = cyc / 200, wxp = dir > 0 ? -160 + p * (STAGE_W + 320) : STAGE_W + 160 - p * (STAGE_W + 320), x = Math.round(wxp + nx);
+      g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.8; g.drawImage(BG.head, x - 80, 150); g.drawImage(BG.head, x - 30, 154);
+      g.globalAlpha = 0.35; g.drawImage(BG.head, x - 80, 222, 160, 30); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    }
+  }
   for (const l of LAMPS) {
     const x = l - 10 + nx; if (x < -70 || x > W + 70) continue;
     if (lv > 0) { g.globalCompositeOperation = 'lighter'; g.drawImage(BG.glow, x - 60, 120 - 60); g.drawImage(BG.cone, x - 40, 122); g.globalAlpha = 0.6; g.drawImage(BG.glow, x - 60, 236 - 60); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
@@ -249,10 +306,16 @@ function drawStage(g, camX, tick) {
 }
 function drawSnow(g, tick, near) {
   const lv = QUAL.lv, n = lv === 2 ? 110 : lv === 1 ? 70 : 30;
+  if (!near && tick !== WIND.last) {   // wind: a steady drift plus a gust every ~12 s
+    const dt = Math.max(0, Math.min(5, tick - WIND.last)); WIND.last = tick;
+    WIND.g = Math.pow(Math.max(0, Math.sin(tick * 0.0085)), 10); WIND.off += dt * (0.12 + WIND.g * 2.6);
+  }
+  const gst = WIND.g, streak = lv > 0 && gst > 0.25 ? Math.round(1 + gst * 4) : 0;
+  g.fillStyle = near ? '#eef4ff' : '#9aa8d0';
   for (let i = near ? 0 : 1; i < n; i += 2) {
     const s = BG.snow[i], big = near && s.s > 0.6, sp = near ? s.s : s.s * 0.5;
-    const y = (s.y + tick * sp * 0.7) % H, x = ((s.x + Math.sin((tick + s.y) * 0.02) * 6 - (near ? (G ? G.camX : 0) * 0.3 : 0)) % W + W) % W;
-    g.fillStyle = near ? '#eef4ff' : '#9aa8d0'; g.fillRect(x | 0, y | 0, big ? 2 : 1, big ? 2 : 1);
+    const y = (s.y + tick * sp * (0.7 - gst * 0.25)) % H, x = ((s.x + WIND.off * sp + Math.sin((tick + s.y) * 0.02) * 6 - (near ? (G ? G.camX : 0) * 0.3 : 0)) % W + W) % W;
+    g.fillRect(x | 0, y | 0, (big ? 2 : 1) + (streak ? (big ? streak : streak >> 1) : 0), big ? 2 : 1);
   }
 }
 
@@ -261,34 +324,98 @@ const FLASH = mk(FW, FH);
 function fighterVisible(f, tick) {
   const M = moveDef(f);
   if (M && M.tele && f.mf < M.s) return f.mf < 4 ? ((tick >> 1) & 1) : 0;   // DROP IN: vanishes on startup
+  if (M && M.warp && f.mf < M.s) return f.mf < 5 ? 1 : f.mf < 9 ? ((tick >> 1) & 1) * 0.7 : 0;   // VANISHING TRICK
+  if (M && M.warp && f.mf < M.s + 4) return (tick >> 1) & 1 ? 1 : 0.5;
   if (f.inv > 0 && (tick >> 1) % 2) return 0.6;
   return 1;
 }
 function drawFighter(g, f, tick, camX) {
-  const C = CHARS[f.ch], sx = Math.round(f.x - camX), sy = GROUND - Math.round(f.y), S = SHEETS[f.ch], M = moveDef(f);
+  const C = CHARS[f.ch], sx = Math.round(f.x - camX), sy = GROUND - Math.round(f.y), S = sheetFor(f), M = moveDef(f);
   const vis = fighterVisible(f, tick), rend = RENDERERS[C.render] || RENDERERS.pixel;
   // contact shadow
-  const sw = Math.round(C.bodyW * 0.8 * Math.max(0.35, 1 - f.y / 120));
-  g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillRect(sx - sw, GROUND, sw * 2, 2); g.fillRect(sx - sw + 3, GROUND - 1, sw * 2 - 6, 1); g.fillRect(sx - sw + 3, GROUND + 2, sw * 2 - 6, 1);
+  const sk = Math.max(0.35, 1 - f.y / 120), sw = Math.round(C.bodyW * 0.85 * sk) * 2, shh = Math.max(3, Math.round(7 * sk));
+  g.globalAlpha = 0.55 + 0.3 * sk; g.drawImage(BG.shadow, sx - sw / 2, GROUND - (shh >> 1) + 1, sw, shh); g.globalAlpha = 1;
   if (M && M.tele && f.mf < M.s) {   // wire-glint swirl where she vanished
     g.fillStyle = '#d0d4dc'; for (let k = 0; k < 6; k++) { const a = tick * 0.3 + k * 1.05, r = 6 + f.mf * 1.2; g.fillRect(sx + Math.cos(a) * r | 0, sy - 40 + Math.sin(a) * r * 1.6 | 0, 2, 1); }
   }
+  if (M && M.warp && f.mf < M.s && f.mf > 3) {   // boombox-pink smoke puff where he vanished
+    g.fillStyle = (tick >> 2) & 1 ? '#ff6ad8' : '#b8f4ff'; for (let k = 0; k < 8; k++) { const a = k * 0.785 + f.mf * 0.2, r = 4 + f.mf * 1.6; g.fillRect(sx + Math.cos(a) * r | 0, sy - 36 + Math.sin(a) * r * 1.3 | 0, 2, 2); }
+  }
   if (!vis) return;
+  if (f.buff > 0) drawAura(g, f, sx, sy, tick);
   // afterimages on dashes, rushes and the drop
   const active = M && f.mf >= M.s && f.mf < M.s + M.a;
-  if (M && (M.dash || M.tele) && (active || f.mv === 'dsh') && QUAL.lv > 0) {
-    for (let k = 2; k >= 1; k--) { g.globalAlpha = 0.18 * (3 - k); const dx = M.tele ? 0 : -Math.round(f.vx * 4 * k), dy = M.tele && active ? -12 * k : 0; rend(g, f, C, sx + dx, sy + dy, tick); }
+  const spc = f.mv === 'sp' || f.mv === 'sp2';
+  if (M && (M.dash || M.tele || spc) && (active || f.mv === 'dsh' || (spc && f.mf < M.s + M.a)) && QUAL.lv > 0) {
+    const n = QUAL.lv === 2 ? 3 : 2;
+    for (let k = n; k >= 1; k--) {
+      g.globalAlpha = 0.14 * (n + 1 - k); const dx = M.tele ? 0 : Math.abs(f.vx) > 0.5 ? -Math.round(f.vx * 4 * k) : -f.face * 7 * k, dy = M.tele && active ? -12 * k : 0;
+      rend(g, f, C, sx + dx, sy + dy, tick);
+    }
     g.globalAlpha = 1;
   }
   g.globalAlpha = vis;
-  rend(g, f, C, sx, sy, tick);
+  rend(g, f, C, sx, sy, tick, false, QUAL.lv > 0 ? 0.7 : 0);
   g.globalAlpha = 1;
   // white hit-flash while the hit-stop holds
   if (G && G.hitstop > 0 && (f.st === 'hit' || f.st === 'kd') && (G.hitstop & 2) && S && S.imgs) {
     const A = animOf(f, S), i = frameOf(f, A, tick), fg = FLASH.g; fg.clearRect(0, 0, FW, FH);
     fg.globalCompositeOperation = 'source-over'; fg.drawImage(S.imgs[A.row], i * S.fw, 0, S.fw, S.fh, 0, 0, S.fw, S.fh);
     fg.globalCompositeOperation = 'source-in'; fg.fillStyle = '#ffffff'; fg.fillRect(0, 0, FW, FH); fg.globalCompositeOperation = 'source-over';
-    g.save(); g.globalAlpha = 0.75; g.translate(sx, sy); g.scale(f.face, 1); g.drawImage(FLASH, -S.ox, -S.oy); g.restore();
+    const sq = squashOf(f) || [1, 1]; g.save(); g.globalAlpha = 0.75; g.translate(sx, sy); g.scale(f.face * sq[0], sq[1]); g.drawImage(FLASH, -S.ox, -S.oy); g.restore();
+  }
+}
+function drawAura(g, f, sx, sy, tick) {   // BINO's power-up: red/orange glow + rising embers
+  if (!BG.aura) { BG.aura = mk(90, 130); const gg = BG.aura.g, gr = gg.createRadialGradient(45, 70, 4, 45, 70, 62); gr.addColorStop(0, 'rgba(255,150,40,0.55)'); gr.addColorStop(0.45, 'rgba(255,70,20,0.28)'); gr.addColorStop(1, 'rgba(255,40,10,0)'); gg.fillStyle = gr; gg.fillRect(0, 0, 90, 130); }
+  const fl = 0.75 + 0.25 * Math.sin(tick * 0.4) * (f.buff < 90 && (tick >> 2) & 1 ? 0.2 : 1);
+  g.globalCompositeOperation = 'lighter'; g.globalAlpha = fl; g.drawImage(BG.aura, sx - 45, sy - 110); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+  for (let k = 0; k < 6; k++) { const ph = (tick * 1.3 + k * 23) % 70; g.fillStyle = k & 1 ? '#ffb020' : '#ff4a12'; g.fillRect(sx - 16 + ((k * 11 + (tick >> 3)) % 32), sy - 8 - ph, ph < 50 ? 2 : 1, ph < 50 ? 2 : 1); }
+}
+function star5(g, x, y, r, col) { g.fillStyle = OUT; g.fillRect(x - r - 1, y - 1, 2 * r + 3, 3); g.fillRect(x - 1, y - r - 1, 3, 2 * r + 3); g.fillStyle = col; g.fillRect(x - r, y, 2 * r + 1, 1); g.fillRect(x, y - r, 1, 2 * r + 1); g.fillRect(x - 1, y - 1, 3, 3); }
+function headY(f) { const h = hurtBox(f); return GROUND - (h[1] + h[3]); }
+function worldBubble(g, x, y, txt, tint) {   // comic speech bubble above a fighter, kept on screen
+  const lines = wrapTxt(txt, 18), w = Math.max(...lines.map(l => txtW(l, 1))) + 10, h = lines.length * 9 + 6;
+  let bx = Math.round(x - w / 2); bx = Math.max(2, Math.min(W - w - 2, bx)); const by = Math.max(46, Math.round(y - h - 8));
+  R(g, OUT, bx - 1, by - 1, w + 2, h + 2); R(g, tint || '#f4f0e0', bx, by, w, h);
+  const tx = Math.max(bx + 4, Math.min(bx + w - 6, Math.round(x))); R(g, OUT, tx - 1, by + h, 5, 4); R(g, tint || '#f4f0e0', tx, by + h, 3, 3);
+  lines.forEach((l, j) => drawTxt(g, l, bx + 5, by + 4 + j * 9, 1, OUT));
+}
+function drawFightFX(g, t, camX) {
+  // speech bubbles: DIRTY's catchphrase, BINO's shout
+  for (const f of G.f) {
+    const M = moveDef(f), x = f.x - camX, y = headY(f);
+    let txt = null;
+    if (f.mv === 'tnt' && M && M.shout && f.mf < M.s + M.a + 34) txt = M.shout;
+    else if (f.ch === 'dirty' && M && (f.mv === 'sp' || f.mv === 'sp2' || f.mv === 'sp3') && f.mf < M.s + M.a + 14) txt = 'NICE NICE NICE!';
+    else if (G.steal && G.steal.i === f.i && G.steal.t < 70) txt = 'NICE NICE NICE!';
+    else if (f.st === 'win' && (G.phase === 'roundEnd' || G.phase === 'matchEnd') && (f.ch === 'dirty' || f.ch === 'bino') && f.t > 10 && f.t < 200) txt = f.ch === 'dirty' ? 'NICE NICE NICE NICE NICE!' : 'ALL GOD DAMN DAY!';
+    if (txt) worldBubble(g, x, y, txt, f.mv === 'tnt' ? '#ffe0b0' : null);
+    if (f.dz > 0) for (let k = 0; k < 3; k++) { const a = t * 0.18 + k * 2.09; star5(g, Math.round(x + Math.cos(a) * 11), Math.round(y - 4 + Math.sin(a) * 3), 2, k & 1 ? '#ffe066' : '#ffffff'); }
+  }
+  // SMOOCH! burst covers the spot - comic star + lip print, never contact
+  if (G.kiss) {
+    const k = G.kiss, x = Math.round(k.x - camX), y = GROUND - 54, pop = Math.min(1, k.t / 5) * (1 + 0.08 * Math.sin(k.t * 0.9)), fade = k.t > 44 ? (54 - k.t) / 10 : 1;
+    g.globalAlpha = Math.max(0, fade);
+    const pts = []; for (let i = 0; i < 24; i++) { const r = (i & 1 ? 20 : 34) * pop; const a = i / 24 * Math.PI * 2 + 0.1; pts.push([x + Math.cos(a) * r * 1.25, y + Math.sin(a) * r]); }
+    g.fillStyle = OUT; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0] + 1, p[1] + 1) : g.moveTo(p[0] + 1, p[1] + 1)); g.closePath(); g.fill();
+    g.fillStyle = '#fff36a'; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fill();
+    g.fillStyle = '#ff9ac0'; g.beginPath(); g.ellipse(x, y, 22 * pop, 14 * pop, 0, 0, 6.3); g.fill();
+    g.fillStyle = '#d0103a'; for (const sgn of [-1, 1]) { g.beginPath(); g.ellipse(x + sgn * 5 * pop, y - 3 * pop, 6 * pop, 3.4 * pop, sgn * 0.25, 0, 6.3); g.fill(); }
+    g.beginPath(); g.ellipse(x, y + 3 * pop, 9 * pop, 4 * pop, 0, 0, 6.3); g.fill(); g.fillStyle = '#ff6a8a'; g.fillRect(x - 6, y + 1, 4, 1);
+    if (k.t > 2) drawText(g, 'SMOOCH!', x, y - 34 * pop - 6, 2, 'red', 'c');
+    g.globalAlpha = 1;
+  }
+  // FIVE-FINGER DISCOUNT: the loot flies over, and flies home when time's up
+  if (G.steal) {
+    const st = G.steal, th = G.f[st.i], vi = G.f[st.v], vch = vi.ch, icon = st.item === 'cap' && vch === 'dirty' ? 'capw' : st.item;
+    let k = -1, from = vi, to = th;
+    if (st.t < 16) k = st.t / 16; else if (st.t >= st.T) { k = st.back / 30; from = th; to = vi; }
+    if (k >= 0 && k <= 1) {
+      const x0 = from.x - camX, y0 = headY(from) + 10, x1 = to.x - camX, y1 = headY(to) + 10;
+      const x = x0 + (x1 - x0) * k, y = y0 + (y1 - y0) * k - Math.sin(k * Math.PI) * 30;
+      g.save(); g.translate(Math.round(x), Math.round(y)); g.rotate(k * 6.28); itemIcon(g, [0, 0], icon, 1.4); g.restore();
+      if (t & 1) { g.fillStyle = '#ffffff'; g.fillRect(Math.round(x - (x1 - x0) * 0.06), Math.round(y), 2, 1); }
+    }
   }
 }
 function drawReflection(g, f, tick, camX) {
@@ -299,7 +426,8 @@ function drawReflection(g, f, tick, camX) {
 function drawProj(g, p, tick, camX) {
   const x = Math.round(p.x - camX), y = GROUND - Math.round(p.y), art = p.art || (G && G.f[p.o] && CHARS[G.f[p.o].ch].moves.sp.proj && CHARS[G.f[p.o].ch].moves.sp.proj.art) || 'ink';
   const fr = PROJ[art] || PROJ.ink, img = fr[Math.floor(tick / 3) % fr.length], d = Math.sign(p.vx) || 1;
-  if (art === 'ink') { g.fillStyle = '#14324a'; for (let k = 1; k < 5; k++) g.fillRect(x - d * k * 7, y + (k & 1 ? 2 : -2) + ((tick + k) % 3), 4 - (k >> 1), 2); }
+  if (art === 'wave') { if ((tick >> 4) & 1) drawText(g, 'NICE', x - d * 4, y - 24 - ((tick >> 2) & 1), 1, 'cyan', 'c'); g.fillStyle = '#ff6ad8'; for (let k = 1; k < 4; k++) if ((tick + k) & 1) g.fillRect(x - d * (10 + k * 7), y - 6 + k * 3, 2, 2); }
+  else if (art === 'ink') { g.fillStyle = '#14324a'; for (let k = 1; k < 5; k++) g.fillRect(x - d * k * 7, y + (k & 1 ? 2 : -2) + ((tick + k) % 3), 4 - (k >> 1), 2); }
   else { g.fillStyle = '#d0d4dc'; for (let k = 1; k < 4; k++) if ((tick + k) & 1) g.fillRect(x - d * k * 8, y - 3 + k * 2, 2, 1); }
   g.save(); g.translate(x, y); g.scale(d, 1); g.drawImage(img, -16, -16); g.restore();
 }
@@ -371,6 +499,17 @@ function drawHUD(g) {
     drawText(g, lab, i ? x + BW - nw - 4 : x + nw + 4, y + BH + 5, 1, 'cyan', i ? 'r' : 'l');
     for (let r = 0; r < G.wins[i]; r++) g.drawImage(HUD.v, i ? x + 2 + r * 11 : x + BW - 11 - r * 11, y + BH + 14);
   }
+  if (G.combo && G.combo.n >= 2 && G.combo.t < 75 && G.phase !== 'matchEnd') {   // combo counter
+    const c = G.combo, pop = c.t < 4 ? 4 : 3, x = c.i ? W - 12 : 12;
+    drawText(g, c.n + ' HITS!', x, 64 - (c.t < 4 ? 2 : 0), pop, c.n >= 5 ? 'fire' : 'gold', c.i ? 'r' : 'l');
+  }
+  if (G.ctr && G.ctr.t < 70) drawText(g, 'COUNTER!', G.ctr.i ? W - 12 : 12, 90, 2, (G.ctr.t >> 2) & 1 ? 'red' : 'flash', G.ctr.i ? 'r' : 'l');
+  for (const f of G.f) {   // special-move name callout
+    const M = moveDef(f);
+    if (M && M.name && (f.mv === 'sp' || f.mv === 'sp2' || f.mv === 'sp3' || f.mv === 'tnt') && f.mf < 40) {
+      const sc = f.mf < 3 ? 3 : 2; drawText(g, M.name, f.i ? W - 14 : 14, 108, sc, 'fire', f.i ? 'r' : 'l');
+    }
+  }
   const tm = String(Math.max(0, G.timer)).padStart(2, '0');
   drawText(g, tm, W / 2, 10, 3, G.timer <= 10 ? ((G.tick >> 4) & 1 ? 'red' : 'white') : 'gold', 'c');
   if (G.banner && G.phase !== 'matchEnd') drawBanner(g, G.banner);
@@ -381,7 +520,7 @@ function drawHUD(g) {
     if (G.result >= 0) {
       const C = CHARS[G.f[G.result].ch], P = PORTRAITS[G.f[G.result].ch];
       chromeBox(g, 40, 118, 100, 100); g.drawImage(P.win, 42, 120);
-      const lines = wrapTxt('"' + C.taunt + '"', 26);
+      const lines = wrapTxt('"' + winQuote(C) + '"', 26);
       R(g, OUT, 150, 132, 300, 14 + lines.length * 12); R(g, '#f4f0e0', 151, 133, 298, 12 + lines.length * 12); R(g, '#f4f0e0', 144, 150, 7, 6); R(g, OUT, 143, 150, 1, 6);
       lines.forEach((l, j) => drawTxt(g, l, 158, 139 + j * 12, 1, OUT));
       drawText(g, C.title + ' TAKES BAY STREET', 150, 160 + lines.length * 12, 1, 'gold', 'l');
@@ -391,14 +530,22 @@ function drawHUD(g) {
 function wrapTxt(s, n) { const out = []; let cur = ''; for (const w of s.split(' ')) { if ((cur + ' ' + w).trim().length > n) { out.push(cur.trim()); cur = w; } else cur += ' ' + w; } if (cur.trim()) out.push(cur.trim()); return out; }
 
 /* ---------- logo (title screen) ---------- */
-function paintLogo() {
-  const el = document.getElementById('logo'); if (!el) return;
+const LOGO = {};
+function paintLogo(t) {   // chrome logo with a sweeping shine and a flickering bolt
+  const el = document.getElementById('logo'); if (!el) return; t = t || 0;
   const g = el.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, el.width, el.height);
-  const a = textSprite('THUNDER BAY', 5, 'ice', 2), b = textSprite('BRAWL', 12, 'fire', 3);
+  if (!LOGO.a) { LOGO.a = textSprite('THUNDER BAY', 5, 'ice', 2); LOGO.b = textSprite('BRAWL', 12, 'fire', 3); LOGO.s = mk(el.width, el.height); }
+  const a = LOGO.a, b = LOGO.b, bob = Math.round(Math.sin(t / 40) * 1.5);
   g.drawImage(a, Math.round((el.width - a.width) / 2), 2);
-  g.drawImage(b, Math.round((el.width - b.width) / 2), a.height + 2);
-  g.fillStyle = '#fff36a'; const bx = el.width - 40, by = a.height + 8;   // lightning bolt
+  g.drawImage(b, Math.round((el.width - b.width) / 2), a.height + 2 + bob);
+  const sg = LOGO.s.g, sx = (t * 4) % (el.width + 260) - 130;   // shine: a bright diagonal band clipped to the letters
+  sg.globalCompositeOperation = 'source-over'; sg.clearRect(0, 0, el.width, el.height); sg.drawImage(el, 0, 0);
+  sg.globalCompositeOperation = 'source-in'; const gr = sg.createLinearGradient(sx - 40, 0, sx + 40, el.height); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); sg.fillStyle = gr; sg.fillRect(0, 0, el.width, el.height);
+  g.drawImage(LOGO.s, 0, 0);
+  const on = (t % 150) > 8 || (t & 2);
+  g.fillStyle = on ? '#fff36a' : '#ffffff'; const bx = el.width - 40, by = a.height + 8 + bob;   // lightning bolt
   for (const [x, y, w] of [[10, 0, 6], [8, 6, 6], [6, 12, 10], [9, 16, 5], [7, 20, 4], [5, 24, 3]]) g.fillRect(bx + x, by + y, w, 4);
+  if (!on) { g.fillStyle = 'rgba(255,243,106,0.25)'; g.fillRect(0, 0, el.width, el.height); }
 }
 
 /* ---------- attract mode behind the title ---------- */
@@ -416,6 +563,44 @@ function renderAttract() {
   drawSnow(wx, frame, true);
 }
 
+/* ---------- VS showdown: portraits slide in nose to nose, lightning, then the trash talk ---------- */
+function vsBubble(g, txt, x, y, w, right, k) {
+  const full = wrapTxt(txt, 30); let left = Math.max(0, Math.floor(k)); const lines = [];
+  for (const l of full) { if (left <= 0) break; lines.push(l.slice(0, left)); left -= l.length + 1; }
+  if (!lines.length) return;
+  const h = full.length * 12 + 8;
+  R(g, OUT, x - 2, y - 2, w + 4, h + 4); R(g, '#f4f0e0', x, y, w, h); R(g, '#ffc83a', x, y + h - 2, w, 2);
+  const tx = right ? x + w - 34 : x + 30, ty = right ? y - 7 : y + h;
+  R(g, OUT, tx - 1, ty - 1, 10, 9); R(g, '#f4f0e0', tx, right ? ty + 1 : ty, 8, 7);
+  lines.forEach((l, j) => drawTxt(g, l, x + 6, y + 5 + j * 12, 1, OUT));
+}
+function drawVS(g, pt) {
+  g.imageSmoothingEnabled = false;
+  g.fillStyle = 'rgba(5,6,15,0.78)'; g.fillRect(0, 0, W, H);
+  const k = Math.min(1, pt / 24), e = 1 - Math.pow(1 - k, 3), hitT = pt - 24;
+  const sh = hitT >= 0 && hitT < 14 ? Math.round((Math.random() - 0.5) * (14 - hitT)) : 0;
+  // red / blue halves split by a diagonal
+  g.fillStyle = 'rgba(160,24,16,0.45)'; g.beginPath(); g.moveTo(0, 0); g.lineTo(W / 2 + 30, 0); g.lineTo(W / 2 - 30, H); g.lineTo(0, H); g.fill();
+  g.fillStyle = 'rgba(20,60,170,0.45)'; g.beginPath(); g.moveTo(W, 0); g.lineTo(W / 2 + 30, 0); g.lineTo(W / 2 - 30, H); g.lineTo(W, H); g.fill();
+  const c1 = G.f[0].ch, c2 = G.f[1].ch, s = 2, pw = 96 * s;
+  const lx = Math.round(-pw + (W / 2 - 14) * e) + sh, rx = Math.round(W + pw - (W / 2 - 14) * e) + sh, py = 36 + (sh >> 1);
+  g.drawImage(PORTRAITS[c1].big, lx - pw + pw, py, pw, pw);   // left, facing right
+  g.save(); g.translate(rx, py); g.scale(-1, 1); g.drawImage(PORTRAITS[c2].big, 0, 0, pw, pw); g.restore();
+  if (hitT >= 0) {
+    if (hitT < 30 || (pt >> 2) % 5 === 0) {   // lightning between them
+      g.strokeStyle = OUT; g.lineWidth = 5; const pts = []; let y = 0, x = W / 2; while (y < H) { pts.push([x, y]); y += 14 + (Math.random() * 12 | 0); x = W / 2 + (Math.random() - 0.5) * 34; }
+      for (const [w2, col] of [[5, OUT], [3, '#fff36a'], [1, '#ffffff']]) { g.lineWidth = w2; g.strokeStyle = col; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.stroke(); }
+    }
+    const z = Math.max(1, 2 - hitT * 0.12), vs = textSprite('VS', 9, 'fire', 3);
+    g.drawImage(vs, Math.round(W / 2 - vs.width * z / 2), Math.round(H / 2 - 24 - vs.height * z / 2), Math.round(vs.width * z), Math.round(vs.height * z));
+    if (hitT < 5) { g.fillStyle = 'rgba(255,255,255,' + (0.8 * (1 - hitT / 5)).toFixed(2) + ')'; g.fillRect(0, 0, W, H); }
+  }
+  drawText(g, CHARS[c1].name, 12, H - 22, 3, 'chrome', 'l'); drawText(g, CHARS[c2].name, W - 12, H - 22, 3, 'chrome', 'r');
+  const bt = banterFor(c1, c2, G.vsLine);
+  if (pt > 40) vsBubble(g, bt[0], 10, 8, 250, false, (pt - 40) * 1.6);
+  if (pt > 120) vsBubble(g, bt[1], W - 260, 186 - (wrapTxt(bt[1], 30).length - 1) * 12, 250, true, (pt - 120) * 1.6);
+  if (pt > 30 && (pt >> 4) & 1) drawText(g, 'TAP TO SKIP', W / 2, H - 10, 1, 'dim', 'c');
+}
 function render() {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
   if (!G) { renderAttract(); ctx.drawImage(wc, 0, 0, 960, 540); if (CRT.on) ctx.drawImage(BG.crt, 0, 0); return; }
@@ -423,18 +608,31 @@ function render() {
   drawStage(wx, camX, t);
   drawSnow(wx, t, false);
   if (QUAL.lv > 0) for (const f of G.f) drawReflection(wx, f, t, camX);
+  if (G.sfz) {   // super-freeze: the street goes dark, a flash blooms behind the attacker
+    const a = G.f[G.sfz.i], k = Math.min(1, (G.sfz.t + 1) / 3);
+    wx.fillStyle = 'rgba(2,3,12,' + (0.62 * k).toFixed(3) + ')'; wx.fillRect(0, 0, W, H);
+    wx.globalCompositeOperation = 'lighter'; wx.globalAlpha = 1 - G.sfz.t / (SFZ_T + 4); wx.drawImage(BG.glow, Math.round(a.x - camX) - 120, GROUND - Math.round(a.y) - 150, 240, 240); wx.globalAlpha = 1; wx.globalCompositeOperation = 'source-over';
+  }
   const order = G.f.slice().sort((a, b) => (a.st === 'atk' ? 1 : 0) - (b.st === 'atk' ? 1 : 0));
   for (const f of order) drawFighter(wx, f, t, camX);
   for (const p of G.proj) drawProj(wx, p, t, camX);
   for (const s of G.sparks) drawSpark(wx, s, camX);
+  if (BG.fg) wx.drawImage(BG.fg, -Math.round(camX * FG_PAR), H - 40);   // foreground parallax: snowbank, parked cars, hydrant, mailbox
   drawSnow(wx, t, true);
+  if (G.phase !== 'vs') drawFightFX(wx, t, camX);
   if (SHOW_BOXES) drawBoxes(wx);
+  if (G.phase === 'vs') drawVS(wx, G.pt);
+  // camera: round-start push-in, KO slow-mo zoom on the loser
+  let z = 1, fx = W / 2, fy = H * 0.62;
+  if (G.phase === 'intro' && G.pt < 50) { const q = 1 - G.pt / 50; z = 1 + 0.28 * q * q; fx = (G.f[0].x + G.f[1].x) / 2 - camX; }
+  else if (G.phase === 'roundEnd' && G.koX != null && G.pt < 110) { z = 1 + 0.35 * Math.min(1, G.pt / 14) * (G.pt > 90 ? (110 - G.pt) / 20 : 1); fx = G.koX - camX; fy = GROUND - 50; }
+  const sw = W / z, shh = H / z, cx0 = Math.max(0, Math.min(W - sw, fx - sw / 2)), cy0 = Math.max(0, Math.min(H - shh, fy - shh * 0.6));
   const sh = G.shake, ox = sh ? Math.round((Math.random() - 0.5) * sh * 2) : 0, oy = sh ? Math.round((Math.random() - 0.5) * sh * 2) : 0;
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 960, 540);
-  ctx.drawImage(wc, ox * 2 - (sh ? 6 : 0), oy * 2 - (sh ? 6 : 0), 960 + (sh ? 12 : 0), 540 + (sh ? 12 : 0));
+  ctx.drawImage(wc, cx0, cy0, sw, shh, ox * 2 - (sh ? 6 : 0), oy * 2 - (sh ? 6 : 0), 960 + (sh ? 12 : 0), 540 + (sh ? 12 : 0));
   if (G.banner && /K\.O\./.test(G.banner.txt) && G.banner.t < 12) { ctx.fillStyle = 'rgba(255,255,255,' + (0.7 * (1 - G.banner.t / 12)).toFixed(3) + ')'; ctx.fillRect(0, 0, 960, 540); }
   ctx.setTransform(2, 0, 0, 2, 0, 0); ctx.imageSmoothingEnabled = false;
-  drawHUD(ctx);
+  if (G.phase !== 'vs') drawHUD(ctx); else warmStealSheets();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (CRT.on) ctx.drawImage(BG.crt, 0, 0);
 }
@@ -466,6 +664,9 @@ function sfx(k) {
     case 'round': tone(440, 440, 0.12, 'square', 0.1); break;
     case 'fight': tone(330, 990, 0.35, 'square', 0.14); break;
     case 'time': tone(600, 200, 0.5, 'square', 0.12); break;
+    case 'taunt': tone(700, 300, 0.12, 'square', 0.08); break;
+    case 'smooch': tone(1600, 0, 0.05, 0, 0.4, 1); tone(900, 1500, 0.12, 'sine', 0.18); setTimeout(() => tone(1200, 1800, 0.1, 'sine', 0.14), 90); break;
+    case 'steal': tone(400, 1400, 0.14, 'triangle', 0.12); setTimeout(() => tone(1400, 1800, 0.08, 'square', 0.06), 120); break;
     case 'matchEnd': tone(523, 523, 0.15, 'square', 0.1); setTimeout(() => tone(784, 784, 0.3, 'square', 0.1), 150); break;
   }
 }
