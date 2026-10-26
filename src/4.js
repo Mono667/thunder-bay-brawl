@@ -38,7 +38,7 @@ function buildCards() {
     d.className = 'card' + (id === pick ? ' sel' : ''); d.id = 'pick-' + id;
     const st = Object.entries(C.stats).map(([k, v]) => `<div class="stat"><b>${k.toUpperCase()}</b><i><s style="width:${v * 20}%"></s></i></div>`).join('');
     d.title = C.blurb;
-    d.innerHTML = `<canvas width="140" height="100"></canvas><div class="nm">${C.title}</div><div class="ds">${CARD_TXT[id] || C.blurb}</div>${st}`;
+    d.innerHTML = `<canvas width="280" height="200"></canvas><div class="nm">${C.title}</div><div class="ds">${CARD_TXT[id] || C.blurb}</div>${st}`;
     d.addEventListener('click', () => { pick = id; buildCards(); });
     box.appendChild(d);
   }
@@ -46,9 +46,9 @@ function buildCards() {
 function drawCards() {
   for (const id of CHAR_IDS) {
     const el = document.querySelector('#pick-' + id + ' canvas'); if (!el) continue;
-    const g = el.getContext('2d'), sel = id === pick; g.imageSmoothingEnabled = false; g.clearRect(0, 0, 140, 100);
+    const g = el.getContext('2d'), sel = id === pick; g.setTransform(2, 0, 0, 2, 0, 0); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 140, 100);
     const gr = g.createLinearGradient(0, 0, 0, 100); gr.addColorStop(0, sel ? '#3a1a10' : '#120f2a'); gr.addColorStop(1, sel ? '#a0401a' : '#2a1d48'); g.fillStyle = gr; g.fillRect(0, 0, 140, 100);
-    g.globalAlpha = sel ? 1 : 0.85; g.drawImage(PORTRAITS[id][sel ? 'win' : 'big'], 0, 2); g.globalAlpha = 1;
+    g.globalAlpha = sel ? 1 : 0.85; g.drawImage(PORTRAITS[id][sel ? 'win' : 'big'], 0, 2, 96, 96); g.globalAlpha = 1;
     g.fillStyle = '#0b0712'; g.fillRect(0, 92, 140, 8);
     const f = newFighter(id, 0); f.face = -1; f.st = sel ? 'win' : 'idle'; f.t = frame % 240;
     const save = G; if (!G) G = { camX: 0 };

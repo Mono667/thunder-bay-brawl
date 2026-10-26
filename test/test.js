@@ -247,7 +247,7 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
     g.drawImage(P.win, 0, 0, P.win.width, P.win.height, 40 + sz, 26, sz, sz); g.fillText('WIN', 40 + sz, 20);
     const sh = SHEETS.sara; let x = 20; const y = 60 + sz, hs = Math.min(120, c.height - y - 10);
     for (const [r, k] of [['idle', 0], ['lp', 1], ['block', 0], ['win', 0]]) { const a = sh.anims[r]; if (!a) continue;
-      g.drawImage(sh.imgs[a.row + k], 72, 32, 36, 36, x, y, hs, hs); g.fillText(r.toUpperCase(), x, y - 4); x += hs + 16; }
+      const Rw = sheetRow(sh, a.row), fx = k * Rw.fw + Rw.ox - 18 * RES, fy = Rw.oy - 70 * RES; g.drawImage(Rw.img, fx, fy, 36 * RES, 36 * RES, x, y, hs, hs); g.fillText(r.toUpperCase(), x, y - 4); x += hs + 16; }
     const d = document.getElementById('game'); g.drawImage(d, 0, 0, d.width, d.height, 80 + sz * 2, 26, c.width - 100 - sz * 2, (c.width - 100 - sz * 2) * d.height / d.width); g.fillText('IN FIGHT', 80 + sz * 2, 20);
   });
   await page.screenshot({ path: '../shot-sara-face.png' });

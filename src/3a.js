@@ -7,8 +7,13 @@
    Everything detailed (fighters, stage, sparks, text) is pre-rendered once.
    ===================================================================== */
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
-const wc = document.createElement('canvas'); wc.width = W; wc.height = H;
-const wx = wc.getContext('2d');
+// RES: the world canvas runs at 2x density (960x540) so fighters, portraits,
+// text and sparks get twice the pixels (16-bit arcade detail); all drawing code
+// still works in 480x270 world units via wx.setTransform(RES, ...).
+const RES = 2;
+const wc = document.createElement('canvas'); wc.width = W * RES; wc.height = H * RES;
+const wx = wc.getContext('2d'); wx.imageSmoothingEnabled = false;
+function worldXform() { wx.setTransform(RES, 0, 0, RES, 0, 0); wx.imageSmoothingEnabled = false; }
 function mk(w, h, rf) { const c = document.createElement('canvas'); c.width = Math.max(1, w | 0); c.height = Math.max(1, h | 0); c.g = c.getContext('2d', rf ? { willReadFrequently: true } : undefined); c.g.imageSmoothingEnabled = false; return c; }
 let seed = 1337; function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
 function rgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
@@ -85,25 +90,45 @@ const TSTYLE = {
   dim: { rows: ['#cfd6ff', '#cfd6ff', '#b8c0f0', '#b8c0f0', '#a0a8e0', '#a0a8e0', '#8890c8'], out: '#000000', sh: 0 }
 };
 const TXC = new Map();
-function textSprite(s, sc, style, outW) {
+/* Text sprites are built at `res` x density (default RES) with chunky arcade styling:
+   per-row gradient bands, a lit bevel on the top edge of each stroke, a thick dark outline and a 3D extruded drop shadow. c.ww/c.hh
+   give the size in world units. */
+function textSprite(s, sc, style, outW, res) {
+  res = res || RES;
   const st = TSTYLE[style] || TSTYLE.white, o = outW != null ? outW : Math.max(1, Math.round(sc / 2.5)), sh = st.sh ? Math.max(1, Math.round(sc / 2)) : 0;
-  const key = s + '|' + sc + '|' + style + '|' + o; let c = TXC.get(key); if (c) return c;
-  const tw = txtW(s, sc), w = tw + o * 2 + sh, h = 7 * sc + o * 2 + sh;
-  const m = mk(w, h); drawTxt(m.g, s, o, o, sc, '#fff');
+  const key = s + '|' + sc + '|' + style + '|' + o + '|' + res; let c = TXC.get(key); if (c) return c;
+  const tw = txtW(s, sc), w = (tw + o * 2 + sh) * res, h = (7 * sc + o * 2 + sh) * res, O = o * res, SC = sc * res, SH = sh * res;
+  const m = mk(w, h); drawTxt(m.g, s, O, O, SC, '#fff');
   const dark = mk(w, h); dark.g.drawImage(m, 0, 0); dark.g.globalCompositeOperation = 'source-in'; dark.g.fillStyle = st.out; dark.g.fillRect(0, 0, w, h);
   c = mk(w, h); const g = c.g;
-  for (let dy = -o; dy <= o + sh; dy++) for (let dx = -o; dx <= o + sh; dx++) g.drawImage(dark, dx, dy);
+  if (SH) {   // extruded shadow: a diagonal stack of the dark silhouette
+    for (let k = SH; k > 0; k--) g.drawImage(dark, O + k - O, O + k - O);
+  }
+  for (let dy = -O; dy <= O; dy += Math.max(1, O >> 1)) for (let dx = -O; dx <= O; dx += Math.max(1, O >> 1)) if (dx * dx + dy * dy <= O * O + 1) g.drawImage(dark, dx, dy);
+  for (const [dx, dy] of [[-O, 0], [O, 0], [0, -O], [0, O]]) g.drawImage(dark, dx, dy);
   const fill = mk(w, h);   // colour bands first, then keep only the glyph pixels
-  for (let r = 0; r < 7; r++) { fill.g.fillStyle = st.rows[r]; fill.g.fillRect(0, o + r * sc, w, sc); }
+  for (let r = 0; r < 7; r++) {
+    fill.g.fillStyle = st.rows[r]; fill.g.fillRect(0, O + r * SC, w, SC);
+  }
+  if (SC >= 6) {   // bevel each lit font cell: highlight on the top-left edge, shade on the bottom-right
+    const bv = Math.max(1, Math.round(SC / 6)); let cx = O;
+    for (const ch of s) { const G2 = GL[ch] || GL[' '];
+      for (let r = 0; r < 7; r++) for (let q = 0; q < G2.w; q++) { if (G2.rows[r][q] !== '1') continue; const x = cx + q * SC, y = O + r * SC;
+        const up = r > 0 && G2.rows[r - 1][q] === '1', lf = q > 0 && G2.rows[r][q - 1] === '1', dn = r < 6 && G2.rows[r + 1][q] === '1', rt = q < G2.w - 1 && G2.rows[r][q + 1] === '1';
+        fill.g.fillStyle = 'rgba(255,255,255,0.5)'; if (!up) fill.g.fillRect(x, y, SC, bv); if (!lf && !up) fill.g.fillRect(x, y, bv, SC >> 1);
+        fill.g.fillStyle = 'rgba(0,0,0,0.22)'; if (!dn && !rt) fill.g.fillRect(x + (SC >> 1), y + SC - bv, SC - (SC >> 1), bv); }
+      cx += (G2.w + 1) * SC; }
+  }
   fill.g.globalCompositeOperation = 'destination-in'; fill.g.drawImage(m, 0, 0);
   g.drawImage(fill, 0, 0);
+  c.ww = w / res; c.hh = h / res;
   TXC.set(key, c); return c;
 }
 // draw a text sprite centred (align 'c'), left ('l') or right ('r') at world coords
 function drawText(g, s, x, y, sc, style, align, outW) {
   const c = textSprite(s, sc, style, outW), o = outW != null ? outW : Math.max(1, Math.round(sc / 2.5));
-  const dx = align === 'l' ? x - o : align === 'r' ? x - c.width + o : x - (c.width - (TSTYLE[style] && TSTYLE[style].sh ? Math.max(1, Math.round(sc / 2)) : 0)) / 2;
-  g.drawImage(c, Math.round(dx), Math.round(y - o));
-  return c.width;
+  const dx = align === 'l' ? x - o : align === 'r' ? x - c.ww + o : x - (c.ww - (TSTYLE[style] && TSTYLE[style].sh ? Math.max(1, Math.round(sc / 2)) : 0)) / 2;
+  g.drawImage(c, Math.round(dx), Math.round(y - o), c.ww, c.hh);
+  return c.ww;
 }
 </script>

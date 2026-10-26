@@ -225,7 +225,7 @@ function buildSparks() {
   for (const k in life) {
     const n = Math.ceil(life[k] / 2), S = size[k], arr = [];
     for (let i = 0; i < n; i++) {
-      const c = mk(S, S, true), g = c.g, p = i / (n - 1), m = S / 2; seed = 99 + i * 7 + k.charCodeAt(0);
+      const c = mk(S * RES, S * RES, true), g = c.g, p = i / (n - 1), m = S / 2; seed = 99 + i * 7 + k.charCodeAt(0); g.setTransform(RES, 0, 0, RES, 0, 0);
       if (k === 'h' || k === 'H' || k === 'K') {
         const big = k === 'h' ? 1.3 : k === 'H' ? 2.2 : 3.4, rays = k === 'h' ? 8 : 14;
         if (i < 2) { g.fillStyle = '#ffffff'; g.fillRect(m - S * 0.45, m - 1.5, S * 0.9, 3); g.fillRect(m - 1.5, m - S * 0.32, 3, S * 0.64); }   // first frames: hard cross-flash
@@ -235,6 +235,8 @@ function buildSparks() {
         g.strokeStyle = col; g.lineCap = 'round';
         for (let r = 0; r < rays; r++) { const a = r / rays * Math.PI * 2 + (r & 1) * 0.2, L0 = (3 + p * 10) * big, L1 = L0 + (r & 1 ? 5 : 9) * big * (1 - p * 0.7); g.lineWidth = Math.max(1, (2.6 - p * 2) * big * 0.7); g.beginPath(); g.moveTo(m + Math.cos(a) * L0, m + Math.sin(a) * L0); g.lineTo(m + Math.cos(a) * L1, m + Math.sin(a) * L1); g.stroke(); }
         if (k !== 'h') { g.strokeStyle = p < 0.4 ? '#ffffff' : '#ffb020'; g.lineWidth = Math.max(1, 2 * (1 - p)); g.beginPath(); g.arc(m, m, (4 + p * 16) * big * 0.8, 0, 7); g.stroke(); }
+        if (p < 0.8) { g.strokeStyle = '#ffffff'; g.lineWidth = 0.5; for (let r = 0; r < rays; r++) { const a = r / rays * Math.PI * 2 + (r & 1) * 0.2 + 0.11, L0 = (2 + p * 10) * big, L1 = L0 + (r & 1 ? 4 : 8) * big * (1 - p * 0.7); g.beginPath(); g.moveTo(m + Math.cos(a) * L0, m + Math.sin(a) * L0); g.lineTo(m + Math.cos(a) * L1, m + Math.sin(a) * L1); g.stroke(); } }   // fine white glints (2x detail)
+        if (p > 0.3) { for (let d = 0; d < (k === 'h' ? 5 : 12); d++) { const a = rnd() * 7, rr = (8 + p * 22) * big * (0.5 + rnd() * 0.6); g.fillStyle = p < 0.6 ? '#fff6b0' : '#ff9a3a'; g.fillRect(m + Math.cos(a) * rr, m + Math.sin(a) * rr, 1, 1); } }   // ember specks
         for (let d = 0; d < (k === 'h' ? 4 : 9); d++) { const a = rnd() * 7, rr = (6 + p * 16) * big * (0.6 + rnd() * 0.5); g.fillStyle = col; g.fillRect(m + Math.cos(a) * rr, m + Math.sin(a) * rr, 2, 2); }
       } else if (k === 'b') {
         g.strokeStyle = p < 0.3 ? '#ffffff' : p < 0.6 ? '#bfe8ff' : '#3a8aff'; g.lineWidth = Math.max(1, 3 - p * 2);
@@ -334,7 +336,7 @@ function drawSnow(g, tick, near) {
 }
 
 /* ---------- fighters ---------- */
-const FLASH = mk(FW, FH);
+const FLASH = mk(FW * RES, FH * RES);
 function fighterVisible(f, tick) {
   const M = moveDef(f);
   if (M && M.tele && f.mf < M.s) return f.mf < 4 ? ((tick >> 1) & 1) : 0;   // DROP IN: vanishes on startup
@@ -344,7 +346,7 @@ function fighterVisible(f, tick) {
   return 1;
 }
 function drawFighter(g, f, tick, camX) {
-  const C = CHARS[f.ch], sx = Math.round(f.x - camX), sy = GROUND - Math.round(f.y), S = sheetFor(f), M = moveDef(f);
+  const C = CHARS[f.ch], sx = Math.round((f.x - camX) * RES) / RES, sy = GROUND - Math.round(f.y * RES) / RES, S = sheetFor(f), M = moveDef(f);   // half-pixel positions at 2x density
   const vis = fighterVisible(f, tick), rend = RENDERERS[C.render] || RENDERERS.pixel;
   // contact shadow
   const sk = Math.max(0.35, 1 - f.y / 120), sw = Math.round(C.bodyW * 0.85 * sk) * 2, shh = Math.max(3, Math.round(7 * sk));
@@ -372,11 +374,11 @@ function drawFighter(g, f, tick, camX) {
   rend(g, f, C, sx, sy, tick, false, QUAL.lv > 0 ? 0.7 : 0);
   g.globalAlpha = 1;
   // white hit-flash while the hit-stop holds
-  if (G && G.hitstop > 0 && (f.st === 'hit' || f.st === 'kd') && (G.hitstop & 2) && S && S.imgs) {
-    const A = animOf(f, S), i = frameOf(f, A, tick), fg = FLASH.g; fg.clearRect(0, 0, FW, FH);
-    fg.globalCompositeOperation = 'source-over'; fg.drawImage(S.imgs[A.row], i * S.fw, 0, S.fw, S.fh, 0, 0, S.fw, S.fh);
-    fg.globalCompositeOperation = 'source-in'; fg.fillStyle = '#ffffff'; fg.fillRect(0, 0, FW, FH); fg.globalCompositeOperation = 'source-over';
-    const sq = squashOf(f) || [1, 1]; g.save(); g.globalAlpha = 0.75; g.translate(sx, sy); g.scale(f.face * sq[0], sq[1]); g.drawImage(FLASH, -S.ox, -S.oy); g.restore();
+  if (G && G.hitstop > 0 && (f.st === 'hit' || f.st === 'kd') && (G.hitstop & 2) && S && S.lazy) {
+    const A = animOf(f, S), i = frameOf(f, A, tick), Rw = sheetRow(S, A.row), fg = FLASH.g; fg.clearRect(0, 0, FLASH.width, FLASH.height);
+    fg.globalCompositeOperation = 'source-over'; fg.drawImage(Rw.img, i * Rw.fw, 0, Rw.fw, Rw.fh, 0, 0, Rw.fw, Rw.fh);
+    fg.globalCompositeOperation = 'source-in'; fg.fillStyle = '#ffffff'; fg.fillRect(0, 0, Rw.fw, Rw.fh); fg.globalCompositeOperation = 'source-over';
+    const sq = squashOf(f) || [1, 1]; g.save(); g.globalAlpha = 0.75; g.translate(sx, sy); g.scale(f.face * sq[0] / RES, sq[1] / RES); g.drawImage(FLASH, 0, 0, Rw.fw, Rw.fh, -Rw.ox, -Rw.oy, Rw.fw, Rw.fh); g.restore();
   }
 }
 function drawAura(g, f, sx, sy, tick) {   // BINO's power-up: red/orange glow + rising embers
@@ -448,7 +450,8 @@ function drawProj(g, p, tick, camX) {
 function drawSpark(g, s, camX) {
   const fr = SPK[s.k] || SPK.h, img = fr[Math.min(fr.length - 1, s.t >> 1)];
   const dust = s.k === 'd' || s.k === 'D';
-  g.drawImage(img, Math.round(s.x - camX - img.width / 2), Math.round(GROUND - s.y - img.height / 2 - (dust ? img.height * 0.2 : 0)));
+  const iw = img.width / RES, ih = img.height / RES;
+  g.drawImage(img, Math.round(s.x - camX - iw / 2), Math.round(GROUND - s.y - ih / 2 - (dust ? ih * 0.2 : 0)), iw, ih);
 }
 function drawBoxes(g) {
   for (const f of G.f) {
@@ -493,7 +496,7 @@ function drawBanner(g, b) {
     drawText(g, txt, Math.round(W / 2 - (1 - k) * 300), y, sc, style, 'c');
   } else if (txt === 'FIGHT!') {
     const z = Math.max(1, 2.2 - t * 0.2), c = textSprite(txt, sc, style);
-    g.drawImage(c, Math.round(W / 2 - c.width * z / 2), Math.round(y + 3.5 * sc - c.height * z / 2), Math.round(c.width * z), Math.round(c.height * z));
+    g.drawImage(c, Math.round(W / 2 - c.ww * z / 2), Math.round(y + 3.5 * sc - c.hh * z / 2), Math.round(c.ww * z), Math.round(c.hh * z));
   } else drawText(g, txt, W / 2, y, sc, style, 'c');
 }
 function drawHUD(g) {
@@ -507,7 +510,7 @@ function drawHUD(g) {
     const low = f.hp / f.max < 0.25 && (G.tick >> 3) % 2;
     if (hp > 0) g.drawImage(low ? HUD.o : HUD.y, 0, 0, hp, BH, i ? x + BW - hp : x, y, hp, BH);
     const P = PORTRAITS[f.ch], hurt = f.st === 'hit' || f.st === 'kd' || f.st === 'lie' || f.st === 'ko', pimg = hurt ? P.h : P.n;
-    g.save(); g.translate(i ? W - 6 : 6, 6); g.scale(i ? -1 : 1, 1); g.drawImage(pimg, 0, 0); g.restore();
+    g.save(); g.translate(i ? W - 6 : 6, 6); g.scale(i ? -1 : 1, 1); g.drawImage(pimg, 0, 0, 30, 30); g.restore();
     const nm = CHARS[f.ch].name, lab = G.mode === 'solo' ? (i ? 'CPU' : '1P') : (i === me ? 'YOU' : (i ? '2P' : '1P'));
     const nw = drawText(g, nm, i ? x + BW : x, y + BH + 5, 1, 'chrome', i ? 'r' : 'l');
     drawText(g, lab, i ? x + BW - nw - 4 : x + nw + 4, y + BH + 5, 1, 'cyan', i ? 'r' : 'l');
@@ -533,7 +536,7 @@ function drawHUD(g) {
     drawText(g, txt, W / 2, Math.round(H * 0.2 + (1 - k) * -40), 6, G.result < 0 ? 'chrome' : won ? 'fire' : 'ice', 'c');
     if (G.result >= 0) {
       const C = CHARS[G.f[G.result].ch], P = PORTRAITS[G.f[G.result].ch];
-      chromeBox(g, 40, 118, 100, 100); g.drawImage(P.win, 42, 120);
+      chromeBox(g, 40, 118, 100, 100); g.drawImage(P.win, 42, 120, 96, 96);
       const lines = wrapTxt('"' + winQuote(C) + '"', 26);
       R(g, OUT, 150, 132, 300, 14 + lines.length * 12); R(g, '#f4f0e0', 151, 133, 298, 12 + lines.length * 12); R(g, '#f4f0e0', 144, 150, 7, 6); R(g, OUT, 143, 150, 1, 6);
       lines.forEach((l, j) => drawTxt(g, l, 158, 139 + j * 12, 1, OUT));
@@ -548,7 +551,7 @@ const LOGO = {};
 function paintLogo(t) {   // chrome logo with a sweeping shine and a flickering bolt
   const el = document.getElementById('logo'); if (!el) return; t = t || 0;
   const g = el.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, el.width, el.height);
-  if (!LOGO.a) { LOGO.a = textSprite('THUNDER BAY', 5, 'ice', 2); LOGO.b = textSprite('BRAWL', 12, 'fire', 3); LOGO.s = mk(el.width, el.height); }
+  if (!LOGO.a) { LOGO.a = textSprite('THUNDER BAY', 5, 'ice', 2, 1); LOGO.b = textSprite('BRAWL', 12, 'fire', 3, 1); LOGO.s = mk(el.width, el.height); }
   const a = LOGO.a, b = LOGO.b, bob = Math.round(Math.sin(t / 40) * 1.5);
   g.drawImage(a, Math.round((el.width - a.width) / 2), 2);
   g.drawImage(b, Math.round((el.width - b.width) / 2), a.height + 2 + bob);
@@ -606,7 +609,7 @@ function drawVS(g, pt) {
       for (const [w2, col] of [[5, OUT], [3, '#fff36a'], [1, '#ffffff']]) { g.lineWidth = w2; g.strokeStyle = col; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.stroke(); }
     }
     const z = Math.max(1, 2 - hitT * 0.12), vs = textSprite('VS', 9, 'fire', 3);
-    g.drawImage(vs, Math.round(W / 2 - vs.width * z / 2), Math.round(H / 2 - 24 - vs.height * z / 2), Math.round(vs.width * z), Math.round(vs.height * z));
+    g.drawImage(vs, Math.round(W / 2 - vs.ww * z / 2), Math.round(H / 2 - 24 - vs.hh * z / 2), Math.round(vs.ww * z), Math.round(vs.hh * z));
     if (hitT < 5) { g.fillStyle = 'rgba(255,255,255,' + (0.8 * (1 - hitT / 5)).toFixed(2) + ')'; g.fillRect(0, 0, W, H); }
   }
   drawText(g, CHARS[c1].name, 12, H - 22, 3, 'chrome', 'l'); drawText(g, CHARS[c2].name, W - 12, H - 22, 3, 'chrome', 'r');
@@ -617,7 +620,8 @@ function drawVS(g, pt) {
 }
 function render() {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
-  if (!G) { renderAttract(); ctx.drawImage(wc, 0, 0, 960, 540); if (CRT.on) ctx.drawImage(BG.crt, 0, 0); return; }
+  worldXform();
+  if (!G) { warmSheets(5); worldXform(); renderAttract(); ctx.drawImage(wc, 0, 0, 960, 540); if (CRT.on) ctx.drawImage(BG.crt, 0, 0); return; }
   const t = G.tick, camX = G.camX;
   drawStage(wx, camX, t);
   drawSnow(wx, t, false);
@@ -643,10 +647,11 @@ function render() {
   const sw = W / z, shh = H / z, cx0 = Math.max(0, Math.min(W - sw, fx - sw / 2)), cy0 = Math.max(0, Math.min(H - shh, fy - shh * 0.6));
   const sh = G.shake, ox = sh ? Math.round((Math.random() - 0.5) * sh * 2) : 0, oy = sh ? Math.round((Math.random() - 0.5) * sh * 2) : 0;
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 960, 540);
-  ctx.drawImage(wc, cx0, cy0, sw, shh, ox * 2 - (sh ? 6 : 0), oy * 2 - (sh ? 6 : 0), 960 + (sh ? 12 : 0), 540 + (sh ? 12 : 0));
+  ctx.drawImage(wc, cx0 * RES, cy0 * RES, sw * RES, shh * RES, ox * 2 - (sh ? 6 : 0), oy * 2 - (sh ? 6 : 0), 960 + (sh ? 12 : 0), 540 + (sh ? 12 : 0));
   if (G.banner && /K\.O\./.test(G.banner.txt) && G.banner.t < 12) { ctx.fillStyle = 'rgba(255,255,255,' + (0.7 * (1 - G.banner.t / 12)).toFixed(3) + ')'; ctx.fillRect(0, 0, 960, 540); }
   ctx.setTransform(2, 0, 0, 2, 0, 0); ctx.imageSmoothingEnabled = false;
   if (G.phase !== 'vs') drawHUD(ctx); else warmStealSheets();
+  if (G.phase !== 'fight') warmSheets(G.phase === 'vs' ? 14 : 5);   // finish the 2x sprite rows off the critical path
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (CRT.on) ctx.drawImage(BG.crt, 0, 0);
 }

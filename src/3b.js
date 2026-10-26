@@ -99,7 +99,20 @@ function artOf(ch, key) {
   return { D: A.D, M: Object.assign({}, A.M, o.M || {}), L: Object.assign({}, A.L, o.L || {}) };
 }
 const FXP = ['#000000', '#0a0d14', '#14324a', '#1e6a8a', '#3ad0e8', '#b8f4ff', '#7a3a14', '#c87838', '#f0b070', '#d0d4dc', '#ffffff'];
-function palOf(ch) { const out = [OUT]; const M = (typeof ch === 'string' ? ART[ch] : ch).M; for (const k in M) for (const c of M[k]) out.push(c); return out.concat(FXP); }
+/* colour mixing for the 16-bit ramps: every material ramp gets in-between tones,
+   a deep core shadow and a specular tint, so shading reads as 6-8 tone bands */
+const MIXC = new Map();
+function mixHex(a, b, t) {
+  const k = a + b + t; let r = MIXC.get(k); if (r) return r;
+  const A = rgb(a), B = rgb(b), h = (v) => ('0' + Math.round(v).toString(16)).slice(-2);
+  r = '#' + h(A[0] + (B[0] - A[0]) * t) + h(A[1] + (B[1] - A[1]) * t) + h(A[2] + (B[2] - A[2]) * t); MIXC.set(k, r); return r;
+}
+const deepOf = (c) => mixHex(c, '#1a0a2a', 0.42), specOf = (c) => mixHex(c, '#fffaf0', 0.42);
+function palOf(ch) {
+  const out = [OUT]; const M = (typeof ch === 'string' ? ART[ch] : ch).M;
+  for (const k in M) { const m = M[k]; if (!Array.isArray(m)) continue; for (let i = 0; i < m.length; i++) { out.push(m[i], deepOf(m[i]), specOf(m[i])); if (i < m.length - 1) out.push(mixHex(m[i], m[i + 1], 0.5)); } }
+  return Array.from(new Set(out)).concat(FXP);
+}
 /* ---------- vector helpers ---------- */
 const A2 = (a, b) => [a[0] + b[0], a[1] + b[1]], S2 = (a, b) => [a[0] - b[0], a[1] - b[1]], M2 = (a, k) => [a[0] * k, a[1] * k];
 const R2 = (v, a) => [v[0] * Math.cos(a) - v[1] * Math.sin(a), v[0] * Math.sin(a) + v[1] * Math.cos(a)];
@@ -165,24 +178,30 @@ function solve1(D, q) {
 
 /* ---------- painting primitives ---------- */
 const LV = [0.45, -0.9];
+const OLW = 1.6;   // outline width added around shapes (world units): ~0.8 each side = 1-2 sprite px at RES 2
 function strokeSeg(g, a, b, w, col, off) { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.moveTo(a[0] + off[0], a[1] + off[1]); g.lineTo(b[0] + off[0], b[1] + off[1]); g.stroke(); }
 function lightN(p, q) { const dx = q[0] - p[0], dy = q[1] - p[1], d = Math.hypot(dx, dy) || 1; let n = [-dy / d, dx / d]; if (n[0] * LV[0] + n[1] * LV[1] < 0) n = [-n[0], -n[1]]; return n; }
 function limb(g, pts, ws, C, stripe) {          // pts: [a, j, b]  ws: [w1, w2]  C: [shadow, base, hi]
   g.lineCap = 'round'; g.lineJoin = 'round';
   const segs = [[pts[0], pts[1], ws[0]], [pts[1], pts[2], ws[1]]];
-  for (const [p, q, w] of segs) strokeSeg(g, p, q, w + 2, OUT, [0, 0]);
+  for (const [p, q, w] of segs) strokeSeg(g, p, q, w + OLW, OUT, [0, 0]);
   for (const [p, q, w] of segs) strokeSeg(g, p, q, w, C[0], [0, 0]);
-  for (const [p, q, w] of segs) { const n = lightN(p, q); strokeSeg(g, p, q, Math.max(1, w - 2.2), C[1], M2(n, 0.9)); }
+  for (const [p, q, w] of segs) { if (w < 3.5) continue; const n = lightN(p, q); strokeSeg(g, p, q, Math.max(0.6, w * 0.2), deepOf(C[0]), M2(n, -(w / 2 - w * 0.12))); }   // core shadow on the dark side
+  for (const [p, q, w] of segs) { const n = lightN(p, q); if (w < 4) strokeSeg(g, p, q, Math.max(1, w - 2.2), C[1], M2(n, 0.9)); else strokeSeg(g, p, q, w * 0.62, C[1], M2(n, w * 0.17)); }   // 16-bit volume: ~40% of the limb stays in shadow
+  for (const [p, q, w] of segs) { if (w < 3.5) continue; const n = lightN(p, q); strokeSeg(g, p, q, Math.max(0.6, w * 0.26), mixHex(C[1], C[2], 0.5), M2(n, w * 0.3)); }   // half-tone band
   for (const [p, q, w] of segs) { if (w < 4) continue; const n = lightN(p, q); strokeSeg(g, p, q, 1, C[2], M2(n, w / 2 - 1.3)); }
+  for (const [p, q, w] of segs) { if (w < 5) continue; const n = lightN(p, q); strokeSeg(g, p, q, 0.5, specOf(C[2]), M2(n, w / 2 - 1.15)); }   // specular glint
   if (stripe) for (const [p, q, w] of segs) { const n = lightN(p, q); g.lineCap = 'butt'; strokeSeg(g, p, q, 1, stripe, M2(n, -w / 2 + 1.6)); g.lineCap = 'round'; }
 }
 function shadeShape(g, path, C, sh, hi) {
   sh = sh == null ? 2.2 : sh; hi = hi == null ? 1.3 : hi;
-  g.save(); g.lineJoin = 'round'; g.lineWidth = 2; g.strokeStyle = OUT; g.beginPath(); path(g, 0, 0); g.stroke();
+  g.save(); g.lineJoin = 'round'; g.lineWidth = OLW; g.strokeStyle = OUT; g.beginPath(); path(g, 0, 0); g.stroke();
   g.beginPath(); path(g, 0, 0); g.clip();
-  g.fillStyle = C[0]; g.fillRect(-999, -999, 1999, 1999);
+  g.fillStyle = sh >= 1.5 ? deepOf(C[0]) : C[0]; g.fillRect(-999, -999, 1999, 1999);   // deep core shadow on the far edge
+  if (sh >= 1.5) { g.fillStyle = C[0]; g.beginPath(); path(g, LV[0] * 0.7, LV[1] * 0.7); g.fill(); }
   g.beginPath(); path(g, LV[0] * sh, LV[1] * sh); g.clip();
   g.fillStyle = C[2]; g.fillRect(-999, -999, 1999, 1999);
+  if (hi >= 1) { g.fillStyle = mixHex(C[1], C[2], 0.5); g.beginPath(); path(g, -LV[0] * hi * 0.55, -LV[1] * hi * 0.55); g.fill(); }   // half-tone band
   g.fillStyle = C[1]; g.beginPath(); path(g, -LV[0] * hi, -LV[1] * hi); g.fill();
   g.restore();
 }
@@ -190,7 +209,7 @@ const polyP = (pts) => { let ar = 0; for (let i = 0; i < pts.length; i++) { cons
 const polyP0 = (pts) => (g, dx, dy) => { g.moveTo(pts[0][0] + dx, pts[0][1] + dy); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0] + dx, pts[i][1] + dy); g.closePath(); };
 const ellP = (c, rx, ry, a) => (g, dx, dy) => { a = a || 0; g.moveTo(c[0] + dx + rx * Math.cos(a), c[1] + dy + rx * Math.sin(a)); g.ellipse(c[0] + dx, c[1] + dy, rx, ry, a, 0, Math.PI * 2); };
 const uni = (...ps) => (g, dx, dy) => { for (const p of ps) p(g, dx, dy); };
-function line(g, a, b, w, col, out) { g.lineCap = 'round'; if (out) strokeSeg(g, a, b, w + 2, OUT, [0, 0]); strokeSeg(g, a, b, w, col, [0, 0]); }
+function line(g, a, b, w, col, out) { g.lineCap = 'round'; if (out) strokeSeg(g, a, b, w + OLW, OUT, [0, 0]); strokeSeg(g, a, b, w, col, [0, 0]); }
 function px(g, p, col, w, h) { g.fillStyle = col; g.fillRect(Math.round(p[0] - (w || 1) / 2), Math.round(p[1] - (h || 1) / 2), w || 1, h || 1); }
 const F3 = (m) => [m[1], m[2], m[3]], B3 = (m) => [m[0], m[1], m[2]];
 
@@ -663,15 +682,17 @@ function paintFrame(g, ch, q, A) {
 }
 /* rim light: a 1px neon edge on the back (magenta sign glow) and top (cold sky) of every frame,
    built once from the silhouette and blended on at draw time */
-function rimOf(c) {
+function rimOf(c, fw) {
   const w = c.width, h = c.height, src = c.g.getImageData(0, 0, w, h).data, r = mk(w, h), im = r.g.createImageData(w, h), d = im.data;
   const op = (x, y) => x >= 0 && y >= 0 && x < w && y < h && src[(y * w + x) * 4 + 3] > 0;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     if (!op(x, y)) continue;
-    const fx = x % FW, o = (y * w + x) * 4;
+    const fx = x % fw, o = (y * w + x) * 4;
     const back = fx > 0 && !op(x - 1, y) && op(x + 1, y) && op(x + 2, y), top = !op(x, y - 1) && op(x, y + 1) && op(x, y + 2);
+    const back2 = !back && fx > 1 && !op(x - 2, y) && op(x - 1, y) && !op(x - 1, y - 1) && op(x + 1, y);   // 2nd, softer rim pixel at 2x density
     if (back) { d[o] = 255; d[o + 1] = 92; d[o + 2] = 214; d[o + 3] = 255; }
     else if (top) { d[o] = 150; d[o + 1] = 236; d[o + 2] = 255; d[o + 3] = 200; }
+    else if (back2) { d[o] = 255; d[o + 1] = 120; d[o + 2] = 220; d[o + 3] = 110; }
   }
   r.g.putImageData(im, 0, 0); return r;
 }
@@ -692,19 +713,52 @@ function itemIcon(g, c, item, s) {   // stolen gear, drawn on its own (flying ba
   else if (item === 'glasses') { for (const x of [-2.4, 2.4]) { g.lineWidth = 2; g.strokeStyle = OUT; g.beginPath(); g.arc(T(x, 0)[0], T(x, 0)[1], 2 * s, 0, 6.3); g.stroke(); g.lineWidth = 0.9; g.strokeStyle = '#e4ecf4'; g.beginPath(); g.arc(T(x, 0)[0], T(x, 0)[1], 2 * s, 0, 6.3); g.stroke(); } }
   else { const C = ['#050508', '#141418', '#2a2a34']; shadeShape(g, polyP([T(-6, -5), T(-2, -6), T(2, -6), T(6, -5), T(8, -1), T(5, 0), T(5, 6), T(-5, 6), T(-5, 0), T(-8, -1)]), C, 1, 0.6); px(g, T(0, 1), item === 'tee' ? '#e05a1a' : '#3a6a8a', 2, 2); }
 }
+/* Sprite sheets are painted at RES x density (2x the pixels of the old sheets),
+   one animation row at a time, on demand, and each row is cropped to the
+   union bounding box of its frames so memory stays phone-friendly.
+   warmSheets() builds rows ahead of need inside a per-frame time budget. */
+let SCRATCH = null;
 function buildSheet(ch, A) {
   A = A || ART[ch];
-  const pal = palOf(A), anims = animsFor(ch, A), S = { fw: FW, fh: FH, ox: FOX, oy: FOY, scale: 1, imgs: [], rims: [], anims: {} };
-  const scratch = mk(FW, FH, true);
-  anims.forEach((an, row) => {
-    const rc = mk(FW * an.frames.length, FH);
-    an.frames.forEach((q, i) => {
-      const g = scratch.g; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, FW, FH); g.save(); g.translate(FOX, FOY);
-      if (q.flip) g.scale(-1, 1); paintFrame(g, ch, q, A); g.restore(); pixelate(scratch, pal, null); rc.g.drawImage(scratch, i * FW, 0);
-    });
-    S.imgs.push(rc); S.rims.push(rimOf(rc)); S.anims[an.name] = Object.assign({ row, n: an.frames.length }, an.meta);
-  });
+  const defs = animsFor(ch, A), S = { lazy: 1, ch, A, pal: palOf(A), defs, rows: [], fw: FW * RES, fh: FH * RES, ox: FOX * RES, oy: FOY * RES, scale: 1 / RES, anims: {} };
+  defs.forEach((an, row) => { S.anims[an.name] = Object.assign({ row, n: an.frames.length }, an.meta); });
   return S;
+}
+function sheetRow(S, row) {
+  let Rw = S.rows[row]; if (Rw) return Rw;
+  const an = S.defs[row], n = an.frames.length, fw = FW * RES, fh = FH * RES;
+  if (!SCRATCH) SCRATCH = mk(fw, fh, true);
+  const tmp = mk(fw * n, fh, true);
+  an.frames.forEach((q, i) => {
+    const g = SCRATCH.g; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, fw, fh); g.setTransform(RES, 0, 0, RES, FOX * RES, FOY * RES);
+    if (q.flip) g.scale(-1, 1); paintFrame(g, S.ch, q, S.A); g.setTransform(1, 0, 0, 1, 0, 0); pixelate(SCRATCH, S.pal, null); tmp.g.drawImage(SCRATCH, i * fw, 0);
+  });
+  const d = tmp.g.getImageData(0, 0, fw * n, fh).data, W2 = fw * n; let x0 = fw, x1 = -1, y0 = fh, y1 = -1;
+  for (let y = 0; y < fh; y++) for (let x = 0; x < W2; x++) if (d[(y * W2 + x) * 4 + 3]) { const fx = x % fw; if (fx < x0) x0 = fx; if (fx > x1) x1 = fx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) { x0 = 0; x1 = 1; y0 = 0; y1 = 1; }
+  x0 = Math.max(0, x0 - 2); y0 = Math.max(0, y0 - 2); x1 = Math.min(fw - 1, x1 + 2); y1 = Math.min(fh - 1, y1 + 2);
+  const cw = x1 - x0 + 1, chh = y1 - y0 + 1, img = mk(cw * n, chh);
+  for (let i = 0; i < n; i++) img.g.drawImage(tmp, i * fw + x0, y0, cw, chh, i * cw, 0, cw, chh);
+  tmp.width = tmp.height = 1;   // free the scratch strip
+  Rw = { img, rim: rimOf(img, cw), fw: cw, fh: chh, ox: FOX * RES - x0, oy: FOY * RES - y0 };
+  S.rows[row] = Rw; return Rw;
+}
+function sheetReady(S) { return !S.lazy || S.rows.length === S.defs.length && S.rows.every(Boolean); }
+/* build pending rows: match fighters (and their FIVE-FINGER DISCOUNT variants) first, then
+   the attract/select rows for everyone. Spends at most `ms` per call. */
+const WARM_BASIC = ['idle', 'walk', 'win'];
+function warmSheets(ms) {
+  const t0 = performance.now(), todo = [];
+  if (G && G.f) { for (const f of G.f) todo.push([SHEETS[f.ch], null]); for (const k in SHEETS) if (k.indexOf(':') > 0) todo.push([SHEETS[k], null]); }
+  for (const ch of CHAR_IDS) todo.push([SHEETS[ch], WARM_BASIC]);
+  for (const [S, only] of todo) {
+    if (!S || !S.lazy) continue;
+    for (let r = 0; r < S.defs.length; r++) {
+      if (S.rows[r] || (only && only.indexOf(S.defs[r].name) < 0)) continue;
+      sheetRow(S, r); if (performance.now() - t0 > ms) return false;
+    }
+  }
+  return true;
 }
 /* portrait: head + shoulders, drawn bigger, same painter */
 function makePortrait(ch, size, sc, expr) {
@@ -748,7 +802,8 @@ function warmStealSheets() {   // called during the VS splash so the swap never 
 function buildFighterArt() {
   for (const ch of CHAR_IDS) {
     SHEETS[ch] = buildSheet(ch);
-    PORTRAITS[ch] = { n: makePortrait(ch, 30, 1.25, 'n'), h: makePortrait(ch, 30, 1.25, 'h'), big: makePortrait(ch, 96, 3.6, 'n'), win: makePortrait(ch, 96, 3.6, 's') };
+    PORTRAITS[ch] = { n: makePortrait(ch, 30 * RES, 1.25 * RES, 'n'), h: makePortrait(ch, 30 * RES, 1.25 * RES, 'h'), big: makePortrait(ch, 96 * RES, 3.6 * RES, 'n'), win: makePortrait(ch, 96 * RES, 3.6 * RES, 's') };
+    sheetRow(SHEETS[ch], SHEETS[ch].anims.idle.row);
   }
 }
 
@@ -787,10 +842,12 @@ function frameOf(f, A, tick) {
 }
 function drawFromSheet(g, f, S, sx, sy, tick, mirrorY, rim) {
   const A = animOf(f, S), i = frameOf(f, A, tick), sc = S.scale || 1, sq = squashOf(f) || [1, 1];
-  const img = S.imgs ? S.imgs[A.row] : S.img;
   g.save(); g.translate(sx, sy); g.scale(f.face * sc * sq[0], (mirrorY ? -sc : sc) * sq[1]);
-  g.drawImage(img, i * S.fw, S.imgs ? 0 : A.row * S.fh, S.fw, S.fh, -S.ox, -S.oy, S.fw, S.fh);
-  if (rim && S.rims && S.rims[A.row]) { const a0 = g.globalAlpha; g.globalAlpha = a0 * rim; g.drawImage(S.rims[A.row], i * S.fw, 0, S.fw, S.fh, -S.ox, -S.oy, S.fw, S.fh); g.globalAlpha = a0; }
+  if (S.lazy) {
+    const Rw = sheetRow(S, A.row);
+    g.drawImage(Rw.img, i * Rw.fw, 0, Rw.fw, Rw.fh, -Rw.ox, -Rw.oy, Rw.fw, Rw.fh);
+    if (rim) { const a0 = g.globalAlpha; g.globalAlpha = a0 * rim; g.drawImage(Rw.rim, i * Rw.fw, 0, Rw.fw, Rw.fh, -Rw.ox, -Rw.oy, Rw.fw, Rw.fh); g.globalAlpha = a0; }
+  } else g.drawImage(S.img, i * S.fw, A.row * S.fh, S.fw, S.fh, -S.ox, -S.oy, S.fw, S.fh);
   g.restore();
 }
 /* RENDERERS[name](g, f, C, sx, sy, tick, mirrorY)
