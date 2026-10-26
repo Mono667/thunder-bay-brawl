@@ -872,7 +872,26 @@ function buildFighterArt() {
     SHEETS[ch] = buildSheet(ch);
     PORTRAITS[ch] = { n: makePortrait(ch, 30 * RES, 1.25 * RES, 'n'), h: makePortrait(ch, 30 * RES, 1.25 * RES, 'h'), big: makePortrait(ch, 96 * RES, 3.6 * RES, 'n'), win: makePortrait(ch, 96 * RES, 3.6 * RES, 's') };
     sheetRow(SHEETS[ch], SHEETS[ch].anims.idle.row);
+    loadPortrait(ch);
   }
+}
+/* a sprite fighter can ship a 192x192 PNG bust (C.sprite.portrait) for the select / VS / HUD / win portraits;
+   until it loads, or if it fails, the code-drawn portraits above stay in place */
+const PORTRAIT_IMG = {};
+function loadPortrait(ch) {
+  const C = CHARS[ch], src = C.render === 'sprite' && C.sprite && C.sprite.portrait; if (!src) return;
+  const apply = im => {
+    const fit = (size, smooth) => { const c = mk(size, size); c.g.imageSmoothingEnabled = smooth; if (smooth) c.g.imageSmoothingQuality = 'high'; c.g.drawImage(im, 0, 0, size, size); return c; };
+    const n = fit(30 * RES, true), h = fit(30 * RES, true);
+    h.g.globalCompositeOperation = 'source-atop'; h.g.fillStyle = 'rgba(255,40,40,0.38)'; h.g.fillRect(0, 0, h.width, h.height);
+    PORTRAITS[ch] = { n, h, big: fit(96 * RES, false), win: fit(96 * RES, false), img: 1 };
+  };
+  const P = PORTRAIT_IMG[ch];
+  if (P) { if (P.ok) apply(P.im); return; }
+  const im = new Image(), rec = PORTRAIT_IMG[ch] = { im, ok: 0 };
+  im.onload = () => { if (im.naturalWidth >= 32 && im.naturalHeight >= 32) { rec.ok = 1; apply(im); } };
+  im.onerror = () => { rec.failed = 1; };   // keep the code-drawn portraits
+  im.src = src;
 }
 
 /* ---------- picking a frame for the fighter's current state ---------- */

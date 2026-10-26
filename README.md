@@ -111,6 +111,9 @@ sprite: { src: 'art/sara.png', fw: 180, fh: 128, ox: 86, oy: 116, scale: 1,
 - **Fallbacks:** crouching moves fall back to the standing anim, and any missing anim uses `idle`.
 - **Loading:** the procedural art is drawn until the image finishes loading (preloaded at boot). If the PNG fails to load, the fighter stays on the procedural art for the session; it also switches back to it while a stolen-item look is worn.
 - **CRAIG** uses one: `art/craig.png` (AI-generated stylized frames, cleaned up into a 20-colour sheet). Hitboxes, stats and netcode are unchanged.
+  Walk (6 frames), block, crouch block, crouch, jump rise/tuck/fall, punch/kick/special wind-ups, KO fall, lying KO, kneeling get-up and body hit are real generated poses (RunPod Nano Banana 2 edit); jump-attack and crouch-attack frames are still derived.
+  (Rebuilt with the local, unpublished `spritetest/` scripts rp_extract.py, process_rp.py and rp_portrait.py.)
+  A sprite character can also set `sprite.portrait` (a 192x192 PNG bust, here `art/craig_portrait.png`) for the select, VS, HUD and win portraits; if it fails to load the code-drawn portraits stay.
 
 Hitboxes are defined per move and are independent of the art. Use stylized likenesses only, not photos. After editing `src/`, run `node build.js` to rebuild `index.html`.
 

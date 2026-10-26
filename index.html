@@ -183,9 +183,9 @@ const CHARS = {
     stats: { speed: 3, power: 3, health: 3, reach: 3 },
     hurt: { st: [-13, 0, 26, 72], cr: [-14, 0, 28, 46], air: [-13, 8, 26, 58] },
     colors: { skin: '#eaa880', top: '#1a2030', top2: '#0b0712', pants: '#2e4466', hair: '#94663a', band: '#b0b0c0', glove: '#eaa880', shoe: '#1e1e22' },
-    // AI-generated sprite sheet (art/craig.png, built by spritetest/process_live.py); falls back to the code-drawn art if it fails to load
-    render: 'sprite', sprite: { src: 'art/craig.png?v=ae995220', fw: 360, fh: 256, ox: 172, oy: 236, scale: 0.5, anims: {
-      idle: { row: 0, n: 4, fps: 5 }, walk: { row: 1, n: 4, by: 'walk', div: 6 },
+    // AI-generated sprite sheet (art/craig.png, built by spritetest/process_rp.py from frames_mk3 + RunPod poses; bust in art/craig_portrait.png); falls back to the code-drawn art if it fails to load
+    render: 'sprite', sprite: { src: 'art/craig.png?v=fd60d757', portrait: 'art/craig_portrait.png?v=6761bbd7', fw: 360, fh: 256, ox: 172, oy: 236, scale: 0.5, anims: {
+      idle: { row: 0, n: 4, fps: 5 }, walk: { row: 1, n: 6, by: 'walk', div: 5 },
       punch: { row: 2, n: 3, ph: ['s', 'a', 'r'] }, lp: { row: 2, n: 3, ph: ['s', 'a', 'r'] }, hp: { row: 2, n: 3, ph: ['s', 'a', 'r'] },
       kick: { row: 3, n: 3, ph: ['s', 'a', 'r'] }, lk: { row: 3, n: 3, ph: ['s', 'a', 'r'] }, hk: { row: 3, n: 3, ph: ['s', 'a', 'r'] },
       clp: { row: 17, n: 3, ph: ['s', 'a', 'r'] }, chp: { row: 17, n: 3, ph: ['s', 'a', 'r'] }, upper: { row: 17, n: 3, ph: ['s', 'a', 'r'] },
@@ -194,7 +194,7 @@ const CHARS = {
       sp: { row: 5, n: 3, ph: ['s', 'a', 'r'] }, toss: { row: 5, n: 3, ph: ['s', 'a', 'r'] },
       hit: { row: 4, n: 2 }, stagger: { row: 4, n: 2 }, hitlo: { row: 15, n: 2 }, chit: { row: 8, n: 1 }, kd: { row: 13, n: 3, by: 't', t: [4, 10] },
       lie: { row: 7, n: 1 }, ko: { row: 7, n: 1 }, rise: { row: 14, n: 3, by: 't', t: [5, 10] }, land: { row: 16, n: 1 },
-      crouch: { row: 8, n: 2, fps: 3 }, block: { row: 9, n: 1 }, cblock: { row: 8, n: 1 }, win: { row: 6, n: 1 }, lose: { row: 15, n: 1 } } },
+      crouch: { row: 8, n: 2, fps: 3 }, block: { row: 9, n: 1 }, cblock: { row: 19, n: 1 }, win: { row: 6, n: 1 }, lose: { row: 15, n: 1 } } },
     moves: {
       lp:  { s: 3, a: 2, r: 7,  dmg: 32, hs: 13, bs: 9,  box: [12, 54, 25, 9],  lvl: 'mid', push: 2.6, anim: 'punch' },
       hp:  { s: 7, a: 3, r: 15, dmg: 80, hs: 19, bs: 13, box: [12, 52, 34, 11], lvl: 'mid', push: 4.6, anim: 'punch', heavy: 1 },
@@ -1841,7 +1841,26 @@ function buildFighterArt() {
     SHEETS[ch] = buildSheet(ch);
     PORTRAITS[ch] = { n: makePortrait(ch, 30 * RES, 1.25 * RES, 'n'), h: makePortrait(ch, 30 * RES, 1.25 * RES, 'h'), big: makePortrait(ch, 96 * RES, 3.6 * RES, 'n'), win: makePortrait(ch, 96 * RES, 3.6 * RES, 's') };
     sheetRow(SHEETS[ch], SHEETS[ch].anims.idle.row);
+    loadPortrait(ch);
   }
+}
+/* a sprite fighter can ship a 192x192 PNG bust (C.sprite.portrait) for the select / VS / HUD / win portraits;
+   until it loads, or if it fails, the code-drawn portraits above stay in place */
+const PORTRAIT_IMG = {};
+function loadPortrait(ch) {
+  const C = CHARS[ch], src = C.render === 'sprite' && C.sprite && C.sprite.portrait; if (!src) return;
+  const apply = im => {
+    const fit = (size, smooth) => { const c = mk(size, size); c.g.imageSmoothingEnabled = smooth; if (smooth) c.g.imageSmoothingQuality = 'high'; c.g.drawImage(im, 0, 0, size, size); return c; };
+    const n = fit(30 * RES, true), h = fit(30 * RES, true);
+    h.g.globalCompositeOperation = 'source-atop'; h.g.fillStyle = 'rgba(255,40,40,0.38)'; h.g.fillRect(0, 0, h.width, h.height);
+    PORTRAITS[ch] = { n, h, big: fit(96 * RES, false), win: fit(96 * RES, false), img: 1 };
+  };
+  const P = PORTRAIT_IMG[ch];
+  if (P) { if (P.ok) apply(P.im); return; }
+  const im = new Image(), rec = PORTRAIT_IMG[ch] = { im, ok: 0 };
+  im.onload = () => { if (im.naturalWidth >= 32 && im.naturalHeight >= 32) { rec.ok = 1; apply(im); } };
+  im.onerror = () => { rec.failed = 1; };   // keep the code-drawn portraits
+  im.src = src;
 }
 
 /* ---------- picking a frame for the fighter's current state ---------- */
@@ -3016,7 +3035,7 @@ addEventListener('resize', fit); fit();
 paintLogo(0);
 /* ---- stale-cache guard: GitHub Pages lets browsers keep the page ~10 min. If the live copy has a
    newer build id than the one running, reload once onto it. ---- */
-const BUILD_ID = 'ae3df8dc';
+const BUILD_ID = '8fa8a58d';
 if ($('build')) $('build').textContent = 'build ' + BUILD_ID;
 (function freshCheck() {
   if (location.protocol === 'file:' || QS.has('nofresh') || !window.fetch) return;
