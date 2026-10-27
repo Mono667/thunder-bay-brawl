@@ -25,9 +25,9 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   await page.goto(BASE + '/?q=2&cpu=aj'); await W(page, 1500);
   ok('title visible', await page.isVisible('#s-title'));
   ok('pixel logo painted', await page.$eval('#logo', c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n > 5000; }));
-  ok('fighter art + stage built (' + await page.evaluate(() => BUILD_MS) + ' ms)', await page.evaluate(() => CHAR_IDS.every(c => SHEETS[c] && PORTRAITS[c].big) && !!(STAGES.bay && STAGES.bay.near && STAGES.alley && STAGES.alley.near) && !!SPK.K));
+  ok('fighter art + stage built (' + await page.evaluate(() => BUILD_MS) + ' ms)', await page.evaluate(() => CHAR_IDS.every(c => SHEETS[c] && PORTRAITS[c].big) && STAGE_IDS.length === 5 && STAGE_IDS.every(id => STAGES[id] && STAGES[id].near && STAGES[id].crowd.length === 6 && STAGES[id].fg) && !!SPK.K));
   ok('CRAIG AI sprite sheet loaded (' + await page.evaluate(() => CHARS.craig.sprite.img && CHARS.craig.sprite.img.naturalWidth + 'x' + CHARS.craig.sprite.img.naturalHeight) + ')', await page.evaluate(() => CHARS.craig.render === 'sprite' && !!CHARS.craig.sprite.img && !CHARS.craig.sprite.failed));
-  ok('CRAIG sprite anims all fit the sheet (walk ' + await page.evaluate(() => CHARS.craig.sprite.anims.walk.n) + ' frames)', await page.evaluate(() => { const S = CHARS.craig.sprite, im = S.img; return !!im && Object.values(S.anims).every(A => (A.row + 1) * S.fh <= im.naturalHeight && A.n * S.fw <= im.naturalWidth) && S.anims.walk.n === 6; }));
+  ok('CRAIG sprite anims all fit the sheet (walk ' + await page.evaluate(() => CHARS.craig.sprite.anims.walk.n) + ' frames)', await page.evaluate(() => { const S = CHARS.craig.sprite, im = S.img; return !!im && Object.values(S.anims).every(A => (A.row + 1) * S.fh <= im.naturalHeight && A.n * S.fw <= im.naturalWidth) && S.anims.walk.n === 5; }));
   ok('CRAIG portrait PNG in use (select/VS/HUD/win)', await page.evaluate(() => PORTRAITS.craig.img === 1 && PORTRAITS.craig.big.width === 96 * RES && PORTRAITS.craig.n.width === 30 * RES && PORTRAITS.craig.h && PORTRAITS.craig.win));
   await page.tap('#btn-crt'); await W(page, 100); ok('CRT toggle', (await page.textContent('#btn-crt')).includes('ON'));
   await page.screenshot({ path: '../shot-title-crt.png' });
@@ -43,7 +43,7 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   await page.screenshot({ path: '../shot-select.png' });
   await page.tap('#btn-fight'); await W(page, 400);
   ok('stage select after character select', await page.isVisible('#s-stage') && !(await S(page)).mode);
-  ok('stage cards: BAY, ALLEY, RANDOM', (await page.$$eval('.scard', es => es.map(e => e.id).join(','))) === 'stage-bay,stage-alley,stage-random');
+  ok('stage cards: BAY, ALLEY, WESTFORT, ARTHUR, HIGH, RANDOM', (await page.$$eval('.scard', es => es.map(e => e.id).join(','))) === 'stage-bay,stage-alley,stage-westfort,stage-arthur,stage-high,stage-random');
   ok('stage names shown', (await page.textContent('#stages')).includes('BAY STREET') && (await page.textContent('#stages')).includes('MAY STREET ALLEY BAR') && (await page.textContent('#stages')).includes('RANDOM'));
   ok('BAY STREET is the default', await page.$eval('#stage-bay', e => e.classList.contains('sel')));
   ok('stage thumbnails painted', await page.$$eval('.scard canvas', cs => cs.every(c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 60) n++; return n > 3000; })));
@@ -326,7 +326,8 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   await page.evaluate(() => FIGHT.press(0, 'hp')); await W(page, 140); await page.screenshot({ path: '../shot-dirty.png' });
   s = await until(page, x => x.f[1].hp < 1000, 800); ok('DIRTY stretch punch lands from 70px (SARA hp ' + s.f[1].hp + ')', s.f[1].hp < 1000);
   await W(page, 800);
-  await page.evaluate(() => FIGHT.press(0, 'sp')); s = await until(page, x => x.proj > 0, 1200); ok('DIRTY boombox wave projectile', s.proj > 0);
+  for (let t = 0; t < 3; t++) { await page.evaluate(() => FIGHT.press(0, 'sp')); s = await until(page, x => x.proj > 0, 1200); if (s.proj > 0) break; }   // retried: the CPU can interrupt the startup
+  ok('DIRTY boombox wave projectile', s.proj > 0);
   await W(page, 1600);
   await page.evaluate(() => { FIGHT.place(0, 300); FIGHT.place(1, 400); }); await W(page, 150);
   await page.evaluate(() => { FIGHT.hold(0, 'd', true); FIGHT.press(0, 'sp'); }); await W(page, 60); await page.evaluate(() => FIGHT.hold(0, 'd', false));
@@ -360,8 +361,18 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   ok('win bubble shown in-round (' + wb.n + ') but never over the win card (' + wb.me + ')', wb.n > 0 && wb.me === 0);
   await page.screenshot({ path: '../shot-alley-win.png' });
   // RANDOM resolves to a real stage
-  for (let i = 0; i < 2; i++) { await solo('craig', '/?q=2&cpu=aj', 'random'); s = await S(page); ok('RANDOM stage -> ' + s.stage, ['bay', 'alley'].includes(s.stage)); }
+  for (let i = 0; i < 2; i++) { await solo('craig', '/?q=2&cpu=aj', 'random'); s = await S(page); ok('RANDOM stage -> ' + s.stage, ['bay', 'alley', 'westfort', 'arthur', 'high'].includes(s.stage)); }
   await page.tap('#b-pause'); await W(page, 150); await page.tap('#btn-quit');
+  // the three new streets: each loads, fights, and keeps the same floor
+  for (const [sid, nm] of [['westfort', 'WESTFORT'], ['arthur', 'ARTHUR STREET'], ['high', 'HIGH STREET']]) {
+    await solo('aj', '/?q=2&cpu=sara', sid); s = await S(page);
+    ok(nm + ' picked + built (stage ' + s.stage + ', ' + await page.evaluate(i => STAGES[i].neon.length + ' neon, ' + STAGES[i].lamps.length + ' lamps', sid) + ')', s.stage === sid && s.phase === 'fight' && await page.evaluate(i => { const A = STAGES[i]; return A.gy === 214 && A.layers.length === 2 && A.neon.length > 0 && A.lamps.length >= 3 && STAGE_INFO.find(x => x.id === i).name.length > 0; }, sid));
+    await page.evaluate(() => { FIGHT.place(0, 370); FIGHT.place(1, 420); }); await W(page, 120);
+    await page.evaluate(() => FIGHT.press(0, 'hp')); await W(page, 150);
+    s = await until(page, x => x.f[1].hp < 1000, 900); ok('combat on ' + nm + ' (SARA hp ' + s.f[1].hp + ')', s.f[1].hp < 1000);
+    await page.screenshot({ path: '../shot-stage-' + sid + '.png' });
+    await page.tap('#b-pause'); await W(page, 150); await page.tap('#btn-quit');
+  }
 
   // CRAIG's PNG sheet is what's drawn in a fight; if the PNG can't load he falls back to the code-drawn art
   await solo('craig', '/?q=2&cpu=bino');
@@ -420,6 +431,18 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   await B.page.screenshot({ path: '../shot-online-guest.png' });
   await B.page.tap('#b-pause'); await W(B.page, 150); await B.page.tap('#btn-quit'); await W(A.page, 600);
   ok('host notified when guest leaves', await A.page.isVisible('#s-online'));
+  // online on each new street: the guest gets the host's stage and the fight runs
+  for (const sid of ['westfort', 'arthur', 'high']) {
+    for (const P of [A, B]) { await P.page.goto(BASE + '/?q=2'); await W(P.page, 900); await P.page.tap('#btn-online'); await W(P.page, 150); }
+    await A.page.tap('#pick-craig'); await B.page.tap('#pick-aj');
+    for (const P of [A, B]) { await P.page.tap('#btn-fight'); await W(P.page, 200); }
+    await A.page.tap('#stage-' + sid); for (const P of [A, B]) { await P.page.tap('#btn-stage-go'); await W(P.page, 150); }
+    await A.page.tap('#btn-create'); await A.page.waitForFunction(() => /^[A-Z]{4}$/.test(document.getElementById('bigcode').textContent), null, { timeout: 4000 });
+    const cd = await A.page.textContent('#bigcode'); await B.page.fill('#code', cd.toLowerCase()); await B.page.tap('#btn-join');
+    sb = await until(B.page, x => x.mode === 'guest' && x.phase === 'fight', 12000); sa = await S(A.page);
+    ok('online on ' + sid + ' (host ' + sa.stage + ', guest ' + sb.stage + ', ' + sb.snaps + ' snaps)', sa.stage === sid && sb.stage === sid && sb.snaps > 20);
+    await B.page.tap('#b-pause'); await W(B.page, 150); await B.page.tap('#btn-quit'); await W(A.page, 400);
+  }
 
   ok('zero console errors/warnings' + (errors.length ? ': ' + errors.join(' | ') : ''), errors.length === 0);
   console.log(fails ? fails + ' FAILED' : 'ALL PASS');

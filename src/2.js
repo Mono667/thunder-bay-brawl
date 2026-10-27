@@ -29,8 +29,8 @@ const CHARS = {
     hurt: { st: [-13, 0, 26, 72], cr: [-14, 0, 28, 46], air: [-13, 8, 26, 58] },
     colors: { skin: '#eaa880', top: '#1a2030', top2: '#0b0712', pants: '#2e4466', hair: '#94663a', band: '#b0b0c0', glove: '#eaa880', shoe: '#1e1e22' },
     // AI-generated sprite sheet (art/craig.png, built by spritetest/process_rp.py from frames_mk3 + RunPod poses; bust in art/craig_portrait.png); falls back to the code-drawn art if it fails to load
-    render: 'sprite', sprite: { src: 'art/craig.png?v=fd60d757', portrait: 'art/craig_portrait.png?v=6761bbd7', fw: 360, fh: 256, ox: 172, oy: 236, scale: 0.5, anims: {
-      idle: { row: 0, n: 4, fps: 5 }, walk: { row: 1, n: 6, by: 'walk', div: 5 },
+    render: 'sprite', sprite: { src: 'art/craig.png?v=acbff495', portrait: 'art/craig_portrait.png?v=b3c18cd3', fw: 360, fh: 256, ox: 172, oy: 236, scale: 0.5, anims: {
+      idle: { row: 0, n: 4, fps: 5 }, walk: { row: 1, n: 5, by: 'walk', div: 6 },
       punch: { row: 2, n: 3, ph: ['s', 'a', 'r'] }, lp: { row: 2, n: 3, ph: ['s', 'a', 'r'] }, hp: { row: 2, n: 3, ph: ['s', 'a', 'r'] },
       kick: { row: 3, n: 3, ph: ['s', 'a', 'r'] }, lk: { row: 3, n: 3, ph: ['s', 'a', 'r'] }, hk: { row: 3, n: 3, ph: ['s', 'a', 'r'] },
       clp: { row: 17, n: 3, ph: ['s', 'a', 'r'] }, chp: { row: 17, n: 3, ph: ['s', 'a', 'r'] }, upper: { row: 17, n: 3, ph: ['s', 'a', 'r'] },
@@ -39,7 +39,7 @@ const CHARS = {
       sp: { row: 5, n: 3, ph: ['s', 'a', 'r'] }, toss: { row: 5, n: 3, ph: ['s', 'a', 'r'] },
       hit: { row: 4, n: 2 }, stagger: { row: 4, n: 2 }, hitlo: { row: 15, n: 2 }, chit: { row: 8, n: 1 }, kd: { row: 13, n: 3, by: 't', t: [4, 10] },
       lie: { row: 7, n: 1 }, ko: { row: 7, n: 1 }, rise: { row: 14, n: 3, by: 't', t: [5, 10] }, land: { row: 16, n: 1 },
-      crouch: { row: 8, n: 2, fps: 3 }, block: { row: 9, n: 1 }, cblock: { row: 19, n: 1 }, win: { row: 6, n: 1 }, lose: { row: 15, n: 1 } } },
+      crouch: { row: 8, n: 2, fps: 3 }, block: { row: 9, n: 1 }, cblock: { row: 19, n: 1 }, win: { row: 6, n: 1 }, lose: { row: 15, n: 1 }, hw: { row: 20, n: 1 } } },
     moves: {
       lp:  { s: 3, a: 2, r: 7,  dmg: 32, hs: 13, bs: 9,  box: [12, 54, 25, 9],  lvl: 'mid', push: 2.6, anim: 'punch' },
       hp:  { s: 7, a: 3, r: 15, dmg: 80, hs: 19, bs: 13, box: [12, 52, 34, 11], lvl: 'mid', push: 4.6, anim: 'punch', heavy: 1 },
@@ -52,7 +52,9 @@ const CHARS = {
       jp:  { s: 4, a: 7, r: 0,  dmg: 60, hs: 17, bs: 11, box: [8, 26, 27, 16],  lvl: 'high', push: 3.0, anim: 'jpunch' },
       jk:  { s: 5, a: 9, r: 0,  dmg: 70, hs: 18, bs: 12, box: [6, 6, 33, 16],   lvl: 'high', push: 3.4, anim: 'jkick', heavy: 1 },
       sp:  { s: 12, a: 1, r: 22, dmg: 85, hs: 24, bs: 16, chip: 22, box: [0, 0, 0, 0], lvl: 'mid', push: 3.4, anim: 'toss', heavy: 1, name: 'INK SPLASH',
-             proj: { vx: 4.4, w: 18, h: 14, y: 52, x: 24, art: 'ink' } }
+             proj: { vx: 4.4, w: 18, h: 14, y: 52, x: 24, art: 'ink' } },
+      // (unlisted) down, back, up + SP: rises up arms-out and hoses them down; long recovery if it whiffs
+      hw:  { s: 14, a: 54, r: 40, dmg: 22, hs: 16, bs: 10, chip: 3, box: [12, -40, 84, 64], lvl: 'mid', push: 0.4, anim: 'holy', multi: 9, holy: 1, name: 'HOLY WATER' }
     }
   },
   aj: {
@@ -62,7 +64,8 @@ const CHARS = {
     stats: { speed: 1, power: 5, health: 5, reach: 5 },
     hurt: { st: [-19, 0, 38, 98], cr: [-20, 0, 40, 60], air: [-18, 8, 36, 74] },
     colors: { skin: '#e2a682', top: '#121218', top2: '#e05a1a', pants: '#3a6ac8', hair: '#8a6a40', band: '#e05a1a', glove: '#e2a682', shoe: '#e2a682' },
-    render: 'pixel', sprite: null,
+    // AI-generated sprite sheet (art/aj.png, spritetest/rw/fighter.py from Runway strips; bust from the shared 5-portrait strip); falls back to the code-drawn art if it fails to load
+    render: 'sprite', sprite: {src: 'art/aj.png?v=bd0e41bb', portrait: 'art/aj_portrait.png?v=fe235fe6', fw: 242, fh: 312, ox: 98, oy: 307, scale: 0.5, anims: {idle: {row: 0, n: 2, fps: 3}, walk: {row: 1, n: 6, by: 'walk', div: 6}, punch: {row: 2, n: 3, ph: ['s', 'a', 'r']}, kick: {row: 3, n: 3, ph: ['s', 'a', 'r']}, hit: {row: 4, n: 2}, hitlo: {row: 5, n: 2}, win: {row: 6, n: 1, fps: 2}, lie: {row: 7, n: 1}, crouch: {row: 8, n: 1}, block: {row: 9, n: 1}, cblock: {row: 10, n: 1}, jump: {row: 11, n: 3, by: 'vy'}, jpunch: {row: 12, n: 2, ph: ['s', 'a']}, jkick: {row: 13, n: 2, ph: ['s', 'a']}, kd: {row: 14, n: 3, by: 't', t: [4, 10]}, rise: {row: 15, n: 3, by: 't', t: [5, 10]}, cpunch: {row: 16, n: 3, ph: ['s', 'a', 'r']}, upper: {row: 17, n: 3, ph: ['s', 'a', 'r']}, csweep: {row: 18, n: 3, ph: ['s', 'a', 'r']}, lose: {row: 19, n: 1}, sp: {row: 20, n: 4, ph: ['s', 'a', 'r', 'r']}, sp2: {row: 21, n: 3, ph: ['s', 'a', 'r']}, lp: {row: 2, n: 3, ph: ['s', 'a', 'r']}, hp: {row: 2, n: 3, ph: ['s', 'a', 'r']}, lk: {row: 3, n: 3, ph: ['s', 'a', 'r']}, hk: {row: 3, n: 3, ph: ['s', 'a', 'r']}, clp: {row: 16, n: 3, ph: ['s', 'a', 'r']}, chp: {row: 17, n: 3, ph: ['s', 'a', 'r']}, clk: {row: 18, n: 3, ph: ['s', 'a', 'r']}, chk: {row: 18, n: 3, ph: ['s', 'a', 'r']}, sweep: {row: 18, n: 3, ph: ['s', 'a', 'r']}, jp: {row: 12, n: 2, ph: ['s', 'a']}, jk: {row: 13, n: 2, ph: ['s', 'a']}, stagger: {row: 4, n: 2}, ko: {row: 7, n: 1}, land: {row: 8, n: 1}, chit: {row: 8, n: 1}}},
     moves: {
       lp:  { s: 4, a: 3, r: 9,  dmg: 40,  hs: 14, bs: 9,  box: [16, 68, 30, 11], lvl: 'mid', push: 3.4, anim: 'punch' },
       hp:  { s: 9, a: 4, r: 20, dmg: 112, hs: 21, bs: 15, box: [16, 64, 44, 14], lvl: 'mid', push: 6.4, anim: 'punch', heavy: 1, armor: 1 },
@@ -85,7 +88,8 @@ const CHARS = {
     stats: { speed: 4, power: 3, health: 3, reach: 3 },
     hurt: { st: [-14, 0, 28, 82], cr: [-15, 0, 30, 52], air: [-14, 8, 28, 62] },
     colors: { skin: '#cc8a5c', top: '#cc8a5c', top2: '#9a5a36', pants: '#2c3a54', hair: '#e8661e', band: '#c8d4e4', glove: '#cc8a5c', shoe: '#3e2a1a', beard: 1 },
-    render: 'pixel', sprite: null,
+    // AI-generated sprite sheet (art/bino.png, spritetest/rw/fighter.py from Runway strips; bust from the shared 5-portrait strip); falls back to the code-drawn art if it fails to load
+    render: 'sprite', sprite: {src: 'art/bino.png?v=60b1c133', portrait: 'art/bino_portrait.png?v=82295717', fw: 196, fh: 252, ox: 80, oy: 247, scale: 0.5, anims: {idle: {row: 0, n: 2, fps: 3}, walk: {row: 1, n: 6, by: 'walk', div: 5}, punch: {row: 2, n: 3, ph: ['s', 'a', 'r']}, kick: {row: 3, n: 3, ph: ['s', 'a', 'r']}, hit: {row: 4, n: 2}, hitlo: {row: 5, n: 2}, win: {row: 6, n: 1, fps: 2}, lie: {row: 7, n: 1}, crouch: {row: 8, n: 1}, block: {row: 9, n: 1}, cblock: {row: 10, n: 1}, jump: {row: 11, n: 3, by: 'vy'}, jpunch: {row: 12, n: 2, ph: ['s', 'a']}, jkick: {row: 13, n: 2, ph: ['s', 'a']}, kd: {row: 14, n: 3, by: 't', t: [4, 10]}, rise: {row: 15, n: 3, by: 't', t: [5, 10]}, cpunch: {row: 16, n: 3, ph: ['s', 'a', 'r']}, upper: {row: 17, n: 3, ph: ['s', 'a', 'r']}, csweep: {row: 18, n: 3, ph: ['s', 'a', 'r']}, lose: {row: 19, n: 1}, sp: {row: 20, n: 3, ph: ['s', 'a', 'r']}, sp2: {row: 21, n: 6, ph: ['s', 'a', 'a', 'a', 'a', 'r']}, tnt: {row: 22, n: 4, ph: ['s', 'a', 'r', 'r']}, lp: {row: 2, n: 3, ph: ['s', 'a', 'r']}, hp: {row: 2, n: 3, ph: ['s', 'a', 'r']}, lk: {row: 3, n: 3, ph: ['s', 'a', 'r']}, hk: {row: 3, n: 3, ph: ['s', 'a', 'r']}, clp: {row: 16, n: 3, ph: ['s', 'a', 'r']}, chp: {row: 17, n: 3, ph: ['s', 'a', 'r']}, clk: {row: 18, n: 3, ph: ['s', 'a', 'r']}, chk: {row: 18, n: 3, ph: ['s', 'a', 'r']}, sweep: {row: 18, n: 3, ph: ['s', 'a', 'r']}, jp: {row: 12, n: 2, ph: ['s', 'a']}, jk: {row: 13, n: 2, ph: ['s', 'a']}, stagger: {row: 4, n: 2}, ko: {row: 7, n: 1}, land: {row: 8, n: 1}, chit: {row: 8, n: 1}}},
     chain: 1,
     moves: {
       lp:  { s: 3, a: 2, r: 6,  dmg: 30, hs: 13, bs: 9,  box: [13, 60, 28, 10], lvl: 'mid', push: 2.2, anim: 'punch' },
@@ -111,7 +115,8 @@ const CHARS = {
     stats: { speed: 5, power: 2, health: 2, reach: 3 },
     hurt: { st: [-11, 0, 22, 70], cr: [-12, 0, 24, 44], air: [-11, 8, 22, 56] },
     colors: { skin: '#f0c0a4', top: '#46464e', top2: '#2e2e34', pants: '#22304e', hair: '#140c0a', band: '#d8e0e8', glove: '#f0c0a4', shoe: '#1e1e22' },
-    render: 'pixel', sprite: null,
+    // AI-generated sprite sheet (art/sara.png, spritetest/rw/fighter.py from Runway strips; bust from the shared 5-portrait strip); falls back to the code-drawn art if it fails to load
+    render: 'sprite', sprite: {src: 'art/sara.png?v=83fbfd5a', portrait: 'art/sara_portrait.png?v=2d61b8be', fw: 176, fh: 196, ox: 79, oy: 192, scale: 0.5, anims: {idle: {row: 0, n: 2, fps: 3}, walk: {row: 1, n: 6, by: 'walk', div: 5}, punch: {row: 2, n: 3, ph: ['s', 'a', 'r']}, kick: {row: 3, n: 3, ph: ['s', 'a', 'r']}, hit: {row: 4, n: 2}, hitlo: {row: 5, n: 2}, win: {row: 6, n: 1, fps: 2}, lie: {row: 7, n: 1}, crouch: {row: 8, n: 1}, block: {row: 9, n: 1}, cblock: {row: 10, n: 1}, jump: {row: 11, n: 3, by: 'vy'}, jpunch: {row: 12, n: 2, ph: ['s', 'a']}, jkick: {row: 13, n: 2, ph: ['s', 'a']}, kd: {row: 14, n: 3, by: 't', t: [4, 10]}, rise: {row: 15, n: 3, by: 't', t: [5, 10]}, cpunch: {row: 16, n: 3, ph: ['s', 'a', 'r']}, upper: {row: 17, n: 3, ph: ['s', 'a', 'r']}, csweep: {row: 18, n: 3, ph: ['s', 'a', 'r']}, lose: {row: 19, n: 1}, sp: {row: 20, n: 3, ph: ['s', 'a', 'r']}, sp2: {row: 21, n: 4, ph: ['s', 's', 'a', 'r']}, dsh: {row: 22, n: 3, ph: ['s', 'a', 'r']}, lp: {row: 2, n: 3, ph: ['s', 'a', 'r']}, hp: {row: 2, n: 3, ph: ['s', 'a', 'r']}, lk: {row: 3, n: 3, ph: ['s', 'a', 'r']}, hk: {row: 3, n: 3, ph: ['s', 'a', 'r']}, clp: {row: 16, n: 3, ph: ['s', 'a', 'r']}, chp: {row: 17, n: 3, ph: ['s', 'a', 'r']}, clk: {row: 18, n: 3, ph: ['s', 'a', 'r']}, chk: {row: 18, n: 3, ph: ['s', 'a', 'r']}, sweep: {row: 18, n: 3, ph: ['s', 'a', 'r']}, jp: {row: 12, n: 2, ph: ['s', 'a']}, jk: {row: 13, n: 2, ph: ['s', 'a']}, stagger: {row: 4, n: 2}, ko: {row: 7, n: 1}, land: {row: 8, n: 1}, chit: {row: 8, n: 1}}},
     chain: 1, dashV: 6.0,
     moves: {
       lp:  { s: 2, a: 2, r: 5,  dmg: 24, hs: 13, bs: 8,  box: [12, 52, 24, 9],  lvl: 'mid', push: 2.0, anim: 'punch' },
@@ -138,7 +143,8 @@ const CHARS = {
     stats: { speed: 1, power: 3, health: 2, reach: 5 },
     hurt: { st: [-11, 0, 22, 84], cr: [-12, 0, 24, 50], air: [-11, 8, 22, 64] },
     colors: { skin: '#e2a07a', top: '#2a5ab0', top2: '#14306a', pants: '#94c4ec', hair: '#6a4a2c', band: '#f4f4f4', glove: '#e2a07a', shoe: '#2a2a30' },
-    render: 'pixel', sprite: null,
+    // AI-generated sprite sheet (art/dirty.png, spritetest/rw/fighter.py from Runway strips; bust from the shared 5-portrait strip); falls back to the code-drawn art if it fails to load
+    render: 'sprite', sprite: {src: 'art/dirty.png?v=550e7660', portrait: 'art/dirty_portrait.png?v=2d376c97', fw: 216, fh: 238, ox: 84, oy: 233, scale: 0.5, anims: {idle: {row: 0, n: 2, fps: 3}, walk: {row: 1, n: 6, by: 'walk', div: 6}, punch: {row: 2, n: 3, ph: ['s', 'a', 'r']}, kick: {row: 3, n: 3, ph: ['s', 'a', 'r']}, hit: {row: 4, n: 2}, hitlo: {row: 5, n: 2}, win: {row: 6, n: 2, fps: 2}, lie: {row: 7, n: 1}, crouch: {row: 8, n: 1}, block: {row: 9, n: 1}, cblock: {row: 10, n: 1}, jump: {row: 11, n: 3, by: 'vy'}, jpunch: {row: 12, n: 2, ph: ['s', 'a']}, jkick: {row: 13, n: 2, ph: ['s', 'a']}, kd: {row: 14, n: 3, by: 't', t: [4, 10]}, rise: {row: 15, n: 3, by: 't', t: [5, 10]}, cpunch: {row: 16, n: 3, ph: ['s', 'a', 'r']}, upper: {row: 17, n: 3, ph: ['s', 'a', 'r']}, csweep: {row: 18, n: 3, ph: ['s', 'a', 'r']}, lose: {row: 19, n: 1}, sp: {row: 20, n: 3, ph: ['s', 'a', 'r']}, sp2: {row: 21, n: 4, ph: ['s', 's', 'a', 'r']}, sp3: {row: 22, n: 3, ph: ['s', 'a', 'r']}, lp: {row: 2, n: 3, ph: ['s', 'a', 'r']}, hp: {row: 2, n: 3, ph: ['s', 'a', 'r']}, lk: {row: 3, n: 3, ph: ['s', 'a', 'r']}, hk: {row: 3, n: 3, ph: ['s', 'a', 'r']}, clp: {row: 16, n: 3, ph: ['s', 'a', 'r']}, chp: {row: 17, n: 3, ph: ['s', 'a', 'r']}, clk: {row: 18, n: 3, ph: ['s', 'a', 'r']}, chk: {row: 18, n: 3, ph: ['s', 'a', 'r']}, sweep: {row: 18, n: 3, ph: ['s', 'a', 'r']}, jp: {row: 12, n: 2, ph: ['s', 'a']}, jk: {row: 13, n: 2, ph: ['s', 'a']}, stagger: {row: 4, n: 2}, ko: {row: 7, n: 1}, land: {row: 8, n: 1}, chit: {row: 8, n: 1}}},
     moves: {   // long stretchy limbs: big reach, slow to retract, and the limb itself can be hit (see hurtBox)
       lp:  { s: 5, a: 3, r: 13, dmg: 30, hs: 13, bs: 9,  box: [12, 58, 52, 9],  lvl: 'mid', push: 2.4, anim: 'punch', limb: 1 },
       hp:  { s: 10, a: 4, r: 24, dmg: 74, hs: 19, bs: 13, box: [12, 56, 76, 11], lvl: 'mid', push: 4.2, anim: 'punch', heavy: 1, limb: 1 },
@@ -239,7 +245,10 @@ function newFighter(ch, i) {
 }
 const STAGE_INFO = [
   { id: 'bay', name: 'BAY STREET', sub: 'PORT ARTHUR, THUNDER BAY', takes: 'BAY STREET' },
-  { id: 'alley', name: 'MAY STREET ALLEY BAR', sub: 'FORT WILLIAM, THUNDER BAY', takes: 'MAY STREET' }
+  { id: 'alley', name: 'MAY STREET ALLEY BAR', sub: 'FORT WILLIAM, THUNDER BAY', takes: 'MAY STREET' },
+  { id: 'westfort', name: 'WESTFORT', sub: 'FREDERICA ST, KAM RIVER', takes: 'WESTFORT' },
+  { id: 'arthur', name: 'ARTHUR STREET', sub: 'THE STRIP BY THE AIRPORT', takes: 'ARTHUR STREET' },
+  { id: 'high', name: 'HIGH STREET', sub: 'UP THE HILL, OVER THE LAKE', takes: 'HIGH STREET' }
 ];
 const STAGE_IDS = STAGE_INFO.map(s => s.id);
 function stageInfo(id) { return STAGE_INFO.find(s => s.id === id) || STAGE_INFO[0]; }
@@ -252,7 +261,7 @@ function newMatch(mode, c1, c2, stage) {
 const VS_T = 230, VS_SKIP = 200, SFZ_T = 16;   // showdown: slide in 0-30, P1 line 40-130, P2 reply 120-215
 function startRound() {
   G.f = [newFighter(G.chars[0], 0), newFighter(G.chars[1], 1)];
-  G.proj = []; G.sparks = []; G.sfz = null; G.combo = null; G.koX = null; G.steal = null; G.ctr = null; G.kiss = null; G.timer = 99; G.tt = 0; G.phase = 'intro'; G.pt = 0; G.slow = 0; G.hitstop = 0;
+  G.proj = []; G.sparks = []; G.sfz = null; G.combo = null; G.koX = null; G.steal = null; G.ctr = null; G.kiss = null; G.yuck = null; G.timer = 99; G.tt = 0; G.phase = 'intro'; G.pt = 0; G.slow = 0; G.hitstop = 0;
   hist[0] = []; hist[1] = []; cpuBrain.reset();
   const final = G.wins[0] === 1 && G.wins[1] === 1;
   G.banner = { txt: final ? 'FINAL ROUND' : 'ROUND ' + G.round, t: 0 };
@@ -306,13 +315,24 @@ function dashTap(h) {   // forward, release, forward again within ~14 ticks
   return false;
 }
 function wantsSpecial3(f, inp, fwd) { return !!CHARS[f.ch].moves.sp3 && inp.p.sp && fwd && !inp.d && !inp.u; }
+function holyMotion(h) {   // down, back, up (relative to facing) in that order, up in the last few ticks
+  let st = 0, upAt = -1;
+  for (let k = 0; k < h.length; k++) {
+    const d = h[k];
+    if (st === 0 && (d === 1 || d === 2 || d === 3)) st = 1;
+    else if (st === 1 && (d === 1 || d === 4)) st = 2;
+    else if (st === 2 && (d === 7 || d === 8 || d === 9)) { st = 3; upAt = k; }
+  }
+  return st === 3 && upAt >= h.length - 10;
+}
+function wantsHoly(f, inp) { return !!CHARS[f.ch].moves.hw && inp.p.sp && holyMotion(hist[f.i]); }
 function wantsTaunt(f, inp) { return !!CHARS[f.ch].moves.tnt && inp.p.sp && inp.u && !(f.tcd > 0); }
 function specialReady(f) { const M = CHARS[f.ch].moves.sp; return !(M.proj && G.proj.some(p => p.o === f.i)); }
 function startMove(f, name) {
   f.st = 'atk'; f.mv = name; f.mf = 0; f.hitC = false; f.t = 0;
   const M = CHARS[f.ch].moves[name];
   if (name !== 'sp' && !M.dash) f.vx = 0;
-  if (name === 'sp' || name === 'sp2' || name === 'sp3') { G.stat.specials[f.i]++; ev('special'); G.sfz = { i: f.i, t: 0, nm: M.name || 'SPECIAL' }; }   // super-freeze + name callout
+  if (name === 'sp' || name === 'sp2' || name === 'sp3' || name === 'hw') { G.stat.specials[f.i]++; ev('special'); G.sfz = { i: f.i, t: 0, nm: M.name || 'SPECIAL' }; }   // super-freeze + name callout
   else if (M.taunt) { f.tcd = TAUNT_CD; ev('taunt'); }
   else if (M.nohit) ev('jump');
   else ev(M.heavy ? 'swingH' : 'swing');
@@ -338,6 +358,7 @@ function stepFighter(f, inp, o) {
     f.blk = (back2 || inp.bl) && !fwd2;
     f.cr = inp.d;
     f.chainN = 0;
+    if (wantsHoly(f, inp)) { startMove(f, 'hw'); f.hy0 = 0; return; }
     if (wantsTaunt(f, inp)) { startMove(f, 'tnt'); return; }
     if (wantsSpecial2(f, inp)) { startMove(f, 'sp2'); return; }
     if (wantsSpecial3(f, inp, fwd2)) { startMove(f, 'sp3'); return; }
@@ -356,6 +377,7 @@ function stepFighter(f, inp, o) {
   }
   switch (f.st) {
     case 'jump': {
+      if (!f.airAtk && f.vy > 0 && f.y < 34 && wantsHoly(f, inp)) { f.vy = 0; f.vx = 0; startMove(f, 'hw'); f.hy0 = f.y; break; }   // the 'up' of the motion already hopped him off the ground
       if (!f.airAtk) {
         const b = inp.p.lp || inp.p.hp ? 'jp' : inp.p.lk || inp.p.hk ? 'jk' : null;
         if (b) { f.mv = b; f.mf = 0; f.hitC = false; f.airAtk = true; ev('swing'); }
@@ -387,12 +409,20 @@ function stepFighter(f, inp, o) {
         if (f.mf > M.s && f.mf < M.s + M.a) f.y = Math.max(0, f.y - 7.5);
         if (f.mf >= M.s + M.a) f.y = 0;
       }
+      if (M.holy) {   // HOLY WATER: float up, hold, drift back down
+        const top = 40, y0 = f.hy0 || 0;
+        f.vx = 0;
+        if (f.mf <= M.s) f.y = y0 + (top - y0) * (f.mf / M.s);
+        else if (f.mf < M.s + M.a) f.y = top + Math.sin((f.mf - M.s) * 0.2) * 1.5;
+        else f.y = Math.max(0, top * (1 - (f.mf - M.s - M.a) / 14));
+        if (f.mf === M.s) ev('toss');
+      }
       if (M.warp) {   // VANISHING TRICK: fade out, reappear behind the opponent (or in front if holding back)
         const o2 = G.f[1 - f.i];
         if (f.mf < M.s + 6) f.inv = 2;
         if (f.mf === M.s) { const bk = f.face > 0 ? inp.l : inp.r, side = bk ? -f.face : f.face; f.x = Math.max(20, Math.min(STAGE_W - 20, o2.x + side * (bk ? 62 : 34))); f.face = o2.x >= f.x ? 1 : -1; f.vx = 0; ev('toss'); }
       }
-      const isSp = f.mv === 'sp' || f.mv === 'sp2' || f.mv === 'sp3' || M.taunt;
+      const isSp = f.mv === 'sp' || f.mv === 'sp2' || f.mv === 'sp3' || f.mv === 'hw' || M.taunt;
       if (!isSp && !M.nohit && f.hitC && f.mf >= M.s) {
         if (wantsSpecial2(f, inp)) { startMove(f, 'sp2'); break; }
         if (wantsSpecial3(f, inp, f.face > 0 ? inp.r : inp.l)) { startMove(f, 'sp3'); break; }
@@ -402,7 +432,7 @@ function stepFighter(f, inp, o) {
           if (b2) { f.chainN = (f.chainN || 0) + 1; startMove(f, (inp.d ? 'c' : '') + b2); break; }
         }
       }
-      if (f.mf >= M.s + M.a + M.r) { f.mv = null; f.vx = 0; f.st = inp.d ? 'crouch' : 'idle'; f.cr = inp.d; }
+      if (f.mf >= M.s + M.a + M.r) { if (M.holy) { f.y = 0; f.hy0 = 0; } f.mv = null; f.vx = 0; f.st = inp.d ? 'crouch' : 'idle'; f.cr = inp.d; }
       break;
     }
     case 'hit': case 'block':
@@ -461,6 +491,7 @@ function applyHit(a, d, M, at, fromProj) {
     } else if (M.steal) {   // FIVE-FINGER DISCOUNT: yank the item, shove them off
       d.st = 'hit'; d.stun = M.hs; d.vx = a.face * 3.4; d.y = 0;
       G.steal = { i: a.i, v: d.i, item: STEAL_ITEM[d.ch] || 'cap', t: 0, T: STEAL_T, back: 0 }; ev('steal');
+    } else if (M.holy) { G.yuck = { i: d.i, t: 0 }; d.vx = away * 0.4; ev('smooch');
     } else if (M.grab) { d.x = a.x + a.face * 14; d.vy = 7.2; d.vx = -a.face * 3.0; d.y = Math.max(d.y, 2); G.shake = 10; }   // BACKYARD SLAM: up and over
     d.t = 0;   // animation clock only
     G.sparks.push({ x: sx, y: sy, t: 0, k: d.hp <= 0 ? 'K' : M.heavy ? 'H' : 'h' });
@@ -552,6 +583,7 @@ function step() {
   if (G.combo) G.combo.t++;
   if (G.ctr && ++G.ctr.t > 70) G.ctr = null;
   if (G.kiss && ++G.kiss.t > 54) G.kiss = null;
+  if (G.yuck && ++G.yuck.t > 50) G.yuck = null;
   if (G.phase === 'vs') {   // any button from either player skips the banter (host decides online)
     const a = readInput(me), b = G.mode === 'host' ? readInput(1) : null, hit = (q) => q && q.p && (q.p.lp || q.p.hp || q.p.lk || q.p.hk || q.p.sp);
     if (G.pt > 12 && (hit(a) || hit(b)) && G.pt < VS_SKIP) G.pt = VS_SKIP;

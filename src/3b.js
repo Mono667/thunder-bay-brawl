@@ -665,6 +665,11 @@ function animsFor(ch, A) {
     Q(D, { flip: 1, hip: [0, hy + 3], lean: 0.42, fH: [4, 8], bHa: [-11, -37], expr: 's', speed: 1, hairK: 3 }),
     Q(D, { flip: 1, hip: [0, hy + 2], lean: 0.36, tilt: -0.6, fH: [4, 8], bHa: [-12, -38], expr: 's', hairK: 1 }),
     Q(D, { hip: [0, hy], lean: ln, expr: 's' })]);
+  if (MV.hw) add('hw', { ph: ['s', 'a', 'a', 'r'] }, [   // arms spread wide, legs together, chin up
+    Q(D, { hip: [0, hy], lean: 0, tilt: -0.15, fHa: [18, -54], bHa: [-16, -54], fF: [3, ank], bF: [-3, ank], expr: 's' }),
+    Q(D, { hip: [0, hy], lean: -0.04, tilt: -0.3, fHa: [28, -64], bHa: [-26, -64], fF: [2, ank + 2], bF: [-2, ank + 1], expr: 'l', hairK: 1 }),
+    Q(D, { hip: [0, hy], lean: -0.04, tilt: -0.32, fHa: [28, -65], bHa: [-26, -65], fF: [2, ank + 2], bF: [-2, ank + 1], expr: 's', hairK: 2 }),
+    Q(D, { hip: [0, hy], lean: ln, fH: [6, -4], expr: 's' })]);
   if (MV.dsh) add('dsh', { ph: ['s', 'a', 'r'] }, [
     Q(D, { hip: [0, hy + 2], lean: ln + 0.3, fF: [12, ank - 2], bF: [-8, ank], fH: [-4, 4], bH: [-8, 3], hairK: 3 }),
     Q(D, { hip: [1, hy + 3], lean: ln + 0.42, fF: [15, ank - 4], bF: [-15, ank - 7], fH: [-8, 5], bH: [-11, 3], hairK: 5, speed: 1 }),
@@ -684,7 +689,7 @@ function animsFor(ch, A) {
       ins(an, ph.length, tweenQ(D, rL, rest, 0.5), 'r');                           // settle back to guard
       if (heavy) ins(an, lastA + 1, tweenQ(D, aL, fs[lastA + 1], 0.3), 'a');         // follow-through holds the hit
       ins(an, lastS + 1, tweenQ(D, s0, a0, 0.55), 's');                              // the snap between wind-up and contact
-    } else if (/^(sp|sp2|sp3|dsh|tnt)$/.test(an.name)) {
+    } else if (/^(sp|sp2|sp3|dsh|tnt|hw)$/.test(an.name)) {
       if (lastA + 1 < fs.length) ins(an, lastA + 1, tweenQ(D, aL, fs[lastA + 1], 0.45), 'r');
       ins(an, lastS + 1, tweenQ(D, s0, a0, 0.5), 's');
     }
@@ -957,7 +962,7 @@ const RENDERERS = {
   sprite(g, f, C, sx, sy, tick, my, rim) {
     const S = C.sprite;
     // code-drawn art while the PNG loads, if it failed to load, or while a stolen-item look is being worn
-    if (!S || !S.img || stealLookOn(f)) { if (S && !S.loading) loadSprite(S); return RENDERERS.pixel(g, f, C, sx, sy, tick, my, rim); }
+    if (!S || !S.img || stealLookOn(f) || (f.mv === 'hw' && !S.anims.hw)) { if (S && !S.loading) loadSprite(S); return RENDERERS.pixel(g, f, C, sx, sy, tick, my, rim); }
     drawFromSheet(g, f, S, sx, sy, tick, my);
   }
 };

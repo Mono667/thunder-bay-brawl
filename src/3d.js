@@ -193,7 +193,7 @@ function drawFighter(g, f, tick, camX) {
   rend(g, f, C, sx, sy, tick, false, QUAL.lv > 0 ? 0.7 : 0);
   g.globalAlpha = 1;
   // white hit-flash while the hit-stop holds
-  const SP = C.render === 'sprite' && C.sprite && C.sprite.img && !stealLookOn(f) ? C.sprite : null;   // PNG-sheet fighter: flash its own frame
+  const SP = C.render === 'sprite' && C.sprite && C.sprite.img && !stealLookOn(f) && !(f.mv === 'hw' && !C.sprite.anims.hw) ? C.sprite : null;   // PNG-sheet fighter: flash its own frame
   if (G && G.hitstop > 0 && (f.st === 'hit' || f.st === 'kd') && (G.hitstop & 2) && (SP || (S && S.lazy))) {
     let Rw, i; if (SP) { const A = animOf(f, SP); i = frameOf(f, A, tick); Rw = { img: SP.img, fw: SP.fw, fh: SP.fh, ox: SP.ox, oy: SP.oy, sy: A.row * SP.fh }; } else { const A = animOf(f, S); [Rw, i] = readyRow(S, A, frameOf(f, A, tick)); }
     const fg = FLASH.g; fg.clearRect(0, 0, FLASH.width, FLASH.height);
@@ -244,6 +244,25 @@ function drawFightFX(g, t, camX) {
     if (k.t > 2) drawText(g, 'SMOOCH!', x, y - 34 * pop - 6, 2, 'red', 'c');
     g.globalAlpha = 1;
   }
+  // HOLY WATER: a cartoon yellow arc from behind a big CENSORED bar; YUCK! on whoever it lands on
+  for (const f of G.f) {
+    if (f.st !== 'atk' || f.mv !== 'hw') continue;
+    const M = moveDef(f); if (!M) continue;
+    const cx = Math.round(f.x - camX + f.face * 3), cy = Math.round(GROUND - f.y - 34);
+    if (f.mf >= M.s && f.mf < M.s + M.a) {
+      const o = G.f[1 - f.i], dx = Math.abs(o.x - f.x), reach = Math.min(96, Math.max(40, dx)), tx = cx + f.face * reach, ty = GROUND - (dx < 100 ? Math.max(8, o.y + 26) : 2);
+      const k0 = Math.min(1, (f.mf - M.s) / 6), mx = cx + f.face * reach * 0.45, my = cy - 22, N = 60;
+      const pt = (u) => [(1 - u) * (1 - u) * cx + 2 * (1 - u) * u * mx + u * u * tx, (1 - u) * (1 - u) * cy + 2 * (1 - u) * u * my + u * u * ty];
+      for (const [col, w] of [[OUT, 5], ['#c9a000', 4], ['#ffe23c', 2]]) { g.fillStyle = col; for (let j = 0; j <= N * k0; j++) { const [x, y] = pt(j / N); g.fillRect(Math.round(x - w / 2), Math.round(y - w / 2), w, w); } }
+      g.fillStyle = '#fff6a0'; for (let j = 0; j < 4; j++) { const u = ((t * 0.07 + j / 4) % 1) * k0, [x, y] = pt(u); g.fillRect(Math.round(x), Math.round(y - 1), 1, 1); }
+      if (k0 >= 1) for (let j = 0; j < 5; j++) { const ph = (t * 3 + j * 37) % 20, a = (j / 5 - 0.5) * 2.4; g.fillStyle = j & 1 ? '#ffe23c' : '#c9a000'; g.fillRect(Math.round(tx + Math.sin(a) * ph * 0.9), Math.round(ty - Math.cos(a) * ph * 0.6 + ph * ph * 0.02), 2, 2); }
+    }
+    // the bar stays on for the whole move, drawn last so it hides where the stream starts
+    const bw = txtW('CENSORED', 1) + 6, bh = 11, bx = cx - (bw >> 1), by = cy - (bh >> 1);
+    g.fillStyle = OUT; g.fillRect(bx - 1, by - 1, bw + 2, bh + 2); g.fillStyle = '#000000'; g.fillRect(bx, by, bw, bh);
+    drawTxt(g, 'CENSORED', bx + 3, by + 3, 1, '#ffffff');
+  }
+  if (G.yuck && G.phase !== 'matchEnd') { const v = G.f[G.yuck.i]; worldBubble(g, v.x - camX, headY(v), 'YUCK!', '#e8f5a0'); }
   // FIVE-FINGER DISCOUNT: the loot flies over, and flies home when time's up
   if (G.steal) {
     const st = G.steal, th = G.f[st.i], vi = G.f[st.v], vch = vi.ch, icon = st.item === 'cap' && vch === 'dirty' ? 'capw' : st.item;
@@ -392,7 +411,7 @@ function paintLogo(t) {   // chrome logo with a sweeping shine and a flickering 
 const ATTRACT = { pair: null, at: -1, stage: 'bay' };
 function renderAttract() {
   const cyc = Math.floor(frame / 420);
-  if (ATTRACT.at !== cyc) { ATTRACT.at = cyc; ATTRACT.stage = (cyc & 1) && STAGES.alley ? 'alley' : 'bay'; const a = CHAR_IDS[cyc % CHAR_IDS.length], b = CHAR_IDS[(cyc + 1 + (cyc >> 2)) % CHAR_IDS.length]; ATTRACT.pair = [newFighter(a, 0), newFighter(b === a ? CHAR_IDS[(cyc + 2) % CHAR_IDS.length] : b, 1)]; }
+  if (ATTRACT.at !== cyc) { ATTRACT.at = cyc; ATTRACT.stage = STAGE_IDS.filter(id => STAGES[id])[cyc % STAGE_IDS.length] || 'bay'; const a = CHAR_IDS[cyc % CHAR_IDS.length], b = CHAR_IDS[(cyc + 1 + (cyc >> 2)) % CHAR_IDS.length]; ATTRACT.pair = [newFighter(a, 0), newFighter(b === a ? CHAR_IDS[(cyc + 2) % CHAR_IDS.length] : b, 1)]; }
   const camX = (STAGE_W - VIEW_W) / 2 + Math.sin(frame / 300) * 140;
   drawStage(wx, camX, frame); screenXform(wx, RES); drawSnow(wx, frame, false); planeXform(wx, RES);
   const [p, q] = ATTRACT.pair, ph = frame % 420;
@@ -484,7 +503,7 @@ function render() {
 }
 
 /* ---------- build everything once at load ---------- */
-const BUILD_MS = (() => { const t0 = performance.now(); buildFighterArt(); buildStageCommon(); STAGES.bay = buildBay(); STAGES.alley = buildAlley(); buildSparks(); buildProj(); buildHUD(); return Math.round(performance.now() - t0); })();
+const BUILD_MS = (() => { const t0 = performance.now(); buildFighterArt(); buildStageCommon(); STAGES.bay = buildBay(); STAGES.alley = buildAlley(); STAGES.westfort = buildWestfort(); STAGES.arthur = buildArthur(); STAGES.high = buildHigh(); buildSparks(); buildProj(); buildHUD(); return Math.round(performance.now() - t0); })();
 
 /* ---------- tiny synth SFX ---------- */
 let AC = null;
