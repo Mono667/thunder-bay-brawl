@@ -79,6 +79,36 @@ const ART = {
       misc: ['#f4f4f8', '#6a1a14', '#f4f0e8', '#3a0a08'], bike: ['#1a1a1e', '#2a2a30', '#9aa2b4', '#c4ccd8'], prt: ['#3a6a8a', '#e05a1a'] },
     L: { top: 'tee', heather: 1, lower: 'shorts', feet: 'sneaker', hair: 'buzz', beard: 'stubble', hat: 'flatbrim', shades: 1, pack: 1, boom: 1,
       ink: { foreF: 1, foreB: 1 }, win: 'bmx', toss: 'boom', stretch: 1 }
+  },
+  /* BREE - stylized likeness: platinum mullet (HAIR DAY: shaved top + hot-pink curls), pink/black motocross gear, white boots */
+  bree: {
+    D: { thigh: 17, shin: 17, ank: 3, torso: 22, neck: 3.4, ua: 12, fa: 11.5, shX: 1.5, hipH: 35, crH: 19, lean0: 0.06, tw: 7.2, hs: 0.98,
+      st: [9, -7], gF: [9, -4], gB: [6, 0], legW: [6.8, 5.8], armW: [4.6, 4.0], fist: 2.5, walkDiv: 3, stride: 7 },
+    M: { skin: ['#7a4a3a', '#c8907a', '#f0c2a8', '#ffe2d0'], hair: ['#a88a98', '#d8bcc8', '#f4dce6', '#ffffff'],
+      top: ['#3a0420', '#80104a', '#c01870', '#f04a9a'], pants: ['#100a10', '#24161e', '#3a2632', '#5a4050'],
+      shoe: ['#8a8a96', '#c8c8d4', '#ececf4', '#ffffff'], glass: ['#5c6672', '#e4ecf4'], metal: ['#7a7a88', '#c0c0d0', '#f4f4fc'],
+      misc: ['#ffffff', '#8a2a2a', '#f8f4ee', '#4a0e0e'] },
+    L: { top: 'tee', lower: 'pants', feet: 'boot', hair: 'long', smile: 1, win: 'peace', toss: 'ink' }
+  },
+  /* KIDDOW - stylized likeness: pink/blonde shag, pink fishnet-sleeve top under a black hoodie, black pants, longboard */
+  kiddow: {
+    D: { thigh: 17, shin: 17, ank: 3, torso: 22, neck: 3.4, ua: 12, fa: 11.5, shX: 1.5, hipH: 35, crH: 19, lean0: 0.06, tw: 7.4, hs: 0.98,
+      st: [9, -7], gF: [9, -4], gB: [6, 0], legW: [6.8, 5.8], armW: [4.8, 4.2], fist: 2.5, walkDiv: 3, stride: 7 },
+    M: { skin: ['#7a4a3a', '#c8907a', '#f0c2a8', '#ffe2d0'], hair: ['#a0205a', '#e0408a', '#ff74b0', '#ffc0dc'],
+      top: ['#0a0a0e', '#1c1c24', '#30303a', '#4a4a56'], pants: ['#08080c', '#16161c', '#26262e', '#3a3a46'],
+      shoe: ['#8a8a96', '#c8c8d4', '#ececf4', '#ffffff'], chain: ['#3e4654', '#808ca0', '#c4d0e0', '#f4f8ff'],
+      misc: ['#ff74b0', '#8a2a2a', '#f8f4ee', '#4a0e0e'] },
+    L: { top: 'tee', hood: 1, lower: 'pants', feet: 'sneaker', hair: 'messy', chain: 1, smile: 1, win: 'peace', toss: 'ink' }
+  },
+  /* J RAVEN - stylized likeness: dark hair, navy hoodie (plain script graphic, no brand), denim shorts, chain with round pendant, white/blue high-tops */
+  jraven: {
+    D: { thigh: 18, shin: 17, ank: 3, torso: 25, neck: 3, ua: 13, fa: 12.5, shX: 2, hipH: 36, crH: 20, lean0: 0.06, tw: 9, hs: 1,
+      st: [10, -8], gF: [9, -3], gB: [6, 1], legW: [7.8, 6.2], armW: [6, 5], fist: 3, walkDiv: 3, stride: 6 },
+    M: { skin: ['#5a3220', '#a06a4a', '#d29c76', '#f0c4a0'], hair: ['#080606', '#1a1210', '#2e221c', '#463630'],
+      top: ['#080e1e', '#141e3a', '#22305a', '#3a4a7a'], pants: ['#2a4060', '#46648c', '#6a8cb8', '#9ab8dc'],
+      shoe: ['#1a3a8a', '#c8ccd8', '#eceef4', '#ffffff'], chain: ['#5a4a1a', '#a08a3a', '#e0c460', '#fff0b0'],
+      misc: ['#f4f4f8', '#6a1a14', '#f4f0e8', '#3a0a08'] },
+    L: { top: 'tee', hood: 1, lower: 'shorts', feet: 'sneaker', hair: 'buzz', beard: 'stubble', chain: 1, smile: 1, win: 'pump', toss: 'ink' }
   }
 };
 /* FIVE-FINGER DISCOUNT wardrobe swaps: '<fighter>:<key>' -> overrides on top of ART. Built lazily, only for the pair in a match. */
@@ -92,6 +122,7 @@ const STEAL_LOOK = {
   'dirty:tee': { M: { top: ['#050508', '#121218', '#24242e', '#3c3c4a'], print: ['#8a2a08', '#e05a1a', '#ff9a4a'] }, L: { sleevePrint: 1, hemPrint: 1, heather: 0 } },
   'dirty:cap': { M: { hat: ['#5a0606', '#a81812', '#e03a22', '#ff7a5a'], chain: ['#3e4654', '#808ca0', '#c4d0e0', '#f4f8ff'] }, L: { hat: 'snapback', shades: 0, chain: 1 } },
   'dirty:capw': { L: { hat: 'snapback', shades: 1 } },
+  'bree:strip': {}, 'kiddow:strip': {}, 'jraven:strip': {},
   'dirty:glasses': { M: { glass: ['#9aa6b4', '#e4ecf4'] }, L: { glasses: 1, shades: 0 } }
 };
 function artOf(ch, key) {
@@ -960,7 +991,7 @@ function drawFromSheet(g, f, S, sx, sy, tick, mirrorY, rim) {
 const RENDERERS = {
   pixel(g, f, C, sx, sy, tick, my, rim) { drawFromSheet(g, f, sheetFor(f), sx, sy, tick, my, rim); },
   sprite(g, f, C, sx, sy, tick, my, rim) {
-    const S = C.sprite;
+    const S = spriteOf(f, C);
     // code-drawn art while the PNG loads, if it failed to load, or while a stolen-item look is being worn
     if (!S || !S.img || stealLookOn(f) || (f.mv === 'hw' && !S.anims.hw)) { if (S && !S.loading) loadSprite(S); return RENDERERS.pixel(g, f, C, sx, sy, tick, my, rim); }
     drawFromSheet(g, f, S, sx, sy, tick, my);
@@ -977,6 +1008,8 @@ function stealLookOn(f) {
   const k = stealKeys(st), key = f.i === st.i ? k.thief : f.i === st.v ? k.victim : null, L = key && STEAL_LOOK[f.ch + ':' + key];
   return !!(L && Object.keys(L).length);
 }
-function preloadSprites() { for (const id of CHAR_IDS) { const S = CHARS[id].sprite; if (CHARS[id].render === 'sprite' && S && !S.loading) loadSprite(S); } }
+function preloadSprites() { for (const id of CHAR_IDS) for (const S of [CHARS[id].sprite, CHARS[id].sprite2]) if (CHARS[id].render === 'sprite' && S && !S.loading) loadSprite(S); }
+/* BREE's HAIR DAY: the curls look is its own sheet (same poses, same scale) */
+function spriteOf(f, C) { return f.hair && C.sprite2 && C.sprite2.img ? C.sprite2 : C.sprite; }
 RENDERERS.shapes = RENDERERS.pixel;
 </script>

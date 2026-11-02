@@ -36,8 +36,9 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   await page.tap('#btn-howto'); await W(page, 200); ok('controls screen', await page.isVisible('#s-howto'));
   await page.tap('#btn-howto-back'); await W(page, 150);
   await page.tap('#btn-solo'); await W(page, 250); ok('select screen', await page.isVisible('#s-select'));
-  ok('select shows all 5 fighters', (await page.$$eval('.card', es => es.map(e => e.id).join(','))) === 'pick-craig,pick-aj,pick-bino,pick-sara,pick-dirty');
-  ok('5 cards fit on screen', await page.$$eval('.card', es => es.every(e => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1; })));
+  ok('select shows all 8 fighters', (await page.$$eval('.card', es => es.map(e => e.id).join(','))) === 'pick-craig,pick-aj,pick-bino,pick-sara,pick-dirty,pick-bree,pick-kiddow,pick-jraven');
+  await page.screenshot({ path: '../shots/report/select.png' });
+  ok('8 cards fit on screen', await page.$$eval('.card', es => es.every(e => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1; })));
   await page.tap('#pick-craig'); await W(page, 300);
   ok('craig selected', await page.$eval('#pick-craig', e => e.classList.contains('sel')));
   await page.screenshot({ path: '../shot-select.png' });
@@ -222,7 +223,7 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   s = await until(page, x => x.stat.hits[0] + x.stat.blocks[1] > 0, 4000); ok('projectile connects', s.stat.hits[0] > 0 || s.stat.blocks[1] > 0);
   // random CPU opponent (no ?cpu=)
   const seen = new Set();
-  for (let i = 0; i < 3; i++) { await solo('bino', '/?q=2'); s = await S(page); seen.add(s.f[1].ch); ok('random CPU for BINO: ' + s.f[1].ch, s.f[0].ch === 'bino' && s.f[1].ch !== 'bino' && ['craig', 'aj', 'sara', 'dirty'].includes(s.f[1].ch)); }
+  for (let i = 0; i < 3; i++) { await solo('bino', '/?q=2'); s = await S(page); seen.add(s.f[1].ch); ok('random CPU for BINO: ' + s.f[1].ch, s.f[0].ch === 'bino' && s.f[1].ch !== 'bino' && ['craig', 'aj', 'sara', 'dirty', 'bree', 'kiddow', 'jraven'].includes(s.f[1].ch)); }
   ok('every pair has its own banter', await page.evaluate(() => CHAR_IDS.every(a => CHAR_IDS.every(b => a === b || (BANTER[a + '>' + b] || []).length > 0))));
   // SARA: WIRE TOSS projectile, DROP IN teleport, dash
   await solo('sara', '/?q=2&cpu=bino');
@@ -399,10 +400,37 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
     await ctx.close();
   }
 
+
+  // ---------------- NEW FIGHTERS: BREE, KIDDOW, J RAVEN ----------------
+  const tap2 = async (dir, b) => { await page.evaluate(([d, b]) => { if (d) FIGHT.hold(0, d, true); FIGHT.press(0, b); }, [dir, b]); await W(page, 50); if (dir) await page.evaluate(d => FIGHT.hold(0, d, false), dir); };
+  const reset = async () => { await page.evaluate(() => { const f = FIGHT.G.f[0]; f.tcd = 0; f.buff = 0; FIGHT.setHp(0, 1000); FIGHT.setHp(1, 1000); FIGHT.place(0, 300); FIGHT.place(1, 520); }); await W(page, 300); };
+  await solo('bree', '/?q=2&cpu=kiddow');
+  s = await S(page); ok('BREE vs KIDDOW', s.f[0].ch === 'bree' && s.f[1].ch === 'kiddow');
+  ok('BREE sprite + hair variant loaded', await page.evaluate(() => !!CHARS.bree.sprite.img && !!CHARS.bree.sprite2.img));
+  await reset(); await page.screenshot({ path: '../shots/report/bree-mullet.png' });
+  await motion('KeyJ'); s = await until(page, x => x.proj > 0, 1500); ok('BREE ROOST mud projectile', s.proj > 0); await W(page, 900);
+  await reset(); await tap2('d', 'sp'); s = await until(page, x => x.f[0].mv === 'sp2', 800); ok('BREE WHEELIE CHARGE', s.f[0].mv === 'sp2'); await W(page, 1200);
+  await reset(); await tap2('u', 'sp'); await until(page, x => x.f[0].mv === 'tnt', 800); await W(page, 400);
+  ok('BREE HAIR DAY swaps to the curls', await page.evaluate(() => FIGHT.G.f[0].hair === 1)); await W(page, 600);
+  await page.screenshot({ path: '../shots/report/bree-curls.png' });
+  await solo('kiddow', '/?q=2&cpu=jraven');
+  s = await S(page); ok('KIDDOW vs J RAVEN', s.f[0].ch === 'kiddow' && s.f[1].ch === 'jraven');
+  await page.evaluate(() => { FIGHT.place(0, 300); FIGHT.place(1, 360); }); await W(page, 200);
+  await motion('KeyJ'); s = await until(page, x => x.f[0].mv === 'sp', 800); ok('KIDDOW SPACE SABER', s.f[0].mv === 'sp');
+  await W(page, 130); await page.screenshot({ path: '../shots/report/space-saber.png' }); await W(page, 900);
+  await reset(); await tap2('d', 'sp'); s = await until(page, x => x.f[0].mv === 'sp2', 800); ok('KIDDOW LONGBOARD ride-in', s.f[0].mv === 'sp2'); await W(page, 1200);
+  await solo('jraven', '/?q=2&cpu=bree');
+  s = await S(page); ok('J RAVEN vs BREE', s.f[0].ch === 'jraven' && s.f[1].ch === 'bree');
+  await reset(); await motion('KeyJ'); s = await until(page, x => x.proj > 0, 1500); ok('J RAVEN MAKE IT RAIN projectile', s.proj > 0);
+  await W(page, 150); await page.screenshot({ path: '../shots/report/make-it-rain.png' }); await W(page, 900);
+  await reset(); await tap2('d', 'sp'); s = await until(page, x => x.f[0].mv === 'sp2', 800); ok('J RAVEN STOMP KICK', s.f[0].mv === 'sp2'); await W(page, 1200);
+  await page.goto(BASE + '/?q=2'); await W(page, 900); await page.tap('#btn-solo'); await W(page, 150); await page.tap('#pick-jraven'); await page.tap('#btn-fight'); await W(page, 100); await page.tap('#btn-stage-go');
+  s = await until(page, x => x.phase === 'vs' && x.pt >= 150, 5000); await page.screenshot({ path: '../shots/report/vs.png' }); ok('J RAVEN VS screen', s.phase === 'vs');
+  for (const a of ['bree', 'kiddow', 'jraven']) { await solo(a, '/?q=2&cpu=craig'); await page.evaluate(() => FIGHT.cpu(true)); await W(page, 2500); s = await S(page); ok('CPU fight runs with ' + a, s.phase === 'fight' || s.phase === 'ko' || s.phase === 'round'); }
   // ---------------- ONLINE (two phones through the server) ----------------
   const A = await mkPage(), B = await mkPage();
   for (const P of [A, B]) { await P.page.goto(BASE + '/?q=2'); await W(P.page, 900); await P.page.tap('#btn-online'); await W(P.page, 150); }
-  ok('online select shows all 5', (await B.page.$$eval('.card', es => es.length)) === 5);
+  ok('online select shows all 8', (await B.page.$$eval('.card', es => es.length)) === 8);
   await A.page.tap('#pick-dirty'); await B.page.tap('#pick-bino');
   for (const P of [A, B]) { await P.page.tap('#btn-fight'); await W(P.page, 200); }
   ok('online: stage select shows the host note', (await A.page.textContent('#stage-note')).includes('host'));
@@ -432,9 +460,9 @@ const BASE = 'http://localhost:' + (process.env.PORT || 8090);
   await B.page.tap('#b-pause'); await W(B.page, 150); await B.page.tap('#btn-quit'); await W(A.page, 600);
   ok('host notified when guest leaves', await A.page.isVisible('#s-online'));
   // online on each new street: the guest gets the host's stage and the fight runs
-  for (const sid of ['westfort', 'arthur', 'high']) {
+  for (const [sid, pa, pb] of [['westfort', 'craig', 'aj'], ['arthur', 'jraven', 'bree'], ['high', 'kiddow', 'jraven']]) {
     for (const P of [A, B]) { await P.page.goto(BASE + '/?q=2'); await W(P.page, 900); await P.page.tap('#btn-online'); await W(P.page, 150); }
-    await A.page.tap('#pick-craig'); await B.page.tap('#pick-aj');
+    await A.page.tap('#pick-' + pa); await B.page.tap('#pick-' + pb);
     for (const P of [A, B]) { await P.page.tap('#btn-fight'); await W(P.page, 200); }
     await A.page.tap('#stage-' + sid); for (const P of [A, B]) { await P.page.tap('#btn-stage-go'); await W(P.page, 150); }
     await A.page.tap('#btn-create'); await A.page.waitForFunction(() => /^[A-Z]{4}$/.test(document.getElementById('bigcode').textContent), null, { timeout: 4000 });

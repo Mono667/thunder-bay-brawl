@@ -193,7 +193,7 @@ function drawFighter(g, f, tick, camX) {
   rend(g, f, C, sx, sy, tick, false, QUAL.lv > 0 ? 0.7 : 0);
   g.globalAlpha = 1;
   // white hit-flash while the hit-stop holds
-  const SP = C.render === 'sprite' && C.sprite && C.sprite.img && !stealLookOn(f) && !(f.mv === 'hw' && !C.sprite.anims.hw) ? C.sprite : null;   // PNG-sheet fighter: flash its own frame
+  const S0 = C.render === 'sprite' && C.sprite ? spriteOf(f, C) : null, SP = S0 && S0.img && !stealLookOn(f) && !(f.mv === 'hw' && !S0.anims.hw) ? S0 : null;   // PNG-sheet fighter: flash its own frame
   if (G && G.hitstop > 0 && (f.st === 'hit' || f.st === 'kd') && (G.hitstop & 2) && (SP || (S && S.lazy))) {
     let Rw, i; if (SP) { const A = animOf(f, SP); i = frameOf(f, A, tick); Rw = { img: SP.img, fw: SP.fw, fh: SP.fh, ox: SP.ox, oy: SP.oy, sy: A.row * SP.fh }; } else { const A = animOf(f, S); [Rw, i] = readyRow(S, A, frameOf(f, A, tick)); }
     const fg = FLASH.g; fg.clearRect(0, 0, FLASH.width, FLASH.height);
@@ -224,12 +224,20 @@ function drawFightFX(g, t, camX) {
   for (const f of G.f) {
     const M = moveDef(f), x = f.x - camX, y = headY(f);
     let txt = null;
-    if (f.mv === 'tnt' && M && M.shout && f.mf < M.s + M.a + 34) txt = M.shout;
+    if (f.mv === 'tnt' && M && (M.shout || M.shouts) && f.mf < M.s + M.a + 34) txt = M.shouts ? M.shouts[(f.sh | 0) % M.shouts.length] : M.shout;
     else if (f.ch === 'dirty' && M && (f.mv === 'sp' || f.mv === 'sp2' || f.mv === 'sp3') && f.mf < M.s + M.a + 14) txt = 'NICE NICE NICE!';
     else if (G.steal && G.steal.i === f.i && G.steal.t < 70) txt = 'NICE NICE NICE!';
     else if (f.st === 'win' && G.phase === 'roundEnd' && (f.ch === 'dirty' || f.ch === 'bino') && f.t > 10 && f.t < 200) txt = f.ch === 'dirty' ? 'NICE NICE NICE NICE NICE!' : 'ALL GOD DAMN DAY!';
     if (txt && G.phase !== 'matchEnd') worldBubble(g, x, y, txt, f.mv === 'tnt' ? '#ffe0b0' : null);   // the winner card owns the quote at match end
     if (f.dz > 0) for (let k = 0; k < 3; k++) { const a = t * 0.18 + k * 2.09; star5(g, Math.round(x + Math.cos(a) * 11), Math.round(y - 4 + Math.sin(a) * 3), 2, k & 1 ? '#ffe066' : '#ffffff'); }
+  }
+  // KIDDOW's SPACE SABER: a glowing blade along the hitbox while it swings
+  for (const f of G.f) {
+    const M = moveDef(f); if (!M || !M.glow || f.mf < M.s - 3 || f.mf >= M.s + M.a + 4) continue;
+    const x0 = f.x - camX + f.face * M.box[0], x1 = x0 + f.face * M.box[2], yy = GROUND - f.y - M.box[1] - M.box[3] / 2, k = f.mf < M.s ? 0.5 : 1;
+    g.globalAlpha = 0.35 * k; g.fillStyle = '#3af0ff'; g.fillRect(Math.min(x0, x1), yy - 3, Math.abs(x1 - x0), 6);
+    g.globalAlpha = 0.9 * k; g.fillStyle = '#c8ffff'; g.fillRect(Math.min(x0, x1), yy - 1, Math.abs(x1 - x0), 2);
+    g.globalAlpha = 1; g.fillStyle = '#2a2a32'; g.fillRect(Math.round(x0) - 2, yy - 2, 4, 4);
   }
   // SMOOCH! burst covers the spot - comic star + lip print, never contact
   if (G.kiss) {
@@ -284,10 +292,24 @@ function drawReflection(g, f, tick, camX) {
 function drawProj(g, p, tick, camX) {
   const x = Math.round((p.x - camX) * SD) / SD, y = GROUND - Math.round(p.y * SD) / SD, art = p.art || (G && G.f[p.o] && CHARS[G.f[p.o].ch].moves.sp.proj && CHARS[G.f[p.o].ch].moves.sp.proj.art) || 'ink';
   const fr = PROJ[art] || PROJ.ink, img = fr[Math.floor(tick / 3) % fr.length], d = Math.sign(p.vx) || 1;
+  if (art === 'mud' || art === 'cash') { drawDrops(g, art, x, y, d, tick); return; }
   if (art === 'wave') { if ((tick >> 4) & 1) drawText(g, 'NICE', x - d * 4, y - 24 - ((tick >> 2) & 1), 1, 'cyan', 'c'); g.fillStyle = '#ff6ad8'; for (let k = 1; k < 4; k++) if ((tick + k) & 1) g.fillRect(x - d * (10 + k * 7), y - 6 + k * 3, 2, 2); }
   else if (art === 'ink') { g.fillStyle = '#14324a'; for (let k = 1; k < 5; k++) g.fillRect(x - d * k * 7, y + (k & 1 ? 2 : -2) + ((tick + k) % 3), 4 - (k >> 1), 2); }
   else { g.fillStyle = '#d0d4dc'; for (let k = 1; k < 4; k++) if ((tick + k) & 1) g.fillRect(x - d * k * 8, y - 3 + k * 2, 2, 1); }
   g.save(); g.translate(x, y); g.scale(d, 1); g.drawImage(img, -16, -16, 32, 32); g.restore();
+}
+/* BREE's ROOST mud spray and J RAVEN's MAKE IT RAIN bills: little pixel clusters, no sprite needed */
+function drawDrops(g, art, x, y, d, tick) {
+  const R2 = (c, a, b, w, h) => { g.fillStyle = c; g.fillRect(Math.round(a), Math.round(b), w, h); };
+  if (art === 'mud') {
+    for (let k = 0; k < 7; k++) { const a = x - d * (k * 4 - 6), b = y - 4 + ((k * 5 + tick) % 7) - (k & 1) * 3, s = 5 - (k >> 1);
+      R2(OUT, a - 1, b - 1, s + 2, s + 1); R2(k & 1 ? '#5a3a1e' : '#7a5230', a, b, s, s - 1); R2('#9a7048', a, b, 2, 1); }
+    for (let k = 1; k < 4; k++) if ((tick + k) & 1) R2('#5a3a1e', x - d * (k * 7 + 12), y + 2 - k, 2, 2);
+  } else {
+    for (let k = 0; k < 6; k++) { const ph = tick * 0.25 + k * 1.7, a = x - d * (k * 5 - 8) + Math.sin(ph) * 2, b = y - 8 + (k % 3) * 6 + Math.cos(ph) * 2, fl = (Math.floor(ph) & 1);
+      R2(OUT, a - 1, b - 1, fl ? 10 : 6, fl ? 6 : 8); R2('#3a9a4a', a, b, fl ? 8 : 4, fl ? 4 : 6); R2('#bff0b0', a + (fl ? 3 : 1), b + 1, 2, 2); }
+    if ((tick >> 2) & 1) { R2('#fff6b0', x - d * 4, y - 14, 2, 2); R2('#ffe066', x + d * 6, y + 8, 2, 2); }
+  }
 }
 function drawSpark(g, s, camX) {
   const fr = SPK[s.k] || SPK.h, img = fr[Math.min(fr.length - 1, s.t >> 1)];

@@ -161,11 +161,96 @@ const CHARS = {
       sp2: { s: 16, a: 1, r: 14, dmg: 0, hs: 0, bs: 0, box: [0, 0, 0, 0], lvl: 'mid', push: 0, anim: 'warp', nohit: 1, warp: 1, name: 'VANISHING TRICK' },
       sp3: { s: 6, a: 3, r: 26, dmg: 50, hs: 30, bs: 0, box: [8, 26, 30, 46], lvl: 'mid', push: 1.6, anim: 'grab', grab: 1, steal: 1, name: 'FIVE-FINGER DISCOUNT' }
     }
+  },
+  /* NEW3 */
+  /* ---- BREE: stylized likeness, motocross gear. HAIR DAY swaps the mullet (speed) for the curls (damage). ---- */
+  bree: {
+    name: 'BREE', title: 'BREE', hp: 920, walk: 2.7, back: 2.3, jumpV: 7.6, jumpX: 3.1, grav: 0.44, scale: 1, bodyW: 22,
+    blurb: 'Motocross rushdown. ROOST (SP): low mud spray. WHEELIE CHARGE (SP + down): dirt-bike dash. HAIR DAY (SP + up): mullet = faster, curls = harder hits.',
+    taunt: 'UGH, THIS IS SO NOT FAIR!',
+    stats: { speed: 4, power: 3, health: 2, reach: 3 },
+    hurt: { st: [-11, 0, 22, 70], cr: [-12, 0, 24, 44], air: [-11, 8, 22, 56] },
+    colors: { skin: '#f0c0a4', top: '#c01870', top2: '#2a1a24', pants: '#2a1a24', hair: '#f4d8e4', band: '#f4f4f8', glove: '#2a1a24', shoe: '#e8e8f0' },
+    // AI-generated sprite sheets (art/bree.png mullet, art/bree_c.png curls; spritetest/rw/fighter.py from Runway strips); code-drawn art fallback
+    render: 'sprite', sprite: {src: 'art/bree.png?v=31f8b6ce', portrait: 'art/bree_portrait.png?v=466e14e0', fw: 150, fh: 208, ox: 70, oy: 203, scale: 0.5, anims: {'idle': {'row': 0, 'n': 2, 'fps': 3}, 'walk': {'row': 1, 'n': 6, 'by': 'walk', 'div': 5}, 'punch': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'kick': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hit': {'row': 4, 'n': 2}, 'hitlo': {'row': 5, 'n': 2}, 'win': {'row': 6, 'n': 2, 'fps': 2}, 'lie': {'row': 7, 'n': 1}, 'crouch': {'row': 8, 'n': 1}, 'block': {'row': 9, 'n': 1}, 'cblock': {'row': 10, 'n': 1}, 'jump': {'row': 11, 'n': 3, 'by': 'vy'}, 'jpunch': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jkick': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'kd': {'row': 14, 'n': 3, 'by': 't', 't': [4, 10]}, 'rise': {'row': 15, 'n': 3, 'by': 't', 't': [5, 10]}, 'cpunch': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'upper': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'csweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lose': {'row': 19, 'n': 1}, 'sp': {'row': 20, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sp2': {'row': 21, 'n': 4, 'ph': ['s', 'a', 'a', 'r']}, 'tnt': {'row': 22, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clp': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chp': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'jp': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jk': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'stagger': {'row': 4, 'n': 2}, 'ko': {'row': 7, 'n': 1}, 'land': {'row': 8, 'n': 1}, 'chit': {'row': 8, 'n': 1}}},
+    sprite2: {src: 'art/bree_c.png?v=b3c6df6d', portrait: 'art/bree_c_portrait.png?v=d334f560', fw: 154, fh: 214, ox: 71, oy: 209, scale: 0.5, anims: {'idle': {'row': 0, 'n': 2, 'fps': 3}, 'walk': {'row': 1, 'n': 6, 'by': 'walk', 'div': 5}, 'punch': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'kick': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hit': {'row': 4, 'n': 2}, 'hitlo': {'row': 5, 'n': 2}, 'win': {'row': 6, 'n': 2, 'fps': 2}, 'lie': {'row': 7, 'n': 1}, 'crouch': {'row': 8, 'n': 1}, 'block': {'row': 9, 'n': 1}, 'cblock': {'row': 10, 'n': 1}, 'jump': {'row': 11, 'n': 3, 'by': 'vy'}, 'jpunch': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jkick': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'kd': {'row': 14, 'n': 3, 'by': 't', 't': [4, 10]}, 'rise': {'row': 15, 'n': 3, 'by': 't', 't': [5, 10]}, 'cpunch': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'upper': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'csweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lose': {'row': 19, 'n': 1}, 'sp': {'row': 20, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sp2': {'row': 21, 'n': 4, 'ph': ['s', 'a', 'a', 'r']}, 'tnt': {'row': 22, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clp': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chp': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'jp': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jk': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'stagger': {'row': 4, 'n': 2}, 'ko': {'row': 7, 'n': 1}, 'land': {'row': 8, 'n': 1}, 'chit': {'row': 8, 'n': 1}}},
+    moves: {
+      lp:  { s: 2, a: 2, r: 5,  dmg: 24, hs: 13, bs: 8,  box: [12, 52, 24, 9],  lvl: 'mid', push: 2.0, anim: 'punch' },
+      hp:  { s: 5, a: 3, r: 14, dmg: 60, hs: 18, bs: 12, box: [12, 50, 30, 10], lvl: 'mid', push: 3.8, anim: 'punch', heavy: 1 },
+      lk:  { s: 3, a: 3, r: 8,  dmg: 32, hs: 14, bs: 9,  box: [10, 24, 32, 10], lvl: 'mid', push: 2.2, anim: 'kick' },
+      hk:  { s: 7, a: 4, r: 16, dmg: 72, hs: 19, bs: 13, box: [10, 44, 42, 12], lvl: 'mid', push: 4.4, anim: 'kick', heavy: 1 },
+      clp: { s: 2, a: 2, r: 5,  dmg: 22, hs: 12, bs: 8,  box: [12, 22, 24, 9],  lvl: 'low', push: 2.0, anim: 'punch' },
+      chp: { s: 5, a: 4, r: 16, dmg: 60, hs: 19, bs: 12, box: [8, 38, 26, 30],  lvl: 'mid', push: 3.2, anim: 'upper', heavy: 1 },
+      clk: { s: 3, a: 3, r: 7,  dmg: 28, hs: 13, bs: 8,  box: [10, 2, 34, 9],   lvl: 'low', push: 2.2, anim: 'sweep' },
+      chk: { s: 6, a: 4, r: 19, dmg: 64, hs: 20, bs: 13, box: [10, 1, 44, 9],   lvl: 'low', push: 3.0, anim: 'sweep', kd: 1, heavy: 1 },
+      jp:  { s: 3, a: 7, r: 0,  dmg: 50, hs: 17, bs: 11, box: [8, 26, 26, 16],  lvl: 'high', push: 3.0, anim: 'jpunch' },
+      jk:  { s: 4, a: 9, r: 0,  dmg: 60, hs: 18, bs: 12, box: [6, 6, 34, 16],   lvl: 'high', push: 3.4, anim: 'jkick', heavy: 1 },
+      sp:  { s: 11, a: 1, r: 19, dmg: 72, hs: 22, bs: 15, chip: 18, box: [0, 0, 0, 0], lvl: 'low', push: 3.0, anim: 'toss', name: 'ROOST',
+             proj: { vx: 4.4, w: 24, h: 14, y: 10, x: 22, art: 'mud' } },
+      sp2: { s: 10, a: 22, r: 20, dmg: 96, hs: 24, bs: 16, chip: 18, box: [6, 8, 36, 50], lvl: 'mid', push: 4.2, anim: 'kick', kd: 1, heavy: 1, dash: 4.4, ride: 1, name: 'WHEELIE CHARGE' },
+      tnt: { s: 14, a: 6, r: 18, dmg: 0, hs: 0, bs: 0, box: [0, 0, 0, 0], lvl: 'mid', push: 0, anim: 'idle', nohit: 1, taunt: 1, hair: 1, cd: 300, name: 'HAIR DAY',
+             shouts: ['UGH, I JUST DID MY HAIR!', 'THIS STAGE SMELLS LIKE A GAS STATION!', 'WHY IS EVERYONE SO SWEATY?', 'NOBODY TOLD ME THERE WOULD BE MUD!', 'SERIOUSLY? MY GOOD BOOTS?'] }
+    }
+  },
+  /* ---- KIDDOW: stylized likeness, pink hoodie (always fully clothed), longboard. ---- */
+  kiddow: {
+    name: 'KIDDOW', title: 'KIDDOW', hp: 960, walk: 2.5, back: 2.1, jumpV: 7.3, jumpX: 3.0, grav: 0.42, scale: 1, bodyW: 22,
+    blurb: 'Board-swinging all-rounder. SPACE SABER (SP): glowing blade slash. LONGBOARD (SP + down): low ride-in. BOARD SWING (SP + forward). OLD SCHOOL (SP + up): rap taunt, power buff.',
+    taunt: 'ROLL UP, ROLL OUT!',
+    stats: { speed: 3, power: 3, health: 3, reach: 4 },
+    hurt: { st: [-11, 0, 22, 70], cr: [-12, 0, 24, 44], air: [-11, 8, 22, 56] },
+    colors: { skin: '#f0c0a4', top: '#e8508a', top2: '#2a2a32', pants: '#1e1e26', hair: '#ff5aa0', band: '#c0c0d0', glove: '#f0c0a4', shoe: '#e8e8f0' },
+    render: 'sprite', sprite: {src: 'art/kiddow.png?v=dd378117', portrait: 'art/kiddow_portrait.png?v=6640d089', fw: 162, fh: 198, ox: 65, oy: 193, scale: 0.5, anims: {'idle': {'row': 0, 'n': 2, 'fps': 3}, 'walk': {'row': 1, 'n': 6, 'by': 'walk', 'div': 5}, 'punch': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'kick': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hit': {'row': 4, 'n': 2}, 'hitlo': {'row': 5, 'n': 2}, 'win': {'row': 6, 'n': 2, 'fps': 2}, 'lie': {'row': 7, 'n': 1}, 'crouch': {'row': 8, 'n': 1}, 'block': {'row': 9, 'n': 1}, 'cblock': {'row': 10, 'n': 1}, 'jump': {'row': 11, 'n': 3, 'by': 'vy'}, 'jpunch': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jkick': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'kd': {'row': 14, 'n': 3, 'by': 't', 't': [4, 10]}, 'rise': {'row': 15, 'n': 3, 'by': 't', 't': [5, 10]}, 'cpunch': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'upper': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'csweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lose': {'row': 19, 'n': 1}, 'sp': {'row': 20, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sp2': {'row': 21, 'n': 4, 'ph': ['s', 'a', 'a', 'r']}, 'sp3': {'row': 22, 'n': 3, 'ph': ['s', 'a', 'r']}, 'tnt': {'row': 23, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clp': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chp': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'jp': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jk': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'stagger': {'row': 4, 'n': 2}, 'ko': {'row': 7, 'n': 1}, 'land': {'row': 8, 'n': 1}, 'chit': {'row': 8, 'n': 1}}},
+    moves: {
+      lp:  { s: 2, a: 2, r: 5,  dmg: 26, hs: 13, bs: 8,  box: [12, 52, 26, 9],  lvl: 'mid', push: 2.0, anim: 'punch' },
+      hp:  { s: 5, a: 3, r: 14, dmg: 62, hs: 18, bs: 12, box: [12, 50, 34, 10], lvl: 'mid', push: 3.8, anim: 'punch', heavy: 1 },
+      lk:  { s: 3, a: 3, r: 8,  dmg: 34, hs: 14, bs: 9,  box: [10, 24, 36, 10], lvl: 'mid', push: 2.2, anim: 'kick' },
+      hk:  { s: 7, a: 4, r: 16, dmg: 74, hs: 19, bs: 13, box: [10, 44, 46, 12], lvl: 'mid', push: 4.4, anim: 'kick', heavy: 1 },
+      clp: { s: 2, a: 2, r: 5,  dmg: 22, hs: 12, bs: 8,  box: [12, 22, 26, 9],  lvl: 'low', push: 2.0, anim: 'punch' },
+      chp: { s: 5, a: 4, r: 16, dmg: 60, hs: 19, bs: 12, box: [8, 38, 26, 30],  lvl: 'mid', push: 3.2, anim: 'upper', heavy: 1 },
+      clk: { s: 3, a: 3, r: 7,  dmg: 28, hs: 13, bs: 8,  box: [10, 2, 36, 9],   lvl: 'low', push: 2.2, anim: 'sweep' },
+      chk: { s: 6, a: 4, r: 19, dmg: 64, hs: 20, bs: 13, box: [10, 1, 48, 9],   lvl: 'low', push: 3.0, anim: 'sweep', kd: 1, heavy: 1 },
+      jp:  { s: 3, a: 7, r: 0,  dmg: 50, hs: 17, bs: 11, box: [8, 26, 26, 16],  lvl: 'high', push: 3.0, anim: 'jpunch' },
+      jk:  { s: 4, a: 9, r: 0,  dmg: 60, hs: 18, bs: 12, box: [6, 6, 34, 16],   lvl: 'high', push: 3.4, anim: 'jkick', heavy: 1 },
+      sp:  { s: 9, a: 5, r: 20, dmg: 98, hs: 24, bs: 16, chip: 24, box: [10, 30, 60, 30], lvl: 'mid', push: 4.2, anim: 'punch', heavy: 1, glow: 1, name: 'SPACE SABER' },
+      sp2: { s: 8, a: 20, r: 18, dmg: 80, hs: 22, bs: 14, chip: 14, box: [4, 0, 34, 30], lvl: 'low', push: 3.6, anim: 'sweep', kd: 1, heavy: 1, dash: 5.0, ride: 1, name: 'LONGBOARD' },
+      sp3: { s: 12, a: 4, r: 24, dmg: 108, hs: 26, bs: 16, chip: 20, box: [8, 34, 50, 32], lvl: 'mid', push: 6.0, anim: 'punch', kd: 1, heavy: 1, name: 'BOARD SWING' },
+      tnt: { s: 10, a: 50, r: 10, dmg: 0, hs: 0, bs: 0, box: [0, 0, 0, 0], lvl: 'mid', push: 0, anim: 'idle', nohit: 1, taunt: 1, rap: 1, cd: 600, name: 'OLD SCHOOL',
+             shouts: ["ROLLIN' DOWN THE HILL WITH A BOARD AND A BEAT. YOU CAN'T STAND THE HEAT, GET OFF MY STREET!", "EIGHT WHEELS DEEP AND THE BASS GOES BOOM. STEP IN MY ZONE, NOW YOU'RE OUT OF ROOM!", "LOW AND SLOW LIKE A SUNDAY CRUISE. YOU BROUGHT A FIGHT, I BROUGHT THE NEWS!"] }
+    }
+  },
+  /* ---- J RAVEN: stylized likeness, navy hoodie (plain script graphic, no brand), denim shorts, chain, white/blue high-tops. Empty hands. ---- */
+  jraven: {
+    name: 'J RAVEN', title: 'J RAVEN', hp: 1000, walk: 2.4, back: 2.0, jumpV: 7.0, jumpX: 2.8, grav: 0.42, scale: 1, bodyW: 24,
+    blurb: 'Smooth mid-range swagger. MAKE IT RAIN (SP): cash spray. STOMP KICK (SP + down). SMOOTH TALK (SP + up): cheesy pickup line, power buff.',
+    taunt: "YOU MUST BE TIRED, YOU'VE BEEN RUNNING FROM ME ALL DAY.",
+    stats: { speed: 3, power: 3, health: 3, reach: 4 },
+    hurt: { st: [-12, 0, 24, 76], cr: [-13, 0, 26, 48], air: [-12, 8, 24, 60] },
+    colors: { skin: '#d8a07a', top: '#1c2a4a', top2: '#0e162a', pants: '#5a7ea8', hair: '#1a1210', band: '#d8d8e0', glove: '#d8a07a', shoe: '#f0f0f4' },
+    render: 'sprite', sprite: {src: 'art/jraven.png?v=dea15746', portrait: 'art/jraven_portrait.png?v=d1e27a1d', fw: 166, fh: 230, ox: 71, oy: 225, scale: 0.5, anims: {'idle': {'row': 0, 'n': 2, 'fps': 3}, 'walk': {'row': 1, 'n': 6, 'by': 'walk', 'div': 5}, 'punch': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'kick': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hit': {'row': 4, 'n': 2}, 'hitlo': {'row': 5, 'n': 2}, 'win': {'row': 6, 'n': 2, 'fps': 2}, 'lie': {'row': 7, 'n': 1}, 'crouch': {'row': 8, 'n': 1}, 'block': {'row': 9, 'n': 1}, 'cblock': {'row': 10, 'n': 1}, 'jump': {'row': 11, 'n': 3, 'by': 'vy'}, 'jpunch': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jkick': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'kd': {'row': 14, 'n': 3, 'by': 't', 't': [4, 10]}, 'rise': {'row': 15, 'n': 3, 'by': 't', 't': [5, 10]}, 'cpunch': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'upper': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'csweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lose': {'row': 19, 'n': 1}, 'sp': {'row': 20, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sp2': {'row': 21, 'n': 3, 'ph': ['s', 'a', 'r']}, 'tnt': {'row': 22, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clp': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chp': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'jp': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jk': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'stagger': {'row': 4, 'n': 2}, 'ko': {'row': 7, 'n': 1}, 'land': {'row': 8, 'n': 1}, 'chit': {'row': 8, 'n': 1}}},
+    moves: {
+      lp:  { s: 2, a: 2, r: 5,  dmg: 26, hs: 13, bs: 8,  box: [12, 52, 28, 9],  lvl: 'mid', push: 2.0, anim: 'punch' },
+      hp:  { s: 5, a: 3, r: 14, dmg: 64, hs: 18, bs: 12, box: [12, 50, 34, 10], lvl: 'mid', push: 3.8, anim: 'punch', heavy: 1 },
+      lk:  { s: 3, a: 3, r: 8,  dmg: 34, hs: 14, bs: 9,  box: [10, 24, 38, 10], lvl: 'mid', push: 2.2, anim: 'kick' },
+      hk:  { s: 7, a: 4, r: 16, dmg: 76, hs: 19, bs: 13, box: [10, 44, 46, 12], lvl: 'mid', push: 4.4, anim: 'kick', heavy: 1 },
+      clp: { s: 2, a: 2, r: 5,  dmg: 22, hs: 12, bs: 8,  box: [12, 22, 28, 9],  lvl: 'low', push: 2.0, anim: 'punch' },
+      chp: { s: 5, a: 4, r: 16, dmg: 60, hs: 19, bs: 12, box: [8, 38, 26, 30],  lvl: 'mid', push: 3.2, anim: 'upper', heavy: 1 },
+      clk: { s: 3, a: 3, r: 7,  dmg: 28, hs: 13, bs: 8,  box: [10, 2, 38, 9],   lvl: 'low', push: 2.2, anim: 'sweep' },
+      chk: { s: 6, a: 4, r: 19, dmg: 64, hs: 20, bs: 13, box: [10, 1, 48, 9],   lvl: 'low', push: 3.0, anim: 'sweep', kd: 1, heavy: 1 },
+      jp:  { s: 3, a: 7, r: 0,  dmg: 50, hs: 17, bs: 11, box: [8, 26, 26, 16],  lvl: 'high', push: 3.0, anim: 'jpunch' },
+      jk:  { s: 4, a: 9, r: 0,  dmg: 60, hs: 18, bs: 12, box: [6, 6, 34, 16],   lvl: 'high', push: 3.4, anim: 'jkick', heavy: 1 },
+      sp:  { s: 12, a: 1, r: 20, dmg: 76, hs: 22, bs: 15, chip: 18, box: [0, 0, 0, 0], lvl: 'mid', push: 3.0, anim: 'toss', name: 'MAKE IT RAIN',
+             proj: { vx: 3.8, w: 28, h: 22, y: 52, x: 26, art: 'cash' } },
+      sp2: { s: 11, a: 4, r: 20, dmg: 104, hs: 24, bs: 16, chip: 18, box: [10, 12, 48, 24], lvl: 'mid', push: 7.0, anim: 'kick', kd: 1, heavy: 1, dash: 1.8, stomp: 1, name: 'STOMP KICK' },
+      tnt: { s: 10, a: 46, r: 10, dmg: 0, hs: 0, bs: 0, box: [0, 0, 0, 0], lvl: 'mid', push: 0, anim: 'idle', nohit: 1, taunt: 1, rap: 1, cd: 600, name: 'SMOOTH TALK',
+             shouts: ["YOU MUST BE TIRED, YOU'VE BEEN RUNNING FROM ME ALL DAY.", "IS YOUR NAME WI-FI? 'CAUSE I'M FEELING A CONNECTION.", "ARE YOU A BANK LOAN? 'CAUSE YOU'VE GOT MY INTEREST.", "DO YOU HAVE A MAP? I KEEP GETTING LOST IN THIS FIGHT.", "ARE YOU A PARKING TICKET? 'CAUSE YOU'VE GOT FINE WRITTEN ALL OVER YOU."] }
+    }
   }
+  /* /NEW3 */
 };
 const CHAR_IDS = Object.keys(CHARS);
 /* FIVE-FINGER DISCOUNT: what DIRTY lifts off each opponent and the buff it gives him while he wears it */
-const STEAL_ITEM = { craig: 'hoodie', aj: 'tee', bino: 'cap', sara: 'glasses', dirty: 'cap' };
+const STEAL_ITEM = { craig: 'hoodie', aj: 'tee', bino: 'cap', sara: 'glasses', dirty: 'cap', bree: 'glasses', kiddow: 'hoodie', jraven: 'hoodie' };
 const STEAL_BUFF = { hoodie: 'pow', tee: 'pow', cap: 'spd', glasses: 'spd' };
 const STEAL_T = 360, BUFF_T = 480, TAUNT_CD = 900;
 /* ---------- VS showdown banter: P1 line, then P2's reply. Key 'p1>p2'. Funny trash talk only. ---------- */
@@ -194,18 +279,57 @@ const BANTER = {
   'aj>aj': [["THERE'S ONLY ROOM FOR ONE BIG MAN.", "THEN ONE OF US IS SITTING DOWN."]],
   'bino>bino': [["NICE BEARD.", "ALL GOD DAMN DAY!"]],
   'sara>sara': [["I LIKE YOUR EARRINGS.", "I MADE THEM. OUT OF THE LAST GIRL."]],
-  'dirty>dirty': [["NICE NICE NICE NICE NICE!", "NICE NICE NICE NICE NICE!"]]
+  'dirty>dirty': [["NICE NICE NICE NICE NICE!", "NICE NICE NICE NICE NICE!"]],
+  'bree>craig': [["NICE TATTOOS. DID YOU LOSE A BET?", "AT LEAST MY HAIR DOESN'T NEED A PIT CREW."]],
+  'craig>bree': [["SHOULDN'T YOU BE AT THE TRACK?", "I WAS, UNTIL SOMEONE SAID THERE'D BE SNACKS. THERE ARE NO SNACKS."]],
+  'bree>aj': [["CAN YOU NOT STAND SO CLOSE? YOU'RE BLOCKING MY LIGHT.", "I'M BLOCKING EVERYTHING, KID."]],
+  'aj>bree': [["THAT BIKE GONNA HOLD YOU UP?", "IT HELD ME UP BETTER THAN YOUR JOKES."]],
+  'bree>bino': [["IS THAT BEARD EVEN LEGAL?", "IT'S GOT MORE RIGHTS THAN YOU."]],
+  'bino>bree': [["ALL GOD DAMN DAY, MOTOR GIRL!", "UGH. WHY ARE YOU YELLING? I'M RIGHT HERE."]],
+  'bree>sara': [["COOL GLASSES. VERY LIBRARY.", "COOL MULLET. VERY 1987."]],
+  'sara>bree': [["YOU'RE IN MY SPOT.", "THERE ARE NO SPOTS. THIS IS A PARKING LOT."]],
+  'bree>dirty': [["YOU SMELL LIKE A BOOMBOX.", "NICE NICE NICE NICE NICE!"]],
+  'dirty>bree': [["NICE BOOTS. NICE NICE.", "DON'T EVEN THINK ABOUT TOUCHING MY GOGGLES."]],
+  'bree>kiddow': [["YOUR BOARD HAS MORE WHEELS THAN MY BIKE. THAT'S NOT FAIR.", "SO GET MORE WHEELS. PROBLEM SOLVED."]],
+  'kiddow>bree': [["PINK HAIR, PINK GEAR. WE MATCHING NOW?", "UGH, NO. YOU COPIED ME."]],
+  'bree>jraven': [["DON'T. WHATEVER YOU'RE ABOUT TO SAY, DON'T.", "ARE YOU A HELMET? 'CAUSE I'D PROTECT YOU... FROM ME."]],
+  'jraven>bree': [["DID IT HURT WHEN YOU FELL OFF THAT DIRT BIKE?", "YES, ACTUALLY. IT HURT A LOT. THANKS FOR ASKING."]],
+  'bree>bree': [["NICE HAIR. I HATE IT.", "IT'S YOUR HAIR. COMPLAIN TO YOURSELF."]],
+  'kiddow>craig': [["BIG INK, BIG TALK. ROLL WITH ME, OLD MAN.", "OLD? I'M LIKE FORTY PERCENT TATTOO."]],
+  'craig>kiddow': [["NICE BOARD. GONNA LOOK BETTER INKED.", "TOUCH THE BOARD AND YOU MEET THE SABER."]],
+  'kiddow>aj': [["I'LL CRUISE AROUND YOU LIKE A PYLON.", "PYLONS DON'T PUNCH BACK. I DO."]],
+  'aj>kiddow': [["YOU'RE PINKER THAN MY SUNBURN.", "AND YOU'RE SLOWER THAN A SUNDAY."]],
+  'kiddow>bino': [["THAT BEARD GOT ITS OWN SOUNDTRACK?", "ALL GOD DAMN DAY, BABY!"]],
+  'bino>kiddow': [["NO BOARDS IN MY BAR.", "GOOD THING THIS IS A STREET."]],
+  'kiddow>sara': [["YOU'RE FAST. I'M ON WHEELS. SEE THE PROBLEM?", "I SEE A KID ON A PLANK."]],
+  'sara>kiddow': [["THAT GLOWY STICK DOESN'T SCARE ME.", "IT'S NOT A STICK. IT'S A VIBE."]],
+  'kiddow>dirty': [["NICE BOOMBOX. WHAT'S ON THE TAPE?", "NICE NICE NICE NICE NICE!"]],
+  'dirty>kiddow': [["NICE HOODIE. NICE NICE. MINE NOW.", "HANDS OFF, I GOT RHYMES AND A BOARD."]],
+  'kiddow>jraven': [["SAVE THE SMOOTH TALK, I ONLY SPEAK BASS.", "THEN LET ME DROP A BEAT ON YOU."]],
+  'jraven>kiddow': [["ARE YOU A LONGBOARD? 'CAUSE YOU'RE ON A ROLL.", "THAT WAS ROUGH, MAN. REAL ROUGH."]],
+  'kiddow>kiddow': [["WHO SAID YOU COULD WEAR MY HOODIE?", "SAME CLOSET, SAME RHYMES."]],
+  'jraven>craig': [["ARE YOU A TATTOO? 'CAUSE YOU'RE STUCK ON ME.", "AND YOU'RE ABOUT TO BE STUCK ON THE PAVEMENT."]],
+  'craig>jraven': [["PUT YOUR WALLET AWAY, PRETTY BOY.", "WHY? I'M JUST GETTING STARTED."]],
+  'jraven>aj': [["YOU MUST BE A MAGNET, 'CAUSE I'M ATTRACTED TO THIS FIGHT.", "I'M A WALL. YOU'RE ABOUT TO HIT ME."]],
+  'aj>jraven': [["YOU THROWIN' MONEY? I'LL TAKE IT.", "CATCH IT IF YOU CAN, BIG MAN."]],
+  'jraven>bino': [["NICE BEARD. DOES IT HAVE A NUMBER I CAN CALL?", "IT'S ALL GOD DAMN DAY, THAT'S THE NUMBER."]],
+  'bino>jraven': [["KEEP YOUR CASH, I'VE GOT MY BEARD.", "THEN I'LL MAKE IT RAIN ON THE BEARD."]],
+  'jraven>sara': [["ARE YOU A CAMERA? 'CAUSE I SMILE EVERY TIME I SEE YOU.", "SMILE NOW. YOU WON'T IN A MINUTE."]],
+  'sara>jraven': [["DOES THAT LINE EVER WORK?", "WE'RE ABOUT TO FIND OUT."]],
+  'jraven>dirty': [["YOU MUST BE A BOOMBOX, 'CAUSE YOU'RE BLASTING.", "NICE NICE NICE NICE NICE!"]],
+  'dirty>jraven': [["NICE CHAIN. NICE NICE.", "EYES UP HERE, DIRTY. THE CASH IS FLYING."]],
+  'jraven>jraven': [["LOOKING GOOD... WAIT, THAT'S ME.", "SMOOTH AS EVER. MAY THE BEST JAW WIN."]],
 };
-const BANTER_OPEN = { craig: "YOU JUST GOT INKED!", aj: 'HOLD MY CAN. THIS WON\'T TAKE LONG.', bino: 'ALL GOD DAMN DAY!', sara: 'I MAKE JEWELRY OUT OF GUYS LIKE YOU.', dirty: 'NICE NICE NICE NICE NICE!' };
-const BANTER_REPLY = { craig: 'COME ON THEN. BAY STREET\'S WAITING.', aj: 'I\'VE SAT ON TOUGHER THINGS.', bino: 'THE BEARD SAYS NO.', sara: 'CUTE. NOW HOLD STILL.', dirty: 'NICE. NICE NICE NICE.' };
+const BANTER_OPEN = { craig: "YOU JUST GOT INKED!", aj: 'HOLD MY CAN. THIS WON\'T TAKE LONG.', bino: 'ALL GOD DAMN DAY!', sara: 'I MAKE JEWELRY OUT OF GUYS LIKE YOU.', dirty: 'NICE NICE NICE NICE NICE!', bree: "UGH. FINE. LET'S GET THIS OVER WITH.", kiddow: "ROLL UP, ROLL OUT!", jraven: "YOU MUST BE TIRED, YOU'VE BEEN RUNNING FROM ME ALL DAY." };
+const BANTER_REPLY = { craig: 'COME ON THEN. BAY STREET\'S WAITING.', aj: 'I\'VE SAT ON TOUGHER THINGS.', bino: 'THE BEARD SAYS NO.', sara: 'CUTE. NOW HOLD STILL.', dirty: 'NICE. NICE NICE NICE.', bree: "WHATEVER. MY HAIR LOOKS BETTER.", kiddow: "BRING THE BEAT, I BRING THE BOARD.", jraven: "EASY NOW. THE CASH IS COMING." };
 function banterFor(c1, c2, k) {   // deterministic from the host-chosen index, so online stays in sync
   const pool = (BANTER[c1 + '>' + c2] || []).concat([[BANTER_OPEN[c1] || 'LET\'S GO.', BANTER_REPLY[c2] || 'BRING IT.']]);
   return pool[((k | 0) % pool.length + pool.length) % pool.length];
 }
 function winQuote(C) { const q = C.quotes; return q ? q[(G.wins[0] + G.wins[1] + Math.max(0, G.timer) + G.round) % q.length] : C.taunt; }
 function stealOn(f) { return G && G.steal && G.steal.i === f.i && G.steal.t < G.steal.T ? STEAL_BUFF[G.steal.item] : null; }
-function dmgMul(a, d) { return (a.buff > 0 ? 1.2 : 1) * (stealOn(a) === 'pow' ? 1.2 : 1) * (d && d.mv === 'tnt' ? 1.35 : 1); }
-function spdMul(f) { return stealOn(f) === 'spd' ? 1.35 : 1; }
+function dmgMul(a, d) { return (a.buff > 0 ? 1.2 : 1) * (a.ch === 'bree' && a.hair ? 1.15 : 1) * (stealOn(a) === 'pow' ? 1.2 : 1) * (d && d.mv === 'tnt' ? 1.35 : 1); }
+function spdMul(f) { return (stealOn(f) === 'spd' ? 1.35 : 1) * (f.ch === 'bree' && !f.hair ? 1.15 : 1); }
 
 /* ---------------------------------------------------------------------
    INPUT SOURCES (keyboard/touch, CPU, remote player all look the same)
@@ -241,7 +365,7 @@ let paused = false;
 function newFighter(ch, i) {
   const C = CHARS[ch];
   return { ch, i, x: STAGE_W / 2 + (i ? 70 : -70), y: 0, vx: 0, vy: 0, face: i ? -1 : 1, hp: C.hp, max: C.hp, red: C.hp, redDelay: 0,
-    st: 'idle', t: 0, mv: null, mf: 0, hitC: false, airAtk: false, cr: false, blk: false, stun: 0, inv: 0, pb: 0, walkT: 0, buff: 0, tcd: 0 };
+    st: 'idle', t: 0, mv: null, mf: 0, hitC: false, airAtk: false, cr: false, blk: false, stun: 0, inv: 0, pb: 0, walkT: 0, buff: 0, tcd: 0, hair: 0, sh: 0 };
 }
 const STAGE_INFO = [
   { id: 'bay', name: 'BAY STREET', sub: 'PORT ARTHUR, THUNDER BAY', takes: 'BAY STREET' },
@@ -333,7 +457,7 @@ function startMove(f, name) {
   const M = CHARS[f.ch].moves[name];
   if (name !== 'sp' && !M.dash) f.vx = 0;
   if (name === 'sp' || name === 'sp2' || name === 'sp3' || name === 'hw') { G.stat.specials[f.i]++; ev('special'); G.sfz = { i: f.i, t: 0, nm: M.name || 'SPECIAL' }; }   // super-freeze + name callout
-  else if (M.taunt) { f.tcd = TAUNT_CD; ev('taunt'); }
+  else if (M.taunt) { f.tcd = M.cd || TAUNT_CD; f.sh = M.shouts ? G.tick % M.shouts.length : 0; ev('taunt'); }
   else if (M.nohit) ev('jump');
   else ev(M.heavy ? 'swingH' : 'swing');
 }
@@ -398,6 +522,8 @@ function stepFighter(f, inp, o) {
         for (let k = -1; k < 6; k++) G.sparks.push({ x: f.x + f.face * (k * 30 + 10), y: 0, t: 0, k: 'D' });
         G.shake = Math.max(G.shake, 9); ev('thud');
       }
+      if (M.hair && f.mf === M.s) { f.hair = f.hair ? 0 : 1; ev('toss'); }   // HAIR DAY: mullet <-> curls
+      if (M.rap && f.mf === M.s + M.a) f.buff = BUFF_T;
       if (M.proj && f.mf === M.s) {
         G.proj.push({ o: f.i, x: f.x + f.face * M.proj.x, y: M.proj.y, vx: M.proj.vx * f.face, w: M.proj.w, h: M.proj.h, t: 0, dead: 0, art: M.proj.art || 'ink' });
         ev('toss');
@@ -666,6 +792,8 @@ const cpuBrain = {
         else if (C.moves.sp2 && C.moves.sp2.warp && dist > 120 && r < 0.12) { this.press('sp'); this.hold.d = true; this.next = t + 40; }
         else if (C.moves.sp2 && C.moves.sp2.tele && dist > 90 && r < 0.26) { this.press('sp'); this.hold.d = true; this.next = t + 40; }
         else if (C.moves.sp2 && C.moves.sp2.quake && dist < 165 && o.y <= 0 && r < 0.16) { this.press('sp'); this.hold.d = true; this.next = t + 50; }
+        else if (C.moves.sp2 && C.moves.sp2.ride && dist < 170 && r < 0.14) { this.press('sp'); this.hold.d = true; this.next = t + 40; }
+        else if (C.moves.tnt && C.moves.tnt.nohit && !(c.tcd > 0) && dist > 130 && r < 0.2) { this.press('sp'); this.hold.u = true; this.next = t + 30; }
         else if (C.dashV && r < 0.36) { this.dashAt = t; this.hold[towards] = true; }
         else if (r < 0.09) { this.hold.u = true; this.hold[towards] = true; }
         else this.hold[towards] = true;
@@ -679,7 +807,8 @@ const cpuBrain = {
           this.press(pick);
           if (!C.moves.sp.proj && Math.random() < 0.12 && specialReady(c)) this.press('sp');
           else if (C.moves.sp2 && C.moves.sp2.multi && Math.random() < 0.1) { this.press('sp'); this.hold.d = true; }
-          if (C.moves.tnt && !(c.tcd > 0) && dist < 44 && Math.random() < 0.12) { this.press('sp'); this.hold.u = true; this.hold.d = false; }
+          if (C.moves.sp2 && C.moves.sp2.stomp && Math.random() < 0.12) { this.press('sp'); this.hold.d = true; }
+          else if (C.moves.tnt && !C.moves.tnt.nohit && !(c.tcd > 0) && dist < 44 && Math.random() < 0.12) { this.press('sp'); this.hold.u = true; this.hold.d = false; }
           else if (C.moves.sp3 && dist < 46 && Math.random() < 0.14 && !G.steal) { this.press('sp'); this.hold[towards] = true; this.hold.d = false; }
           if (C.chain && Math.random() < 0.5) this.chainAt = t + 5;
           this.next = t + 16 + (Math.random() * 20 | 0);

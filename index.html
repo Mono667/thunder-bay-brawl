@@ -28,12 +28,12 @@ html,body{width:100%;height:100%;background:#05060f;overflow:hidden;touch-action
 table.keys{border-collapse:collapse;margin:4px auto}
 table.keys td{padding:1px 8px;font-family:Arial,sans-serif;font-weight:bold;font-size:min(3.1vh,12px);text-align:left}
 table.keys td:first-child{color:#ffd23a;text-align:right}
-.cards{display:flex;gap:min(1.2vw,10px);margin:6px 0;flex-wrap:nowrap;justify-content:center}
-.card{width:min(18.6vw,170px);border:3px solid #000;border-radius:8px;background:linear-gradient(#1c2450,#0d1128);padding:4px 6px 6px;cursor:pointer}
+.cards{display:flex;gap:min(0.6vw,6px);margin:6px 0;flex-wrap:nowrap;justify-content:center}
+.card{width:min(11.6vw,128px);border:3px solid #000;border-radius:8px;background:linear-gradient(#1c2450,#0d1128);padding:3px 4px 4px;cursor:pointer}
 .card.sel{outline:4px solid #ffd23a;background:linear-gradient(#3b2a10,#1a1206)}
 .card canvas{width:100%;aspect-ratio:7/5;height:auto;max-height:26vh;object-fit:contain;image-rendering:pixelated;display:block}
-.card .nm{font-size:min(4.2vh,16px);color:#ffd23a}
-.card .ds{font-size:min(2.7vh,10.5px);font-family:Arial,sans-serif;font-weight:bold;color:#cfd6ff;min-height:2.6em}
+.card .nm{font-size:min(3.6vh,13px);white-space:nowrap;color:#ffd23a}
+.card .ds{font-size:min(2.4vh,9px);font-family:Arial,sans-serif;font-weight:bold;color:#cfd6ff;min-height:2.6em}
 .scards{display:grid;grid-template-columns:repeat(3,auto);gap:min(1.4vh,8px) min(1.4vw,12px);margin:4px 0;justify-content:center}
 .scard{width:min(27vw,48vh,240px);border:3px solid #000;border-radius:8px;background:linear-gradient(#1c2450,#0d1128);padding:4px 4px 6px;cursor:pointer}
 .scard.sel{outline:4px solid #ffd23a;background:linear-gradient(#3b2a10,#1a1206)}
@@ -316,11 +316,96 @@ const CHARS = {
       sp2: { s: 16, a: 1, r: 14, dmg: 0, hs: 0, bs: 0, box: [0, 0, 0, 0], lvl: 'mid', push: 0, anim: 'warp', nohit: 1, warp: 1, name: 'VANISHING TRICK' },
       sp3: { s: 6, a: 3, r: 26, dmg: 50, hs: 30, bs: 0, box: [8, 26, 30, 46], lvl: 'mid', push: 1.6, anim: 'grab', grab: 1, steal: 1, name: 'FIVE-FINGER DISCOUNT' }
     }
+  },
+  /* NEW3 */
+  /* ---- BREE: stylized likeness, motocross gear. HAIR DAY swaps the mullet (speed) for the curls (damage). ---- */
+  bree: {
+    name: 'BREE', title: 'BREE', hp: 920, walk: 2.7, back: 2.3, jumpV: 7.6, jumpX: 3.1, grav: 0.44, scale: 1, bodyW: 22,
+    blurb: 'Motocross rushdown. ROOST (SP): low mud spray. WHEELIE CHARGE (SP + down): dirt-bike dash. HAIR DAY (SP + up): mullet = faster, curls = harder hits.',
+    taunt: 'UGH, THIS IS SO NOT FAIR!',
+    stats: { speed: 4, power: 3, health: 2, reach: 3 },
+    hurt: { st: [-11, 0, 22, 70], cr: [-12, 0, 24, 44], air: [-11, 8, 22, 56] },
+    colors: { skin: '#f0c0a4', top: '#c01870', top2: '#2a1a24', pants: '#2a1a24', hair: '#f4d8e4', band: '#f4f4f8', glove: '#2a1a24', shoe: '#e8e8f0' },
+    // AI-generated sprite sheets (art/bree.png mullet, art/bree_c.png curls; spritetest/rw/fighter.py from Runway strips); code-drawn art fallback
+    render: 'sprite', sprite: {src: 'art/bree.png?v=31f8b6ce', portrait: 'art/bree_portrait.png?v=466e14e0', fw: 150, fh: 208, ox: 70, oy: 203, scale: 0.5, anims: {'idle': {'row': 0, 'n': 2, 'fps': 3}, 'walk': {'row': 1, 'n': 6, 'by': 'walk', 'div': 5}, 'punch': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'kick': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hit': {'row': 4, 'n': 2}, 'hitlo': {'row': 5, 'n': 2}, 'win': {'row': 6, 'n': 2, 'fps': 2}, 'lie': {'row': 7, 'n': 1}, 'crouch': {'row': 8, 'n': 1}, 'block': {'row': 9, 'n': 1}, 'cblock': {'row': 10, 'n': 1}, 'jump': {'row': 11, 'n': 3, 'by': 'vy'}, 'jpunch': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jkick': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'kd': {'row': 14, 'n': 3, 'by': 't', 't': [4, 10]}, 'rise': {'row': 15, 'n': 3, 'by': 't', 't': [5, 10]}, 'cpunch': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'upper': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'csweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lose': {'row': 19, 'n': 1}, 'sp': {'row': 20, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sp2': {'row': 21, 'n': 4, 'ph': ['s', 'a', 'a', 'r']}, 'tnt': {'row': 22, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clp': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chp': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'jp': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jk': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'stagger': {'row': 4, 'n': 2}, 'ko': {'row': 7, 'n': 1}, 'land': {'row': 8, 'n': 1}, 'chit': {'row': 8, 'n': 1}}},
+    sprite2: {src: 'art/bree_c.png?v=b3c6df6d', portrait: 'art/bree_c_portrait.png?v=d334f560', fw: 154, fh: 214, ox: 71, oy: 209, scale: 0.5, anims: {'idle': {'row': 0, 'n': 2, 'fps': 3}, 'walk': {'row': 1, 'n': 6, 'by': 'walk', 'div': 5}, 'punch': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'kick': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hit': {'row': 4, 'n': 2}, 'hitlo': {'row': 5, 'n': 2}, 'win': {'row': 6, 'n': 2, 'fps': 2}, 'lie': {'row': 7, 'n': 1}, 'crouch': {'row': 8, 'n': 1}, 'block': {'row': 9, 'n': 1}, 'cblock': {'row': 10, 'n': 1}, 'jump': {'row': 11, 'n': 3, 'by': 'vy'}, 'jpunch': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jkick': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'kd': {'row': 14, 'n': 3, 'by': 't', 't': [4, 10]}, 'rise': {'row': 15, 'n': 3, 'by': 't', 't': [5, 10]}, 'cpunch': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'upper': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'csweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lose': {'row': 19, 'n': 1}, 'sp': {'row': 20, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sp2': {'row': 21, 'n': 4, 'ph': ['s', 'a', 'a', 'r']}, 'tnt': {'row': 22, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clp': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chp': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'jp': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jk': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'stagger': {'row': 4, 'n': 2}, 'ko': {'row': 7, 'n': 1}, 'land': {'row': 8, 'n': 1}, 'chit': {'row': 8, 'n': 1}}},
+    moves: {
+      lp:  { s: 2, a: 2, r: 5,  dmg: 24, hs: 13, bs: 8,  box: [12, 52, 24, 9],  lvl: 'mid', push: 2.0, anim: 'punch' },
+      hp:  { s: 5, a: 3, r: 14, dmg: 60, hs: 18, bs: 12, box: [12, 50, 30, 10], lvl: 'mid', push: 3.8, anim: 'punch', heavy: 1 },
+      lk:  { s: 3, a: 3, r: 8,  dmg: 32, hs: 14, bs: 9,  box: [10, 24, 32, 10], lvl: 'mid', push: 2.2, anim: 'kick' },
+      hk:  { s: 7, a: 4, r: 16, dmg: 72, hs: 19, bs: 13, box: [10, 44, 42, 12], lvl: 'mid', push: 4.4, anim: 'kick', heavy: 1 },
+      clp: { s: 2, a: 2, r: 5,  dmg: 22, hs: 12, bs: 8,  box: [12, 22, 24, 9],  lvl: 'low', push: 2.0, anim: 'punch' },
+      chp: { s: 5, a: 4, r: 16, dmg: 60, hs: 19, bs: 12, box: [8, 38, 26, 30],  lvl: 'mid', push: 3.2, anim: 'upper', heavy: 1 },
+      clk: { s: 3, a: 3, r: 7,  dmg: 28, hs: 13, bs: 8,  box: [10, 2, 34, 9],   lvl: 'low', push: 2.2, anim: 'sweep' },
+      chk: { s: 6, a: 4, r: 19, dmg: 64, hs: 20, bs: 13, box: [10, 1, 44, 9],   lvl: 'low', push: 3.0, anim: 'sweep', kd: 1, heavy: 1 },
+      jp:  { s: 3, a: 7, r: 0,  dmg: 50, hs: 17, bs: 11, box: [8, 26, 26, 16],  lvl: 'high', push: 3.0, anim: 'jpunch' },
+      jk:  { s: 4, a: 9, r: 0,  dmg: 60, hs: 18, bs: 12, box: [6, 6, 34, 16],   lvl: 'high', push: 3.4, anim: 'jkick', heavy: 1 },
+      sp:  { s: 11, a: 1, r: 19, dmg: 72, hs: 22, bs: 15, chip: 18, box: [0, 0, 0, 0], lvl: 'low', push: 3.0, anim: 'toss', name: 'ROOST',
+             proj: { vx: 4.4, w: 24, h: 14, y: 10, x: 22, art: 'mud' } },
+      sp2: { s: 10, a: 22, r: 20, dmg: 96, hs: 24, bs: 16, chip: 18, box: [6, 8, 36, 50], lvl: 'mid', push: 4.2, anim: 'kick', kd: 1, heavy: 1, dash: 4.4, ride: 1, name: 'WHEELIE CHARGE' },
+      tnt: { s: 14, a: 6, r: 18, dmg: 0, hs: 0, bs: 0, box: [0, 0, 0, 0], lvl: 'mid', push: 0, anim: 'idle', nohit: 1, taunt: 1, hair: 1, cd: 300, name: 'HAIR DAY',
+             shouts: ['UGH, I JUST DID MY HAIR!', 'THIS STAGE SMELLS LIKE A GAS STATION!', 'WHY IS EVERYONE SO SWEATY?', 'NOBODY TOLD ME THERE WOULD BE MUD!', 'SERIOUSLY? MY GOOD BOOTS?'] }
+    }
+  },
+  /* ---- KIDDOW: stylized likeness, pink hoodie (always fully clothed), longboard. ---- */
+  kiddow: {
+    name: 'KIDDOW', title: 'KIDDOW', hp: 960, walk: 2.5, back: 2.1, jumpV: 7.3, jumpX: 3.0, grav: 0.42, scale: 1, bodyW: 22,
+    blurb: 'Board-swinging all-rounder. SPACE SABER (SP): glowing blade slash. LONGBOARD (SP + down): low ride-in. BOARD SWING (SP + forward). OLD SCHOOL (SP + up): rap taunt, power buff.',
+    taunt: 'ROLL UP, ROLL OUT!',
+    stats: { speed: 3, power: 3, health: 3, reach: 4 },
+    hurt: { st: [-11, 0, 22, 70], cr: [-12, 0, 24, 44], air: [-11, 8, 22, 56] },
+    colors: { skin: '#f0c0a4', top: '#e8508a', top2: '#2a2a32', pants: '#1e1e26', hair: '#ff5aa0', band: '#c0c0d0', glove: '#f0c0a4', shoe: '#e8e8f0' },
+    render: 'sprite', sprite: {src: 'art/kiddow.png?v=dd378117', portrait: 'art/kiddow_portrait.png?v=6640d089', fw: 162, fh: 198, ox: 65, oy: 193, scale: 0.5, anims: {'idle': {'row': 0, 'n': 2, 'fps': 3}, 'walk': {'row': 1, 'n': 6, 'by': 'walk', 'div': 5}, 'punch': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'kick': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hit': {'row': 4, 'n': 2}, 'hitlo': {'row': 5, 'n': 2}, 'win': {'row': 6, 'n': 2, 'fps': 2}, 'lie': {'row': 7, 'n': 1}, 'crouch': {'row': 8, 'n': 1}, 'block': {'row': 9, 'n': 1}, 'cblock': {'row': 10, 'n': 1}, 'jump': {'row': 11, 'n': 3, 'by': 'vy'}, 'jpunch': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jkick': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'kd': {'row': 14, 'n': 3, 'by': 't', 't': [4, 10]}, 'rise': {'row': 15, 'n': 3, 'by': 't', 't': [5, 10]}, 'cpunch': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'upper': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'csweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lose': {'row': 19, 'n': 1}, 'sp': {'row': 20, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sp2': {'row': 21, 'n': 4, 'ph': ['s', 'a', 'a', 'r']}, 'sp3': {'row': 22, 'n': 3, 'ph': ['s', 'a', 'r']}, 'tnt': {'row': 23, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clp': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chp': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'jp': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jk': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'stagger': {'row': 4, 'n': 2}, 'ko': {'row': 7, 'n': 1}, 'land': {'row': 8, 'n': 1}, 'chit': {'row': 8, 'n': 1}}},
+    moves: {
+      lp:  { s: 2, a: 2, r: 5,  dmg: 26, hs: 13, bs: 8,  box: [12, 52, 26, 9],  lvl: 'mid', push: 2.0, anim: 'punch' },
+      hp:  { s: 5, a: 3, r: 14, dmg: 62, hs: 18, bs: 12, box: [12, 50, 34, 10], lvl: 'mid', push: 3.8, anim: 'punch', heavy: 1 },
+      lk:  { s: 3, a: 3, r: 8,  dmg: 34, hs: 14, bs: 9,  box: [10, 24, 36, 10], lvl: 'mid', push: 2.2, anim: 'kick' },
+      hk:  { s: 7, a: 4, r: 16, dmg: 74, hs: 19, bs: 13, box: [10, 44, 46, 12], lvl: 'mid', push: 4.4, anim: 'kick', heavy: 1 },
+      clp: { s: 2, a: 2, r: 5,  dmg: 22, hs: 12, bs: 8,  box: [12, 22, 26, 9],  lvl: 'low', push: 2.0, anim: 'punch' },
+      chp: { s: 5, a: 4, r: 16, dmg: 60, hs: 19, bs: 12, box: [8, 38, 26, 30],  lvl: 'mid', push: 3.2, anim: 'upper', heavy: 1 },
+      clk: { s: 3, a: 3, r: 7,  dmg: 28, hs: 13, bs: 8,  box: [10, 2, 36, 9],   lvl: 'low', push: 2.2, anim: 'sweep' },
+      chk: { s: 6, a: 4, r: 19, dmg: 64, hs: 20, bs: 13, box: [10, 1, 48, 9],   lvl: 'low', push: 3.0, anim: 'sweep', kd: 1, heavy: 1 },
+      jp:  { s: 3, a: 7, r: 0,  dmg: 50, hs: 17, bs: 11, box: [8, 26, 26, 16],  lvl: 'high', push: 3.0, anim: 'jpunch' },
+      jk:  { s: 4, a: 9, r: 0,  dmg: 60, hs: 18, bs: 12, box: [6, 6, 34, 16],   lvl: 'high', push: 3.4, anim: 'jkick', heavy: 1 },
+      sp:  { s: 9, a: 5, r: 20, dmg: 98, hs: 24, bs: 16, chip: 24, box: [10, 30, 60, 30], lvl: 'mid', push: 4.2, anim: 'punch', heavy: 1, glow: 1, name: 'SPACE SABER' },
+      sp2: { s: 8, a: 20, r: 18, dmg: 80, hs: 22, bs: 14, chip: 14, box: [4, 0, 34, 30], lvl: 'low', push: 3.6, anim: 'sweep', kd: 1, heavy: 1, dash: 5.0, ride: 1, name: 'LONGBOARD' },
+      sp3: { s: 12, a: 4, r: 24, dmg: 108, hs: 26, bs: 16, chip: 20, box: [8, 34, 50, 32], lvl: 'mid', push: 6.0, anim: 'punch', kd: 1, heavy: 1, name: 'BOARD SWING' },
+      tnt: { s: 10, a: 50, r: 10, dmg: 0, hs: 0, bs: 0, box: [0, 0, 0, 0], lvl: 'mid', push: 0, anim: 'idle', nohit: 1, taunt: 1, rap: 1, cd: 600, name: 'OLD SCHOOL',
+             shouts: ["ROLLIN' DOWN THE HILL WITH A BOARD AND A BEAT. YOU CAN'T STAND THE HEAT, GET OFF MY STREET!", "EIGHT WHEELS DEEP AND THE BASS GOES BOOM. STEP IN MY ZONE, NOW YOU'RE OUT OF ROOM!", "LOW AND SLOW LIKE A SUNDAY CRUISE. YOU BROUGHT A FIGHT, I BROUGHT THE NEWS!"] }
+    }
+  },
+  /* ---- J RAVEN: stylized likeness, navy hoodie (plain script graphic, no brand), denim shorts, chain, white/blue high-tops. Empty hands. ---- */
+  jraven: {
+    name: 'J RAVEN', title: 'J RAVEN', hp: 1000, walk: 2.4, back: 2.0, jumpV: 7.0, jumpX: 2.8, grav: 0.42, scale: 1, bodyW: 24,
+    blurb: 'Smooth mid-range swagger. MAKE IT RAIN (SP): cash spray. STOMP KICK (SP + down). SMOOTH TALK (SP + up): cheesy pickup line, power buff.',
+    taunt: "YOU MUST BE TIRED, YOU'VE BEEN RUNNING FROM ME ALL DAY.",
+    stats: { speed: 3, power: 3, health: 3, reach: 4 },
+    hurt: { st: [-12, 0, 24, 76], cr: [-13, 0, 26, 48], air: [-12, 8, 24, 60] },
+    colors: { skin: '#d8a07a', top: '#1c2a4a', top2: '#0e162a', pants: '#5a7ea8', hair: '#1a1210', band: '#d8d8e0', glove: '#d8a07a', shoe: '#f0f0f4' },
+    render: 'sprite', sprite: {src: 'art/jraven.png?v=dea15746', portrait: 'art/jraven_portrait.png?v=d1e27a1d', fw: 166, fh: 230, ox: 71, oy: 225, scale: 0.5, anims: {'idle': {'row': 0, 'n': 2, 'fps': 3}, 'walk': {'row': 1, 'n': 6, 'by': 'walk', 'div': 5}, 'punch': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'kick': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hit': {'row': 4, 'n': 2}, 'hitlo': {'row': 5, 'n': 2}, 'win': {'row': 6, 'n': 2, 'fps': 2}, 'lie': {'row': 7, 'n': 1}, 'crouch': {'row': 8, 'n': 1}, 'block': {'row': 9, 'n': 1}, 'cblock': {'row': 10, 'n': 1}, 'jump': {'row': 11, 'n': 3, 'by': 'vy'}, 'jpunch': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jkick': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'kd': {'row': 14, 'n': 3, 'by': 't', 't': [4, 10]}, 'rise': {'row': 15, 'n': 3, 'by': 't', 't': [5, 10]}, 'cpunch': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'upper': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'csweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lose': {'row': 19, 'n': 1}, 'sp': {'row': 20, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sp2': {'row': 21, 'n': 3, 'ph': ['s', 'a', 'r']}, 'tnt': {'row': 22, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hp': {'row': 2, 'n': 3, 'ph': ['s', 'a', 'r']}, 'lk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'hk': {'row': 3, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clp': {'row': 16, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chp': {'row': 17, 'n': 3, 'ph': ['s', 'a', 'r']}, 'clk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'chk': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'sweep': {'row': 18, 'n': 3, 'ph': ['s', 'a', 'r']}, 'jp': {'row': 12, 'n': 2, 'ph': ['s', 'a']}, 'jk': {'row': 13, 'n': 2, 'ph': ['s', 'a']}, 'stagger': {'row': 4, 'n': 2}, 'ko': {'row': 7, 'n': 1}, 'land': {'row': 8, 'n': 1}, 'chit': {'row': 8, 'n': 1}}},
+    moves: {
+      lp:  { s: 2, a: 2, r: 5,  dmg: 26, hs: 13, bs: 8,  box: [12, 52, 28, 9],  lvl: 'mid', push: 2.0, anim: 'punch' },
+      hp:  { s: 5, a: 3, r: 14, dmg: 64, hs: 18, bs: 12, box: [12, 50, 34, 10], lvl: 'mid', push: 3.8, anim: 'punch', heavy: 1 },
+      lk:  { s: 3, a: 3, r: 8,  dmg: 34, hs: 14, bs: 9,  box: [10, 24, 38, 10], lvl: 'mid', push: 2.2, anim: 'kick' },
+      hk:  { s: 7, a: 4, r: 16, dmg: 76, hs: 19, bs: 13, box: [10, 44, 46, 12], lvl: 'mid', push: 4.4, anim: 'kick', heavy: 1 },
+      clp: { s: 2, a: 2, r: 5,  dmg: 22, hs: 12, bs: 8,  box: [12, 22, 28, 9],  lvl: 'low', push: 2.0, anim: 'punch' },
+      chp: { s: 5, a: 4, r: 16, dmg: 60, hs: 19, bs: 12, box: [8, 38, 26, 30],  lvl: 'mid', push: 3.2, anim: 'upper', heavy: 1 },
+      clk: { s: 3, a: 3, r: 7,  dmg: 28, hs: 13, bs: 8,  box: [10, 2, 38, 9],   lvl: 'low', push: 2.2, anim: 'sweep' },
+      chk: { s: 6, a: 4, r: 19, dmg: 64, hs: 20, bs: 13, box: [10, 1, 48, 9],   lvl: 'low', push: 3.0, anim: 'sweep', kd: 1, heavy: 1 },
+      jp:  { s: 3, a: 7, r: 0,  dmg: 50, hs: 17, bs: 11, box: [8, 26, 26, 16],  lvl: 'high', push: 3.0, anim: 'jpunch' },
+      jk:  { s: 4, a: 9, r: 0,  dmg: 60, hs: 18, bs: 12, box: [6, 6, 34, 16],   lvl: 'high', push: 3.4, anim: 'jkick', heavy: 1 },
+      sp:  { s: 12, a: 1, r: 20, dmg: 76, hs: 22, bs: 15, chip: 18, box: [0, 0, 0, 0], lvl: 'mid', push: 3.0, anim: 'toss', name: 'MAKE IT RAIN',
+             proj: { vx: 3.8, w: 28, h: 22, y: 52, x: 26, art: 'cash' } },
+      sp2: { s: 11, a: 4, r: 20, dmg: 104, hs: 24, bs: 16, chip: 18, box: [10, 12, 48, 24], lvl: 'mid', push: 7.0, anim: 'kick', kd: 1, heavy: 1, dash: 1.8, stomp: 1, name: 'STOMP KICK' },
+      tnt: { s: 10, a: 46, r: 10, dmg: 0, hs: 0, bs: 0, box: [0, 0, 0, 0], lvl: 'mid', push: 0, anim: 'idle', nohit: 1, taunt: 1, rap: 1, cd: 600, name: 'SMOOTH TALK',
+             shouts: ["YOU MUST BE TIRED, YOU'VE BEEN RUNNING FROM ME ALL DAY.", "IS YOUR NAME WI-FI? 'CAUSE I'M FEELING A CONNECTION.", "ARE YOU A BANK LOAN? 'CAUSE YOU'VE GOT MY INTEREST.", "DO YOU HAVE A MAP? I KEEP GETTING LOST IN THIS FIGHT.", "ARE YOU A PARKING TICKET? 'CAUSE YOU'VE GOT FINE WRITTEN ALL OVER YOU."] }
+    }
   }
+  /* /NEW3 */
 };
 const CHAR_IDS = Object.keys(CHARS);
 /* FIVE-FINGER DISCOUNT: what DIRTY lifts off each opponent and the buff it gives him while he wears it */
-const STEAL_ITEM = { craig: 'hoodie', aj: 'tee', bino: 'cap', sara: 'glasses', dirty: 'cap' };
+const STEAL_ITEM = { craig: 'hoodie', aj: 'tee', bino: 'cap', sara: 'glasses', dirty: 'cap', bree: 'glasses', kiddow: 'hoodie', jraven: 'hoodie' };
 const STEAL_BUFF = { hoodie: 'pow', tee: 'pow', cap: 'spd', glasses: 'spd' };
 const STEAL_T = 360, BUFF_T = 480, TAUNT_CD = 900;
 /* ---------- VS showdown banter: P1 line, then P2's reply. Key 'p1>p2'. Funny trash talk only. ---------- */
@@ -349,18 +434,57 @@ const BANTER = {
   'aj>aj': [["THERE'S ONLY ROOM FOR ONE BIG MAN.", "THEN ONE OF US IS SITTING DOWN."]],
   'bino>bino': [["NICE BEARD.", "ALL GOD DAMN DAY!"]],
   'sara>sara': [["I LIKE YOUR EARRINGS.", "I MADE THEM. OUT OF THE LAST GIRL."]],
-  'dirty>dirty': [["NICE NICE NICE NICE NICE!", "NICE NICE NICE NICE NICE!"]]
+  'dirty>dirty': [["NICE NICE NICE NICE NICE!", "NICE NICE NICE NICE NICE!"]],
+  'bree>craig': [["NICE TATTOOS. DID YOU LOSE A BET?", "AT LEAST MY HAIR DOESN'T NEED A PIT CREW."]],
+  'craig>bree': [["SHOULDN'T YOU BE AT THE TRACK?", "I WAS, UNTIL SOMEONE SAID THERE'D BE SNACKS. THERE ARE NO SNACKS."]],
+  'bree>aj': [["CAN YOU NOT STAND SO CLOSE? YOU'RE BLOCKING MY LIGHT.", "I'M BLOCKING EVERYTHING, KID."]],
+  'aj>bree': [["THAT BIKE GONNA HOLD YOU UP?", "IT HELD ME UP BETTER THAN YOUR JOKES."]],
+  'bree>bino': [["IS THAT BEARD EVEN LEGAL?", "IT'S GOT MORE RIGHTS THAN YOU."]],
+  'bino>bree': [["ALL GOD DAMN DAY, MOTOR GIRL!", "UGH. WHY ARE YOU YELLING? I'M RIGHT HERE."]],
+  'bree>sara': [["COOL GLASSES. VERY LIBRARY.", "COOL MULLET. VERY 1987."]],
+  'sara>bree': [["YOU'RE IN MY SPOT.", "THERE ARE NO SPOTS. THIS IS A PARKING LOT."]],
+  'bree>dirty': [["YOU SMELL LIKE A BOOMBOX.", "NICE NICE NICE NICE NICE!"]],
+  'dirty>bree': [["NICE BOOTS. NICE NICE.", "DON'T EVEN THINK ABOUT TOUCHING MY GOGGLES."]],
+  'bree>kiddow': [["YOUR BOARD HAS MORE WHEELS THAN MY BIKE. THAT'S NOT FAIR.", "SO GET MORE WHEELS. PROBLEM SOLVED."]],
+  'kiddow>bree': [["PINK HAIR, PINK GEAR. WE MATCHING NOW?", "UGH, NO. YOU COPIED ME."]],
+  'bree>jraven': [["DON'T. WHATEVER YOU'RE ABOUT TO SAY, DON'T.", "ARE YOU A HELMET? 'CAUSE I'D PROTECT YOU... FROM ME."]],
+  'jraven>bree': [["DID IT HURT WHEN YOU FELL OFF THAT DIRT BIKE?", "YES, ACTUALLY. IT HURT A LOT. THANKS FOR ASKING."]],
+  'bree>bree': [["NICE HAIR. I HATE IT.", "IT'S YOUR HAIR. COMPLAIN TO YOURSELF."]],
+  'kiddow>craig': [["BIG INK, BIG TALK. ROLL WITH ME, OLD MAN.", "OLD? I'M LIKE FORTY PERCENT TATTOO."]],
+  'craig>kiddow': [["NICE BOARD. GONNA LOOK BETTER INKED.", "TOUCH THE BOARD AND YOU MEET THE SABER."]],
+  'kiddow>aj': [["I'LL CRUISE AROUND YOU LIKE A PYLON.", "PYLONS DON'T PUNCH BACK. I DO."]],
+  'aj>kiddow': [["YOU'RE PINKER THAN MY SUNBURN.", "AND YOU'RE SLOWER THAN A SUNDAY."]],
+  'kiddow>bino': [["THAT BEARD GOT ITS OWN SOUNDTRACK?", "ALL GOD DAMN DAY, BABY!"]],
+  'bino>kiddow': [["NO BOARDS IN MY BAR.", "GOOD THING THIS IS A STREET."]],
+  'kiddow>sara': [["YOU'RE FAST. I'M ON WHEELS. SEE THE PROBLEM?", "I SEE A KID ON A PLANK."]],
+  'sara>kiddow': [["THAT GLOWY STICK DOESN'T SCARE ME.", "IT'S NOT A STICK. IT'S A VIBE."]],
+  'kiddow>dirty': [["NICE BOOMBOX. WHAT'S ON THE TAPE?", "NICE NICE NICE NICE NICE!"]],
+  'dirty>kiddow': [["NICE HOODIE. NICE NICE. MINE NOW.", "HANDS OFF, I GOT RHYMES AND A BOARD."]],
+  'kiddow>jraven': [["SAVE THE SMOOTH TALK, I ONLY SPEAK BASS.", "THEN LET ME DROP A BEAT ON YOU."]],
+  'jraven>kiddow': [["ARE YOU A LONGBOARD? 'CAUSE YOU'RE ON A ROLL.", "THAT WAS ROUGH, MAN. REAL ROUGH."]],
+  'kiddow>kiddow': [["WHO SAID YOU COULD WEAR MY HOODIE?", "SAME CLOSET, SAME RHYMES."]],
+  'jraven>craig': [["ARE YOU A TATTOO? 'CAUSE YOU'RE STUCK ON ME.", "AND YOU'RE ABOUT TO BE STUCK ON THE PAVEMENT."]],
+  'craig>jraven': [["PUT YOUR WALLET AWAY, PRETTY BOY.", "WHY? I'M JUST GETTING STARTED."]],
+  'jraven>aj': [["YOU MUST BE A MAGNET, 'CAUSE I'M ATTRACTED TO THIS FIGHT.", "I'M A WALL. YOU'RE ABOUT TO HIT ME."]],
+  'aj>jraven': [["YOU THROWIN' MONEY? I'LL TAKE IT.", "CATCH IT IF YOU CAN, BIG MAN."]],
+  'jraven>bino': [["NICE BEARD. DOES IT HAVE A NUMBER I CAN CALL?", "IT'S ALL GOD DAMN DAY, THAT'S THE NUMBER."]],
+  'bino>jraven': [["KEEP YOUR CASH, I'VE GOT MY BEARD.", "THEN I'LL MAKE IT RAIN ON THE BEARD."]],
+  'jraven>sara': [["ARE YOU A CAMERA? 'CAUSE I SMILE EVERY TIME I SEE YOU.", "SMILE NOW. YOU WON'T IN A MINUTE."]],
+  'sara>jraven': [["DOES THAT LINE EVER WORK?", "WE'RE ABOUT TO FIND OUT."]],
+  'jraven>dirty': [["YOU MUST BE A BOOMBOX, 'CAUSE YOU'RE BLASTING.", "NICE NICE NICE NICE NICE!"]],
+  'dirty>jraven': [["NICE CHAIN. NICE NICE.", "EYES UP HERE, DIRTY. THE CASH IS FLYING."]],
+  'jraven>jraven': [["LOOKING GOOD... WAIT, THAT'S ME.", "SMOOTH AS EVER. MAY THE BEST JAW WIN."]],
 };
-const BANTER_OPEN = { craig: "YOU JUST GOT INKED!", aj: 'HOLD MY CAN. THIS WON\'T TAKE LONG.', bino: 'ALL GOD DAMN DAY!', sara: 'I MAKE JEWELRY OUT OF GUYS LIKE YOU.', dirty: 'NICE NICE NICE NICE NICE!' };
-const BANTER_REPLY = { craig: 'COME ON THEN. BAY STREET\'S WAITING.', aj: 'I\'VE SAT ON TOUGHER THINGS.', bino: 'THE BEARD SAYS NO.', sara: 'CUTE. NOW HOLD STILL.', dirty: 'NICE. NICE NICE NICE.' };
+const BANTER_OPEN = { craig: "YOU JUST GOT INKED!", aj: 'HOLD MY CAN. THIS WON\'T TAKE LONG.', bino: 'ALL GOD DAMN DAY!', sara: 'I MAKE JEWELRY OUT OF GUYS LIKE YOU.', dirty: 'NICE NICE NICE NICE NICE!', bree: "UGH. FINE. LET'S GET THIS OVER WITH.", kiddow: "ROLL UP, ROLL OUT!", jraven: "YOU MUST BE TIRED, YOU'VE BEEN RUNNING FROM ME ALL DAY." };
+const BANTER_REPLY = { craig: 'COME ON THEN. BAY STREET\'S WAITING.', aj: 'I\'VE SAT ON TOUGHER THINGS.', bino: 'THE BEARD SAYS NO.', sara: 'CUTE. NOW HOLD STILL.', dirty: 'NICE. NICE NICE NICE.', bree: "WHATEVER. MY HAIR LOOKS BETTER.", kiddow: "BRING THE BEAT, I BRING THE BOARD.", jraven: "EASY NOW. THE CASH IS COMING." };
 function banterFor(c1, c2, k) {   // deterministic from the host-chosen index, so online stays in sync
   const pool = (BANTER[c1 + '>' + c2] || []).concat([[BANTER_OPEN[c1] || 'LET\'S GO.', BANTER_REPLY[c2] || 'BRING IT.']]);
   return pool[((k | 0) % pool.length + pool.length) % pool.length];
 }
 function winQuote(C) { const q = C.quotes; return q ? q[(G.wins[0] + G.wins[1] + Math.max(0, G.timer) + G.round) % q.length] : C.taunt; }
 function stealOn(f) { return G && G.steal && G.steal.i === f.i && G.steal.t < G.steal.T ? STEAL_BUFF[G.steal.item] : null; }
-function dmgMul(a, d) { return (a.buff > 0 ? 1.2 : 1) * (stealOn(a) === 'pow' ? 1.2 : 1) * (d && d.mv === 'tnt' ? 1.35 : 1); }
-function spdMul(f) { return stealOn(f) === 'spd' ? 1.35 : 1; }
+function dmgMul(a, d) { return (a.buff > 0 ? 1.2 : 1) * (a.ch === 'bree' && a.hair ? 1.15 : 1) * (stealOn(a) === 'pow' ? 1.2 : 1) * (d && d.mv === 'tnt' ? 1.35 : 1); }
+function spdMul(f) { return (stealOn(f) === 'spd' ? 1.35 : 1) * (f.ch === 'bree' && !f.hair ? 1.15 : 1); }
 
 /* ---------------------------------------------------------------------
    INPUT SOURCES (keyboard/touch, CPU, remote player all look the same)
@@ -396,7 +520,7 @@ let paused = false;
 function newFighter(ch, i) {
   const C = CHARS[ch];
   return { ch, i, x: STAGE_W / 2 + (i ? 70 : -70), y: 0, vx: 0, vy: 0, face: i ? -1 : 1, hp: C.hp, max: C.hp, red: C.hp, redDelay: 0,
-    st: 'idle', t: 0, mv: null, mf: 0, hitC: false, airAtk: false, cr: false, blk: false, stun: 0, inv: 0, pb: 0, walkT: 0, buff: 0, tcd: 0 };
+    st: 'idle', t: 0, mv: null, mf: 0, hitC: false, airAtk: false, cr: false, blk: false, stun: 0, inv: 0, pb: 0, walkT: 0, buff: 0, tcd: 0, hair: 0, sh: 0 };
 }
 const STAGE_INFO = [
   { id: 'bay', name: 'BAY STREET', sub: 'PORT ARTHUR, THUNDER BAY', takes: 'BAY STREET' },
@@ -488,7 +612,7 @@ function startMove(f, name) {
   const M = CHARS[f.ch].moves[name];
   if (name !== 'sp' && !M.dash) f.vx = 0;
   if (name === 'sp' || name === 'sp2' || name === 'sp3' || name === 'hw') { G.stat.specials[f.i]++; ev('special'); G.sfz = { i: f.i, t: 0, nm: M.name || 'SPECIAL' }; }   // super-freeze + name callout
-  else if (M.taunt) { f.tcd = TAUNT_CD; ev('taunt'); }
+  else if (M.taunt) { f.tcd = M.cd || TAUNT_CD; f.sh = M.shouts ? G.tick % M.shouts.length : 0; ev('taunt'); }
   else if (M.nohit) ev('jump');
   else ev(M.heavy ? 'swingH' : 'swing');
 }
@@ -553,6 +677,8 @@ function stepFighter(f, inp, o) {
         for (let k = -1; k < 6; k++) G.sparks.push({ x: f.x + f.face * (k * 30 + 10), y: 0, t: 0, k: 'D' });
         G.shake = Math.max(G.shake, 9); ev('thud');
       }
+      if (M.hair && f.mf === M.s) { f.hair = f.hair ? 0 : 1; ev('toss'); }   // HAIR DAY: mullet <-> curls
+      if (M.rap && f.mf === M.s + M.a) f.buff = BUFF_T;
       if (M.proj && f.mf === M.s) {
         G.proj.push({ o: f.i, x: f.x + f.face * M.proj.x, y: M.proj.y, vx: M.proj.vx * f.face, w: M.proj.w, h: M.proj.h, t: 0, dead: 0, art: M.proj.art || 'ink' });
         ev('toss');
@@ -821,6 +947,8 @@ const cpuBrain = {
         else if (C.moves.sp2 && C.moves.sp2.warp && dist > 120 && r < 0.12) { this.press('sp'); this.hold.d = true; this.next = t + 40; }
         else if (C.moves.sp2 && C.moves.sp2.tele && dist > 90 && r < 0.26) { this.press('sp'); this.hold.d = true; this.next = t + 40; }
         else if (C.moves.sp2 && C.moves.sp2.quake && dist < 165 && o.y <= 0 && r < 0.16) { this.press('sp'); this.hold.d = true; this.next = t + 50; }
+        else if (C.moves.sp2 && C.moves.sp2.ride && dist < 170 && r < 0.14) { this.press('sp'); this.hold.d = true; this.next = t + 40; }
+        else if (C.moves.tnt && C.moves.tnt.nohit && !(c.tcd > 0) && dist > 130 && r < 0.2) { this.press('sp'); this.hold.u = true; this.next = t + 30; }
         else if (C.dashV && r < 0.36) { this.dashAt = t; this.hold[towards] = true; }
         else if (r < 0.09) { this.hold.u = true; this.hold[towards] = true; }
         else this.hold[towards] = true;
@@ -834,7 +962,8 @@ const cpuBrain = {
           this.press(pick);
           if (!C.moves.sp.proj && Math.random() < 0.12 && specialReady(c)) this.press('sp');
           else if (C.moves.sp2 && C.moves.sp2.multi && Math.random() < 0.1) { this.press('sp'); this.hold.d = true; }
-          if (C.moves.tnt && !(c.tcd > 0) && dist < 44 && Math.random() < 0.12) { this.press('sp'); this.hold.u = true; this.hold.d = false; }
+          if (C.moves.sp2 && C.moves.sp2.stomp && Math.random() < 0.12) { this.press('sp'); this.hold.d = true; }
+          else if (C.moves.tnt && !C.moves.tnt.nohit && !(c.tcd > 0) && dist < 44 && Math.random() < 0.12) { this.press('sp'); this.hold.u = true; this.hold.d = false; }
           else if (C.moves.sp3 && dist < 46 && Math.random() < 0.14 && !G.steal) { this.press('sp'); this.hold[towards] = true; this.hold.d = false; }
           if (C.chain && Math.random() < 0.5) this.chainAt = t + 5;
           this.next = t + 16 + (Math.random() * 20 | 0);
@@ -1080,6 +1209,36 @@ const ART = {
       misc: ['#f4f4f8', '#6a1a14', '#f4f0e8', '#3a0a08'], bike: ['#1a1a1e', '#2a2a30', '#9aa2b4', '#c4ccd8'], prt: ['#3a6a8a', '#e05a1a'] },
     L: { top: 'tee', heather: 1, lower: 'shorts', feet: 'sneaker', hair: 'buzz', beard: 'stubble', hat: 'flatbrim', shades: 1, pack: 1, boom: 1,
       ink: { foreF: 1, foreB: 1 }, win: 'bmx', toss: 'boom', stretch: 1 }
+  },
+  /* BREE - stylized likeness: platinum mullet (HAIR DAY: shaved top + hot-pink curls), pink/black motocross gear, white boots */
+  bree: {
+    D: { thigh: 17, shin: 17, ank: 3, torso: 22, neck: 3.4, ua: 12, fa: 11.5, shX: 1.5, hipH: 35, crH: 19, lean0: 0.06, tw: 7.2, hs: 0.98,
+      st: [9, -7], gF: [9, -4], gB: [6, 0], legW: [6.8, 5.8], armW: [4.6, 4.0], fist: 2.5, walkDiv: 3, stride: 7 },
+    M: { skin: ['#7a4a3a', '#c8907a', '#f0c2a8', '#ffe2d0'], hair: ['#a88a98', '#d8bcc8', '#f4dce6', '#ffffff'],
+      top: ['#3a0420', '#80104a', '#c01870', '#f04a9a'], pants: ['#100a10', '#24161e', '#3a2632', '#5a4050'],
+      shoe: ['#8a8a96', '#c8c8d4', '#ececf4', '#ffffff'], glass: ['#5c6672', '#e4ecf4'], metal: ['#7a7a88', '#c0c0d0', '#f4f4fc'],
+      misc: ['#ffffff', '#8a2a2a', '#f8f4ee', '#4a0e0e'] },
+    L: { top: 'tee', lower: 'pants', feet: 'boot', hair: 'long', smile: 1, win: 'peace', toss: 'ink' }
+  },
+  /* KIDDOW - stylized likeness: pink/blonde shag, pink fishnet-sleeve top under a black hoodie, black pants, longboard */
+  kiddow: {
+    D: { thigh: 17, shin: 17, ank: 3, torso: 22, neck: 3.4, ua: 12, fa: 11.5, shX: 1.5, hipH: 35, crH: 19, lean0: 0.06, tw: 7.4, hs: 0.98,
+      st: [9, -7], gF: [9, -4], gB: [6, 0], legW: [6.8, 5.8], armW: [4.8, 4.2], fist: 2.5, walkDiv: 3, stride: 7 },
+    M: { skin: ['#7a4a3a', '#c8907a', '#f0c2a8', '#ffe2d0'], hair: ['#a0205a', '#e0408a', '#ff74b0', '#ffc0dc'],
+      top: ['#0a0a0e', '#1c1c24', '#30303a', '#4a4a56'], pants: ['#08080c', '#16161c', '#26262e', '#3a3a46'],
+      shoe: ['#8a8a96', '#c8c8d4', '#ececf4', '#ffffff'], chain: ['#3e4654', '#808ca0', '#c4d0e0', '#f4f8ff'],
+      misc: ['#ff74b0', '#8a2a2a', '#f8f4ee', '#4a0e0e'] },
+    L: { top: 'tee', hood: 1, lower: 'pants', feet: 'sneaker', hair: 'messy', chain: 1, smile: 1, win: 'peace', toss: 'ink' }
+  },
+  /* J RAVEN - stylized likeness: dark hair, navy hoodie (plain script graphic, no brand), denim shorts, chain with round pendant, white/blue high-tops */
+  jraven: {
+    D: { thigh: 18, shin: 17, ank: 3, torso: 25, neck: 3, ua: 13, fa: 12.5, shX: 2, hipH: 36, crH: 20, lean0: 0.06, tw: 9, hs: 1,
+      st: [10, -8], gF: [9, -3], gB: [6, 1], legW: [7.8, 6.2], armW: [6, 5], fist: 3, walkDiv: 3, stride: 6 },
+    M: { skin: ['#5a3220', '#a06a4a', '#d29c76', '#f0c4a0'], hair: ['#080606', '#1a1210', '#2e221c', '#463630'],
+      top: ['#080e1e', '#141e3a', '#22305a', '#3a4a7a'], pants: ['#2a4060', '#46648c', '#6a8cb8', '#9ab8dc'],
+      shoe: ['#1a3a8a', '#c8ccd8', '#eceef4', '#ffffff'], chain: ['#5a4a1a', '#a08a3a', '#e0c460', '#fff0b0'],
+      misc: ['#f4f4f8', '#6a1a14', '#f4f0e8', '#3a0a08'] },
+    L: { top: 'tee', hood: 1, lower: 'shorts', feet: 'sneaker', hair: 'buzz', beard: 'stubble', chain: 1, smile: 1, win: 'pump', toss: 'ink' }
   }
 };
 /* FIVE-FINGER DISCOUNT wardrobe swaps: '<fighter>:<key>' -> overrides on top of ART. Built lazily, only for the pair in a match. */
@@ -1093,6 +1252,7 @@ const STEAL_LOOK = {
   'dirty:tee': { M: { top: ['#050508', '#121218', '#24242e', '#3c3c4a'], print: ['#8a2a08', '#e05a1a', '#ff9a4a'] }, L: { sleevePrint: 1, hemPrint: 1, heather: 0 } },
   'dirty:cap': { M: { hat: ['#5a0606', '#a81812', '#e03a22', '#ff7a5a'], chain: ['#3e4654', '#808ca0', '#c4d0e0', '#f4f8ff'] }, L: { hat: 'snapback', shades: 0, chain: 1 } },
   'dirty:capw': { L: { hat: 'snapback', shades: 1 } },
+  'bree:strip': {}, 'kiddow:strip': {}, 'jraven:strip': {},
   'dirty:glasses': { M: { glass: ['#9aa6b4', '#e4ecf4'] }, L: { glasses: 1, shades: 0 } }
 };
 function artOf(ch, key) {
@@ -1961,7 +2121,7 @@ function drawFromSheet(g, f, S, sx, sy, tick, mirrorY, rim) {
 const RENDERERS = {
   pixel(g, f, C, sx, sy, tick, my, rim) { drawFromSheet(g, f, sheetFor(f), sx, sy, tick, my, rim); },
   sprite(g, f, C, sx, sy, tick, my, rim) {
-    const S = C.sprite;
+    const S = spriteOf(f, C);
     // code-drawn art while the PNG loads, if it failed to load, or while a stolen-item look is being worn
     if (!S || !S.img || stealLookOn(f) || (f.mv === 'hw' && !S.anims.hw)) { if (S && !S.loading) loadSprite(S); return RENDERERS.pixel(g, f, C, sx, sy, tick, my, rim); }
     drawFromSheet(g, f, S, sx, sy, tick, my);
@@ -1978,7 +2138,9 @@ function stealLookOn(f) {
   const k = stealKeys(st), key = f.i === st.i ? k.thief : f.i === st.v ? k.victim : null, L = key && STEAL_LOOK[f.ch + ':' + key];
   return !!(L && Object.keys(L).length);
 }
-function preloadSprites() { for (const id of CHAR_IDS) { const S = CHARS[id].sprite; if (CHARS[id].render === 'sprite' && S && !S.loading) loadSprite(S); } }
+function preloadSprites() { for (const id of CHAR_IDS) for (const S of [CHARS[id].sprite, CHARS[id].sprite2]) if (CHARS[id].render === 'sprite' && S && !S.loading) loadSprite(S); }
+/* BREE's HAIR DAY: the curls look is its own sheet (same poses, same scale) */
+function spriteOf(f, C) { return f.hair && C.sprite2 && C.sprite2.img ? C.sprite2 : C.sprite; }
 RENDERERS.shapes = RENDERERS.pixel;
 </script>
 <script>
@@ -3172,7 +3334,7 @@ function drawFighter(g, f, tick, camX) {
   rend(g, f, C, sx, sy, tick, false, QUAL.lv > 0 ? 0.7 : 0);
   g.globalAlpha = 1;
   // white hit-flash while the hit-stop holds
-  const SP = C.render === 'sprite' && C.sprite && C.sprite.img && !stealLookOn(f) && !(f.mv === 'hw' && !C.sprite.anims.hw) ? C.sprite : null;   // PNG-sheet fighter: flash its own frame
+  const S0 = C.render === 'sprite' && C.sprite ? spriteOf(f, C) : null, SP = S0 && S0.img && !stealLookOn(f) && !(f.mv === 'hw' && !S0.anims.hw) ? S0 : null;   // PNG-sheet fighter: flash its own frame
   if (G && G.hitstop > 0 && (f.st === 'hit' || f.st === 'kd') && (G.hitstop & 2) && (SP || (S && S.lazy))) {
     let Rw, i; if (SP) { const A = animOf(f, SP); i = frameOf(f, A, tick); Rw = { img: SP.img, fw: SP.fw, fh: SP.fh, ox: SP.ox, oy: SP.oy, sy: A.row * SP.fh }; } else { const A = animOf(f, S); [Rw, i] = readyRow(S, A, frameOf(f, A, tick)); }
     const fg = FLASH.g; fg.clearRect(0, 0, FLASH.width, FLASH.height);
@@ -3203,12 +3365,20 @@ function drawFightFX(g, t, camX) {
   for (const f of G.f) {
     const M = moveDef(f), x = f.x - camX, y = headY(f);
     let txt = null;
-    if (f.mv === 'tnt' && M && M.shout && f.mf < M.s + M.a + 34) txt = M.shout;
+    if (f.mv === 'tnt' && M && (M.shout || M.shouts) && f.mf < M.s + M.a + 34) txt = M.shouts ? M.shouts[(f.sh | 0) % M.shouts.length] : M.shout;
     else if (f.ch === 'dirty' && M && (f.mv === 'sp' || f.mv === 'sp2' || f.mv === 'sp3') && f.mf < M.s + M.a + 14) txt = 'NICE NICE NICE!';
     else if (G.steal && G.steal.i === f.i && G.steal.t < 70) txt = 'NICE NICE NICE!';
     else if (f.st === 'win' && G.phase === 'roundEnd' && (f.ch === 'dirty' || f.ch === 'bino') && f.t > 10 && f.t < 200) txt = f.ch === 'dirty' ? 'NICE NICE NICE NICE NICE!' : 'ALL GOD DAMN DAY!';
     if (txt && G.phase !== 'matchEnd') worldBubble(g, x, y, txt, f.mv === 'tnt' ? '#ffe0b0' : null);   // the winner card owns the quote at match end
     if (f.dz > 0) for (let k = 0; k < 3; k++) { const a = t * 0.18 + k * 2.09; star5(g, Math.round(x + Math.cos(a) * 11), Math.round(y - 4 + Math.sin(a) * 3), 2, k & 1 ? '#ffe066' : '#ffffff'); }
+  }
+  // KIDDOW's SPACE SABER: a glowing blade along the hitbox while it swings
+  for (const f of G.f) {
+    const M = moveDef(f); if (!M || !M.glow || f.mf < M.s - 3 || f.mf >= M.s + M.a + 4) continue;
+    const x0 = f.x - camX + f.face * M.box[0], x1 = x0 + f.face * M.box[2], yy = GROUND - f.y - M.box[1] - M.box[3] / 2, k = f.mf < M.s ? 0.5 : 1;
+    g.globalAlpha = 0.35 * k; g.fillStyle = '#3af0ff'; g.fillRect(Math.min(x0, x1), yy - 3, Math.abs(x1 - x0), 6);
+    g.globalAlpha = 0.9 * k; g.fillStyle = '#c8ffff'; g.fillRect(Math.min(x0, x1), yy - 1, Math.abs(x1 - x0), 2);
+    g.globalAlpha = 1; g.fillStyle = '#2a2a32'; g.fillRect(Math.round(x0) - 2, yy - 2, 4, 4);
   }
   // SMOOCH! burst covers the spot - comic star + lip print, never contact
   if (G.kiss) {
@@ -3263,10 +3433,24 @@ function drawReflection(g, f, tick, camX) {
 function drawProj(g, p, tick, camX) {
   const x = Math.round((p.x - camX) * SD) / SD, y = GROUND - Math.round(p.y * SD) / SD, art = p.art || (G && G.f[p.o] && CHARS[G.f[p.o].ch].moves.sp.proj && CHARS[G.f[p.o].ch].moves.sp.proj.art) || 'ink';
   const fr = PROJ[art] || PROJ.ink, img = fr[Math.floor(tick / 3) % fr.length], d = Math.sign(p.vx) || 1;
+  if (art === 'mud' || art === 'cash') { drawDrops(g, art, x, y, d, tick); return; }
   if (art === 'wave') { if ((tick >> 4) & 1) drawText(g, 'NICE', x - d * 4, y - 24 - ((tick >> 2) & 1), 1, 'cyan', 'c'); g.fillStyle = '#ff6ad8'; for (let k = 1; k < 4; k++) if ((tick + k) & 1) g.fillRect(x - d * (10 + k * 7), y - 6 + k * 3, 2, 2); }
   else if (art === 'ink') { g.fillStyle = '#14324a'; for (let k = 1; k < 5; k++) g.fillRect(x - d * k * 7, y + (k & 1 ? 2 : -2) + ((tick + k) % 3), 4 - (k >> 1), 2); }
   else { g.fillStyle = '#d0d4dc'; for (let k = 1; k < 4; k++) if ((tick + k) & 1) g.fillRect(x - d * k * 8, y - 3 + k * 2, 2, 1); }
   g.save(); g.translate(x, y); g.scale(d, 1); g.drawImage(img, -16, -16, 32, 32); g.restore();
+}
+/* BREE's ROOST mud spray and J RAVEN's MAKE IT RAIN bills: little pixel clusters, no sprite needed */
+function drawDrops(g, art, x, y, d, tick) {
+  const R2 = (c, a, b, w, h) => { g.fillStyle = c; g.fillRect(Math.round(a), Math.round(b), w, h); };
+  if (art === 'mud') {
+    for (let k = 0; k < 7; k++) { const a = x - d * (k * 4 - 6), b = y - 4 + ((k * 5 + tick) % 7) - (k & 1) * 3, s = 5 - (k >> 1);
+      R2(OUT, a - 1, b - 1, s + 2, s + 1); R2(k & 1 ? '#5a3a1e' : '#7a5230', a, b, s, s - 1); R2('#9a7048', a, b, 2, 1); }
+    for (let k = 1; k < 4; k++) if ((tick + k) & 1) R2('#5a3a1e', x - d * (k * 7 + 12), y + 2 - k, 2, 2);
+  } else {
+    for (let k = 0; k < 6; k++) { const ph = tick * 0.25 + k * 1.7, a = x - d * (k * 5 - 8) + Math.sin(ph) * 2, b = y - 8 + (k % 3) * 6 + Math.cos(ph) * 2, fl = (Math.floor(ph) & 1);
+      R2(OUT, a - 1, b - 1, fl ? 10 : 6, fl ? 6 : 8); R2('#3a9a4a', a, b, fl ? 8 : 4, fl ? 4 : 6); R2('#bff0b0', a + (fl ? 3 : 1), b + 1, 2, 2); }
+    if ((tick >> 2) & 1) { R2('#fff6b0', x - d * 4, y - 14, 2, 2); R2('#ffe066', x + d * 6, y + 8, 2, 2); }
+  }
 }
 function drawSpark(g, s, camX) {
   const fr = SPK[s.k] || SPK.h, img = fr[Math.min(fr.length - 1, s.t >> 1)];
@@ -3534,7 +3718,7 @@ addEventListener('resize', fit); fit();
 paintLogo(0);
 /* ---- stale-cache guard: GitHub Pages lets browsers keep the page ~10 min. If the live copy has a
    newer build id than the one running, reload once onto it. ---- */
-const BUILD_ID = 'bd7e86c2';
+const BUILD_ID = '7b608cd8';
 if ($('build')) $('build').textContent = 'build ' + BUILD_ID;
 (function freshCheck() {
   if (location.protocol === 'file:' || QS.has('nofresh') || !window.fetch) return;
@@ -3549,7 +3733,7 @@ function crtLabel() { const b = $('btn-crt'); if (b) b.textContent = 'CRT SCANLI
 if ($('btn-crt')) { crtLabel(); $('btn-crt').onclick = () => { CRT.on = !CRT.on; localStorage.setItem('tbb-crt', CRT.on ? '1' : '0'); crtLabel(); }; }
 
 /* ---- character select cards ---- */
-const CARD_TXT = { craig: 'Balanced brawler. INK SPLASH projectile.', aj: 'Big, slow, tanky. Grab slam + ground quake.', bino: 'Rushdown. Chain flurry + KISS MY BUTT taunt-grab.', sara: 'Fastest. Wire toss, teleport drop kick, dash.', dirty: '"NICE NICE NICE NICE NICE!" Lanky zoner, steals your gear.' };
+const CARD_TXT = { bree: 'Motocross rushdown. ROOST mud, WHEELIE CHARGE, HAIR DAY swaps looks.', kiddow: 'Longboard all-rounder. SPACE SABER, board ride-in + swing, rap taunt.', jraven: 'Smooth mid-range. MAKE IT RAIN cash spray, STOMP KICK, pickup lines.', craig: 'Balanced brawler. INK SPLASH projectile.', aj: 'Big, slow, tanky. Grab slam + ground quake.', bino: 'Rushdown. Chain flurry + KISS MY BUTT taunt-grab.', sara: 'Fastest. Wire toss, teleport drop kick, dash.', dirty: '"NICE NICE NICE NICE NICE!" Lanky zoner, steals your gear.' };
 function buildCards() {
   const box = $('cards'); box.innerHTML = '';
   for (const id of CHAR_IDS) {

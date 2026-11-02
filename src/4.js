@@ -30,7 +30,7 @@ function crtLabel() { const b = $('btn-crt'); if (b) b.textContent = 'CRT SCANLI
 if ($('btn-crt')) { crtLabel(); $('btn-crt').onclick = () => { CRT.on = !CRT.on; localStorage.setItem('tbb-crt', CRT.on ? '1' : '0'); crtLabel(); }; }
 
 /* ---- character select cards ---- */
-const CARD_TXT = { craig: 'Balanced brawler. INK SPLASH projectile.', aj: 'Big, slow, tanky. Grab slam + ground quake.', bino: 'Rushdown. Chain flurry + KISS MY BUTT taunt-grab.', sara: 'Fastest. Wire toss, teleport drop kick, dash.', dirty: '"NICE NICE NICE NICE NICE!" Lanky zoner, steals your gear.' };
+const CARD_TXT = { bree: 'Motocross rushdown. ROOST mud, WHEELIE CHARGE, HAIR DAY swaps looks.', kiddow: 'Longboard all-rounder. SPACE SABER, board ride-in + swing, rap taunt.', jraven: 'Smooth mid-range. MAKE IT RAIN cash spray, STOMP KICK, pickup lines.', craig: 'Balanced brawler. INK SPLASH projectile.', aj: 'Big, slow, tanky. Grab slam + ground quake.', bino: 'Rushdown. Chain flurry + KISS MY BUTT taunt-grab.', sara: 'Fastest. Wire toss, teleport drop kick, dash.', dirty: '"NICE NICE NICE NICE NICE!" Lanky zoner, steals your gear.' };
 function buildCards() {
   const box = $('cards'); box.innerHTML = '';
   for (const id of CHAR_IDS) {
